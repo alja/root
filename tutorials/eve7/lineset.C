@@ -13,14 +13,14 @@
 #include <ROOT/REveManager.hxx>
 #include <ROOT/REveStraightLineSet.hxx>
 
-namespace REX = ROOT::Experimental;
+using namespace ROOT::Experimental;
 
-REX::REveStraightLineSet* makeLineSet(Int_t nlines = 40, Int_t nmarkers = 4, bool sc = true)
+REveStraightLineSet* makeLineSet(Int_t nlines = 40, Int_t nmarkers = 4, bool sc = true)
 {
    TRandom r(0);
    Float_t s = 100;
 
-   auto ls = new REX::REveStraightLineSet();
+   auto ls = new REveStraightLineSet();
 
    for (Int_t i = 0; i<nlines; i++) {
       ls->AddLine( r.Uniform(-s,s), r.Uniform(-s,s), r.Uniform(-s,s),
@@ -33,14 +33,14 @@ REX::REveStraightLineSet* makeLineSet(Int_t nlines = 40, Int_t nmarkers = 4, boo
    ls->SetMarkerSize(0.5);
    ls->SetMarkerStyle(1);
    ls->SetAlwaysSecSelect(sc);
-   REX::gEve->GetEventScene()->AddElement(ls);
+   gEve->GetEventScene()->AddElement(ls);
 
    return ls;
 }
 
 void lineset(bool secondarySelect = true)
 {
-   auto eveMng = REX::REveManager::Create();
+   auto eveMng = REveManager::Create();
 
    auto ls1 = makeLineSet(10, 5, secondarySelect);
    ls1->SetMainColor(kViolet);

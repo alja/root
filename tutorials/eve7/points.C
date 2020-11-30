@@ -11,13 +11,13 @@
 #include <ROOT/REveManager.hxx>
 #include <ROOT/REvePointSet.hxx>
 
-namespace REX = ROOT::Experimental;
+using namespace ROOT::Experimental;
 
-REX::REvePointSet *createPointSet(int npoints = 2, float s = 2, int color = 28)
+REvePointSet *createPointSet(int npoints = 2, float s = 2, int color = 28)
 {
    TRandom &r = *gRandom;
 
-   REX::REvePointSet *ps = new REX::REvePointSet("MyTestPoints", "list of eve points", npoints);
+   REvePointSet *ps = new REvePointSet("MyTestPoints", "list of eve points", npoints);
 
    for (Int_t i=0; i < npoints; ++i)
       ps->SetNextPoint(r.Uniform(-s,s), r.Uniform(-s,s), r.Uniform(-s,s));
@@ -30,9 +30,9 @@ REX::REvePointSet *createPointSet(int npoints = 2, float s = 2, int color = 28)
 
 void points()
 {
-   auto eveMng = REX::REveManager::Create();
+   auto eveMng = REveManager::Create();
 
-   REX::REveElement *event = eveMng->GetEventScene();
+   REveElement *event = eveMng->GetEventScene();
    auto ps = createPointSet(100);
    event->AddElement(ps);
 

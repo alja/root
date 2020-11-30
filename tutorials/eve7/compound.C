@@ -4,11 +4,11 @@
 #include <ROOT/REveLine.hxx>
 #include <ROOT/REveCompound.hxx>
 
-namespace REX = ROOT::Experimental;
+using namespace ROOT::Experimental;
 
-REX::REveLine* random_line(TRandom& rnd, Int_t n, Float_t delta)
+REveLine* random_line(TRandom& rnd, Int_t n, Float_t delta)
 {
-   auto line = new REX::REveLine;
+   auto line = new REveLine;
    line->SetMainColor(kGreen);
 
    Float_t x = 0, y = 0, z = 0;
@@ -27,7 +27,7 @@ void compound()
    // disable browser cache - all scripts and html files will be loaded every time, useful for development
    // gEnv->SetValue("WebGui.HttpMaxAge", 0);
 
-   auto eveMng = REX::REveManager::Create();
+   auto eveMng = REveManager::Create();
    TRandom rnd(0);
    /*
    auto* ml = random_line(rnd, 20, 10);
@@ -36,7 +36,7 @@ void compound()
    ml->SetLineWidth(3);
    eveMng->InsertVizDBEntry("BigLine", ml);
    */
-   auto cmp = new REX::REveCompound;
+   auto cmp = new REveCompound;
    cmp->SetMainColor(kGreen);
 
 
