@@ -265,8 +265,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(EveManager) {
          // children
          if (msg.rnr_children_changed && el.childs)
          {
-            let scene = this.mgr.GetElement(el.fSceneId);
-            this.update3DObjectsVisibility(scene.childs, true);
+            this.update3DObjectsVisibility(el.childs, el.fRnrChildren);
          }
       }
 
