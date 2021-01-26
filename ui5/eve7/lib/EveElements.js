@@ -90,9 +90,9 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(EveManager) {
       var pnts     = new jsrp.PointsCreator(size, true, hit_size);
 
       for (var i=0; i<size; i++)
-         pnts.AddPoint(rnrData.vtxBuff[i*3],rnrData.vtxBuff[i*3+1],rnrData.vtxBuff[i*3+2]);
+         pnts.addPoint(rnrData.vtxBuff[i*3],rnrData.vtxBuff[i*3+1],rnrData.vtxBuff[i*3+2]);
 
-      var mesh = pnts.CreatePoints(jsrp.getColor(hit.fMarkerColor));
+      var mesh = pnts.createPoints(jsrp.getColor(hit.fMarkerColor));
 
       // use points control to toggle highlight and selection
       // mesh.get_ctrl = function() { return new jsrp.PointsControl(this); }
@@ -1035,6 +1035,8 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(EveManager) {
       else
          body.computeVertexNormals();
 
+      body.get_ctrl = function() { return new EveElemControl(this); }
+
       // XXXX Fix this. It seems we could have flat shading with usage of simple shaders.
       // XXXX Also, we could do edge detect on the server for outlines.
       // XXXX a) 3d objects - angle between triangles >= 85 degrees (or something);
@@ -1061,6 +1063,8 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(EveManager) {
       var mesh = new THREE.Mesh(geom, material);
 
       egs_ro.add(mesh);
+
+      egs_ro.get_ctrl = function() { return new EveElemControl(this); }
 
       return egs_ro;
    }
@@ -1118,8 +1122,9 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(EveManager) {
             console.error("Unexpected primitive type " + rnr_data.idxBuff[ib_pos]);
             break;
          }
-
       }
+
+      psp_ro.get_ctrl =  function() { return new EveElemControl(this); }
 
       return psp_ro;
    }
@@ -1192,6 +1197,8 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(EveManager) {
          }
 
       }
+
+      psp_ro.get_ctrl =  function() { return new EveElemControl(this); }
 
       return psp_ro;
    }
@@ -1305,9 +1312,9 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(EveManager) {
          for (var i = 0; i < mindx.length; ++i)
          {
             var p = mindx[i]*3;
-            pnts.AddPoint(arr[p], arr[p+1], arr[p+2] );
+            pnts.addPoint(arr[p], arr[p+1], arr[p+2] );
          }
-         var mark = pnts.CreatePoints(color);
+         var mark = pnts.createPoints(color);
          mark.material.size = m.children[1].material.size;
          mark.matrixAutoUpdate = false;
          mark.matrix.fromArray(m.matrix.toArray());
@@ -1318,7 +1325,6 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(EveManager) {
 
    EveElements.prototype.makeStraightLineSet = function(el, rnr_data)
     {
-        console.log("MAKE STRA ...");
       var obj3d = new THREE.Object3D();
 
       var mainColor = jsrp.getColor(el.fMainColor);
@@ -1339,9 +1345,9 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(EveManager) {
       let startIdx = el.fLinePlexSize * 6;
       let endIdx   = startIdx + msize * 3;
       for (let i = startIdx; i < endIdx; i+=3) {
-         pnts.AddPoint(rnr_data.vtxBuff[i], rnr_data.vtxBuff[i+1], rnr_data.vtxBuff[i+2] );
+         pnts.addPoint(rnr_data.vtxBuff[i], rnr_data.vtxBuff[i+1], rnr_data.vtxBuff[i+2] );
       }
-      var marker = pnts.CreatePoints(mainColor);
+      var marker = pnts.createPoints(mainColor);
 
       marker.material.sizeAttenuation = false;
 
