@@ -72,7 +72,6 @@ private:
    std::vector<REveDataItem*> fItems;
    ItemsChangeFunc_t fHandlerItemsChange;
    FillImpliedSelectedFunc_t fHandlerFillImplied;
-
    std::vector<TTip> fTooltipExpressions;
 
 public:
