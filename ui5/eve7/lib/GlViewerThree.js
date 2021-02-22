@@ -484,6 +484,8 @@ sap.ui.define([
       },
       remoteToolTip: function (msg)
       {
+         console.error("AMT teste error GASGAGAAGA");
+         console.log("AMT teste error -LOG");
          this.ttip_text.innerHTML = msg;
          if (this.highlighted_scene) this.ttip.style.display= "block";
       },
