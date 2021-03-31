@@ -154,6 +154,8 @@ REveManager::REveManager()
    fWebWindow->SetGeometry(900, 700); // configure predefined window geometry
    fWebWindow->SetConnLimit(100);     // maximal number of connections
    fWebWindow->SetMaxQueueLength(30); // number of allowed entries in the window queue
+
+   fMIRExecThread = std::thread{[this] { MIRExecThread(); }};
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -163,6 +165,7 @@ REveManager::~REveManager()
 {
    // Stop timer and deny further redraw requests.
    fTimerActive = kTRUE;
+   fMIRExecThread.join();
 
    fGlobalScene->DecDenyDestroy();
    fEventScene->DecDenyDestroy();
@@ -691,7 +694,7 @@ TStdExceptionHandler::EStatus REveManager::RExceptionHandler::Handle(std::except
 /// Process new connection from web window
 
 void REveManager::WindowConnect(unsigned connid)
-{ 
+{
    std::unique_lock lock(fServerState.fMutex);
    while (fServerState.fVal == ServerState::UpdatingScenes)
    {
@@ -732,6 +735,7 @@ void REveManager::WindowConnect(unsigned connid)
       }
    }
 
+   fServerState.fCV.notify_all();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -739,6 +743,11 @@ void REveManager::WindowConnect(unsigned connid)
 
 void REveManager::WindowDisconnect(unsigned connid)
 {
+   std::unique_lock lock(fServerState.fMutex);
+   while (fServerState.fVal != ServerState::Waiting)
+   {
+       fServerState.fCV.wait(lock);
+   }
    auto conn = fConnList.end();
    for (auto i = fConnList.begin(); i != fConnList.end(); ++i) {
       if (i->fId == connid) {
@@ -758,6 +767,7 @@ void REveManager::WindowDisconnect(unsigned connid)
       }
       fWorld->RemoveSubscriber(connid);
    }
+   fServerState.fCV.notify_all();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -796,8 +806,6 @@ void REveManager::WindowData(unsigned connid, const std::string &arg)
       if (ClientConnectionsFree()) {
          fServerState.fVal = ServerState::Waiting;
          fServerState.fCV.notify_all();
-         if (fCBClientsFree)
-            (fCBClientsFree)();
       }
 
       return;
@@ -825,17 +833,23 @@ void REveManager::WindowData(unsigned connid, const std::string &arg)
       std::cout << cmd.str() << std::endl;
    }
 
-   ExecuteCommand(cmd.str());
+   ScheduleMIR(cmd.str());
 }
 
-void REveManager::ExecuteCommand(const std::string &cmd)
+//
+//____________________________________________________________________
+void REveManager::ScheduleMIR(const std::string &cmd)
 {
-
    std::unique_lock lock(fServerState.fMutex);
-   while (fServerState.fVal != ServerState::Waiting)
-      fServerState.fCV.wait(lock);
+   fMIRqueue.push(cmd);
+   if (fServerState.fVal == ServerState::Waiting)
+      fServerState.fCV.notify_all();
+}
 
-   fServerState.fVal = ServerState::UpdatingScenes;
+//
+//____________________________________________________________________
+void REveManager::ExecuteMIR(const std::string &cmd)
+{
    fWorld->BeginAcceptingChanges();
    fScenes->AcceptChanges(true);
 
@@ -847,36 +861,20 @@ void REveManager::ExecuteCommand(const std::string &cmd)
    }
    catch (std::exception &e) {
       std::cout << "REveManager::ExecuteCommand " << e.what() << std::endl;
-   } 
+   }
    catch (...) {
       std::cout << "REveManager::ExecuteCommand unknown exception.\n";
    }
 
    fScenes->AcceptChanges(false);
    fWorld->EndAcceptingChanges();
-
-   nlohmann::json jobj = {};
-
-   jobj["content"] = "BeginChanges";
-   fWebWindow->Send(0, jobj.dump());
-
-   // Process changes in scenes.
-   fWorld->ProcessChanges();
-   fScenes->ProcessSceneChanges();
-
-   jobj["content"] = "EndChanges";
-   fWebWindow->Send(0, jobj.dump());
-
-   fServerState.fVal = ServerState::UpdatingClients;
-  // PublishChanges();
 }
 
+//
+//____________________________________________________________________
 void REveManager::PublishChanges()
 {
-   /*
-   std::unique_lock lock(fServerState.fMutex);
    nlohmann::json jobj = {};
-
    jobj["content"] = "BeginChanges";
    fWebWindow->Send(0, jobj.dump());
 
@@ -886,10 +884,34 @@ void REveManager::PublishChanges()
 
    jobj["content"] = "EndChanges";
    fWebWindow->Send(0, jobj.dump());
+}
 
-   fServerState.fVal = ServerState::UpdatingClients;
-   */
-
+//
+//____________________________________________________________________
+void REveManager::MIRExecThread()
+{
+#if defined(R__LINUX)
+   pthread_setname_np(pthread_self(), "mir_exec");
+#endif
+   while (true)
+   {
+      std::unique_lock lock(fServerState.fMutex);
+      abcLabel:
+      if (fMIRqueue.empty())
+      {
+         fServerState.fCV.wait(lock);
+         goto abcLabel;
+      }
+      else if (fServerState.fVal == ServerState::Waiting)
+      {
+         std::string cmd = fMIRqueue.front();
+         fMIRqueue.pop();
+         fServerState.fVal = ServerState::UpdatingScenes;
+         lock.unlock();
+         ExecuteMIR(cmd);
+         PublishChanges();
+      }
+   }
 }
 
 void REveManager::Send(unsigned connid, const std::string &data)
