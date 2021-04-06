@@ -876,7 +876,6 @@ void REveManager::ExecuteMIR(std::shared_ptr<MIR> mir)
    } catch (...) {
       std::cout << "REveManager::ExecuteCommand unknown exception.\n";
    }
-
 }
 
 //
@@ -923,6 +922,8 @@ void REveManager::MIRExecThread()
    }
 }
 
+
+//____________________________________________________________________
 void REveManager::Send(unsigned connid, const std::string &data)
 {
    fWebWindow->Send(connid, data);
@@ -1057,4 +1058,46 @@ std::shared_ptr<REveGeomViewer> REveManager::ShowGeometry(const RWebDisplayArgs 
    viewer->Show(args);
 
    return viewer;
+}
+
+//____________________________________________________________________
+void REveManager::BeginChangeGuard()
+{
+   {
+      std::unique_lock lock(fServerState.fMutex);
+      while (fServerState.fVal != ServerState::Waiting) {
+         fServerState.fCV.wait(lock);
+      }
+      fServerState.fVal = ServerState::UpdatingScenes;
+   }
+   GetWorld()->BeginAcceptingChanges();
+   GetScenes()->AcceptChanges(true);
+}
+
+//____________________________________________________________________
+void REveManager::EndChangeGuard()
+{
+   GetScenes()->AcceptChanges(false);
+   GetWorld()->EndAcceptingChanges();
+
+   PublishChanges();
+
+   {
+      std::unique_lock lock(fServerState.fMutex);
+      fServerState.fVal = ServerState::UpdatingClients;
+      fServerState.fCV.notify_all();
+   }
+}
+//////////////////////////////////////////////////////////////////////
+//
+// Helper struct to guard update mechanism
+//
+REveManager::ChangeGuard::ChangeGuard()
+{
+   gEve->BeginChangeGuard();
+}
+
+REveManager::ChangeGuard::~ChangeGuard()
+{
+   gEve->EndChangeGuard();
 }
