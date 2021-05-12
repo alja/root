@@ -165,6 +165,7 @@ protected:
    std::unordered_map<std::string, std::shared_ptr<TMethodCall> > fMethCallMap;
 
    Logger            fLogger;
+   std::stringstream fLogBuf;
 
    void WindowConnect(unsigned connid);
    void WindowData(unsigned connid, const std::string &arg);

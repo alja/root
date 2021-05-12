@@ -26,6 +26,7 @@
 #include "TROOT.h"
 #include "TSystem.h"
 #include "TFile.h"
+#include "TError.h"
 #include "TMap.h"
 #include "TExMap.h"
 #include "TEnv.h"
@@ -43,6 +44,11 @@
 #include <iostream>
 #include <regex>
 
+#include <TEnv.h>
+#include <TError.h>
+#include <ThreadLocalStorage.h>
+#include <TSystem.h>
+#include <Varargs.h>
 #include <nlohmann/json.hpp>
 
 using namespace ROOT::Experimental;
@@ -65,6 +71,140 @@ WebEve.TableRowHeight: 33  # size of each row in pixels in the Table view, can b
 */
 
 ////////////////////////////////////////////////////////////////////////////////
+thread_local std::stringstream sLogBuf;
+
+
+static std::mutex *GetErrorMutex() {
+   static std::mutex *m = new std::mutex();
+   return m;
+}
+
+
+static void DebugPrint(const char *fmt, ...)
+{
+   TTHREAD_TLS(Int_t) buf_size = 2048;
+   TTHREAD_TLS(char*) buf = nullptr;
+
+   va_list ap;
+   va_start(ap, fmt);
+
+again:
+   if (!buf)
+      buf = new char[buf_size];
+
+   Int_t n = vsnprintf(buf, buf_size, fmt, ap);
+   // old vsnprintf's return -1 if string is truncated new ones return
+   // total number of characters that would have been written
+   if (n == -1 || n >= buf_size) {
+      if (n == -1)
+         buf_size *= 2;
+      else
+         buf_size = n+1;
+      delete [] buf;
+      buf = nullptr;
+      va_end(ap);
+      va_start(ap, fmt);
+      goto again;
+   }
+   va_end(ap);
+
+   // Serialize the actual printing.
+   std::lock_guard<std::mutex> guard(*GetErrorMutex());
+
+   const char *toprint = buf; // Work around for older platform where we use TThreadTLSWrapper
+   fprintf(stderr, "%s", toprint);
+
+   sLogBuf << buf;
+
+#ifdef WIN32
+   ::OutputDebugString(buf);
+#endif
+}
+
+
+void EveErrorHandler(Int_t level, Bool_t abort_bool, const char *location, const char *msg)
+{
+
+   if (gErrorIgnoreLevel == kUnset) {
+      std::lock_guard<std::mutex> guard(*GetErrorMutex());
+
+   
+      gErrorIgnoreLevel = 0;
+      if (gEnv) {
+         std::string slevel;
+         auto cstrlevel = gEnv->GetValue("Root.ErrorIgnoreLevel", "Print");
+         while (cstrlevel && *cstrlevel) {
+            slevel.push_back(tolower(*cstrlevel));
+            cstrlevel++;
+         }
+
+         if (slevel == "print")
+            gErrorIgnoreLevel = kPrint;
+         else if (slevel == "info")
+            gErrorIgnoreLevel = kInfo;
+         else if (slevel == "warning")
+            gErrorIgnoreLevel = kWarning;
+         else if (slevel == "error")
+            gErrorIgnoreLevel = kError;
+         else if (slevel == "break")
+            gErrorIgnoreLevel = kBreak;
+         else if (slevel == "syserror")
+            gErrorIgnoreLevel = kSysError;
+         else if (slevel == "fatal")
+            gErrorIgnoreLevel = kFatal;
+      }
+   }
+   if (level < gErrorIgnoreLevel)
+      return;
+
+   const char *type = nullptr;
+
+   if (level >= kInfo)
+      type = "Info";
+   if (level >= kWarning)
+      type = "Warning";
+   if (level >= kError)
+      type = "Error";
+   if (level >= kBreak)
+      type = "\n *** Break ***";
+   if (level >= kSysError)
+      type = "SysError";
+   if (level >= kFatal)
+      type = "Fatal";
+
+   std::string smsg;
+   if (level >= kPrint && level < kInfo)
+      smsg = msg;
+   else if (level >= kBreak && level < kSysError)
+      smsg = std::string(type) + " " + msg;
+   else if (!location || !location[0])
+      smsg = std::string(type) + ": " + msg;
+   else
+      smsg = std::string(type) + " in <" + location + ">: " + msg;
+
+   DebugPrint("%s\n", smsg.c_str());
+
+   fflush(stderr);
+   if (abort_bool) {
+
+#ifdef __APPLE__
+      if (__crashreporter_info__)
+         delete [] __crashreporter_info__;
+      __crashreporter_info__ = strdup(smsg.c_str());
+#endif
+
+      DebugPrint("aborting\n");
+      fflush(stderr);
+      if (gSystem) {
+         gSystem->StackTrace();
+         gSystem->Abort();
+      } else {
+         abort();
+      }
+   }
+}
+
+
 
 REveManager::REveManager()
    : // (Bool_t map_window, Option_t* opt) :
@@ -151,6 +291,9 @@ REveManager::REveManager()
    fWebWindow->SetGeometry(900, 700); // configure predefined window geometry
    fWebWindow->SetConnLimit(100);     // maximal number of connections
    fWebWindow->SetMaxQueueLength(30); // number of allowed entries in the window queue
+
+SetErrorHandler(EveErrorHandler);
+   EveLog().SetVerbosity(ELogLevel::kDebug);
 
    fMIRExecThread = std::thread{[this] { MIRExecThread(); }};
 }
@@ -770,6 +913,7 @@ void REveManager::WindowDisconnect(unsigned connid)
 void REveManager::WindowData(unsigned connid, const std::string &arg)
 {
    static const REveException eh("REveManager::WindowData ");
+R__LOG_INFO(EveLog()) << "Window DATA HOWGOW\n";
 
    // find connection object
    bool found = false;
@@ -782,7 +926,7 @@ void REveManager::WindowData(unsigned connid, const std::string &arg)
 
    // this should not happen, just check
    if (!found) {
-      R__LOG_ERROR(EveLog()) << "Internal error - no connection with id " << connid << " found";
+      R__LOG_ERROR(EveLog()) << "Internal error - __no connection with id " << connid << " found";
       return;
    }
    // client status data
@@ -917,6 +1061,7 @@ void REveManager::PublishChanges()
    fScenes->ProcessSceneChanges();
    jobj["content"] = "EndChanges";
 
+/*
    if (!fLogger.fLogEntries.empty()) {
 
       constexpr static int numLevels = static_cast<int>(ELogLevel::kDebug) + 1;
@@ -941,6 +1086,9 @@ void REveManager::PublishChanges()
       jobj["log"] = strm.str();
       fLogger.fLogEntries.clear();
    }
+   */
+  jobj["log"] = sLogBuf.str();
+  sLogBuf.clear();
 
    fWebWindow->Send(0, jobj.dump());
 }
