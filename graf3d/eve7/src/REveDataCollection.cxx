@@ -272,6 +272,9 @@ void REveDataCollection::SetFilterExpr(const char* filter)
 
 void REveDataCollection::ApplyFilter()
 {
+   if (!fFilterFoo)
+      return;
+   
    Ids_t ids;
    int idx = 0;
    for (auto &ii : fItemList->fItems)
