@@ -42,6 +42,7 @@ sap.ui.define(['sap/ui/core/Component',
             filter: "Any files",
             filters: ["Text files (*.txt)", "C++ files (*.cxx *.cpp *.c)", "Any files (*)"],
             onOk: fname => {
+               console.log("AMT test dialof");
                let p = Math.max(fname.lastIndexOf("/"), fname.lastIndexOf("\\"));
                let title = (p > 0) ? fname.substr(p+1) : fname;
                this.setEditorFileKind(tab, title);
