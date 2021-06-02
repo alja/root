@@ -6,8 +6,9 @@ sap.ui.define(['sap/ui/core/Component',
                'sap/m/library',
                'sap/m/Button',
                'sap/m/MenuItem',
-               'rootui5/eve7/lib/EveManager'
-], function(Component, UIComponent, Controller, Splitter, SplitterLayoutData, MobileLibrary, mButton, mMenuItem, EveManager) {
+               'rootui5/eve7/lib/EveManager',
+               'rootui5/browser/controller/FileDialog.controller'
+], function(Component, UIComponent, Controller, Splitter, SplitterLayoutData, MobileLibrary, mButton, mMenuItem, EveManager, FileDialogController) {
 
    "use strict";
 
@@ -29,6 +30,31 @@ sap.ui.define(['sap/ui/core/Component',
          ctrl.SetMgr(this.mgr);
       },
 
+
+      /** @brief Invoke dialog with server side code */
+      onSaveAsFile: function(tab) {
+
+         const oModel = tab.getModel();
+         FileDialogController.SaveAs({
+            websocket: this.websocket,
+            filename: oModel.getProperty("/filename") || oModel.getProperty("/title"),
+            title: "Select file name to save",
+            filter: "Any files",
+            filters: ["Text files (*.txt)", "C++ files (*.cxx *.cpp *.c)", "Any files (*)"],
+            onOk: fname => {
+               let p = Math.max(fname.lastIndexOf("/"), fname.lastIndexOf("\\"));
+               let title = (p > 0) ? fname.substr(p+1) : fname;
+               this.setEditorFileKind(tab, title);
+               oModel.setProperty("/title", title);
+               oModel.setProperty("/filename", fname);
+               this.syncEditor(tab, "SAVE");
+               this.doReload(true); // while new file appears, one should reload items on server
+            },
+            onCancel: function() { },
+            onFailure: function() { }
+         });
+      },
+      
       onDisconnect : function() {
          var t = this.byId("centerTitle");
          t.setHtmlText("<strong style=\"color: red;\">Client Disconnected !</strong>");
