@@ -781,6 +781,8 @@ void REveManager::WindowData(unsigned connid, const std::string &arg)
       }
    }
 
+   std::cout << "WINDOW DATA " << arg << std::endl;
+
    // this should not happen, just check
    if (!found) {
       R__LOG_ERROR(REveLog()) << "Internal error - no connection with id " << connid << " found";

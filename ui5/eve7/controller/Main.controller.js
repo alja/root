@@ -34,10 +34,10 @@ sap.ui.define(['sap/ui/core/Component',
       /** @brief Invoke dialog with server side code */
       onSaveAsFile: function(tab) {
 
-         const oModel = tab.getModel();
+         // const oModel = tab.getModel();
          FileDialogController.SaveAs({
             websocket: this.websocket,
-            filename: oModel.getProperty("/filename") || oModel.getProperty("/title"),
+            filename: "testdialog",
             title: "Select file name to save",
             filter: "Any files",
             filters: ["Text files (*.txt)", "C++ files (*.cxx *.cpp *.c)", "Any files (*)"],
@@ -54,7 +54,7 @@ sap.ui.define(['sap/ui/core/Component',
             onFailure: function() { }
          });
       },
-      
+
       onDisconnect : function() {
          var t = this.byId("centerTitle");
          t.setHtmlText("<strong style=\"color: red;\">Client Disconnected !</strong>");
