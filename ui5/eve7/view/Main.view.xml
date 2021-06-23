@@ -73,7 +73,9 @@
                 <FormattedText id="centerTitle" htmlText="ROOT Event Visalization Environment"/>
               </contentMiddle>
               <contentRight>
-              <Button id="logButton" icon="sap-icon://show" text="log" press="showLog"/>
+              <!--Button id="logButton" icon="sap-icon://show" text="log" press="showLog"/-->
+
+				<Button id="messagePopoverBtn" text="test" press="handleMessagePopoverPress"/>
             <MenuButton text="Help" type="Default"  enabled="true">
               <menu>
                 <Menu >

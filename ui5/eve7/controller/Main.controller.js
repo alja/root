@@ -6,8 +6,9 @@ sap.ui.define(['sap/ui/core/Component',
                'sap/m/library',
                'sap/m/Button',
                'sap/m/MenuItem',
-               'rootui5/eve7/lib/EveManager'
-], function(Component, UIComponent, Controller, Splitter, SplitterLayoutData, MobileLibrary, mButton, mMenuItem, EveManager) {
+               'rootui5/eve7/lib/EveManager',
+               "sap/ui/core/mvc/XMLView"
+], function(Component, UIComponent, Controller, Splitter, SplitterLayoutData, MobileLibrary, mButton, mMenuItem, EveManager, XMLView) {
 
    "use strict";
 
@@ -27,6 +28,26 @@ sap.ui.define(['sap/ui/core/Component',
          var elem = this.byId("Summary");
          var ctrl = elem.getController();
          ctrl.SetMgr(this.mgr);
+
+
+        // toolbar.addContentRight(new sap.m.Button({text:"message log"}));
+
+
+         let pthis = this;
+         XMLView.create({
+            viewName: "rootui5.eve7.view.MessagePopover",
+         }).then(function (oView) {
+            pthis.xxx = oView.getController();
+            //pthis.eventFilter.setGUIElement(pthis.fw2gui);
+           // console.log(oView, "filter dialog", oView.byId("filterDialog"));
+            //pthis.eventFilter.makeTables();
+            //pthis.eventFilter.openFilterDialog();
+
+           
+         var toolbar = pthis.byId("otb1");
+         console.log("amt toolbar", toolbar);
+            toolbar.addContentRight(pthis.xxx.getButton());
+         });
       },
 
       onDisconnect : function() {
@@ -195,10 +216,24 @@ sap.ui.define(['sap/ui/core/Component',
       },
 
       showLog: function (oEvent) {
+         console.log("dddd show LOG AMT");
+         /*
+         jQuery.sap.require("sap.m.MessageBox");
+      //   sap.m.MessageBox.show("Initial button focus is set by attribute \n initialFocus: \"Custom button text\" \n Note: The name is not case sensitive", {
+        // this logBox = new sap.m.MessageBox;
+            sap.m.MessageBox.show(JSROOT.EVE.console.txt, {
+            icon: sap.m.MessageBox.Icon.INFORMATION,
+            title: "Set initial button focus",
+            actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO, "Custom button text"],
+            id: "messageBoxId1",
+            defaultAction: sap.m.MessageBox.Action.NO,
+            initialFocus: "Custom button text"
+         });*/
+         
          let oPopover = sap.ui.getCore().byId("logView");
          if (!oPopover)
          {
-            let oFT = new sap.m.FormattedText("EveConsoleText", {
+            let oFT = new sap.m.MessageStrip("EveConsoleText", {
                convertLinksToAnchorTags: sap.m.LinkConversion.All,
                width: "100%",
                height: "auto"
@@ -256,7 +291,11 @@ sap.ui.define(['sap/ui/core/Component',
          if ((cmd.name == "QuitRoot") && window) {
              window.close();
          }
-      }
+      },
+
+		handleMessagePopoverPress: function (oEvent) {
+			this.xxx.oMessagePopover.toggle(oEvent.getSource());
+		}
 
    });
 });
