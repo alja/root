@@ -317,8 +317,6 @@ Int_t REveTrackProjected::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
 {
    Int_t ret = REveTrack::WriteCoreJson(j, rnr_offset);
 
-   j["render_data"]["break_point_size"] = fBreakPoints.size();
-
    return ret;
 }
 
