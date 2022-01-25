@@ -272,6 +272,13 @@ void REveDataCollection::AddItem(void *data_ptr, const std::string& /*n*/, const
 {
    auto el = new REveDataItem(data_ptr, GetMainColor());
    fItemList->fItems.emplace_back(el);
+   fItemList->StampObjProps();
+}
+
+void REveDataCollection::ClearItems()
+{
+   fItemList->fItems.clear();
+   fItemList->StampObjProps();
 }
 
 //------------------------------------------------------------------------------
