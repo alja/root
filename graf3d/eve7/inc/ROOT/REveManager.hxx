@@ -155,6 +155,7 @@ protected:
 
    Logger            fLogger;
    REveServerStatus  fServerStatus;
+   bool              fIsRCore{false};
 
    void WindowConnect(unsigned connid);
    void WindowData(unsigned connid, const std::string &arg);
@@ -266,6 +267,7 @@ public:
    void Show(const RWebDisplayArgs &args = "");
 
    void GetServerStatus(REveServerStatus&);
+   bool IsRCore() const { return fIsRCore; }
 };
 
 R__EXTERN REveManager* gEve;
