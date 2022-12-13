@@ -268,7 +268,7 @@ sap.ui.define([
 
             if (event.buttons === 0 && event.srcElement === glc.canvas.canvasDOM) {
                glc.removeMouseMoveTimeout();
-               glc.mousemove_timeout = setTimeout(glc.onMouseMoveTimeout.bind(glc, event), glc.controller.htimeout);
+               glc.mousemove_timeout = setTimeout(glc.onMouseMoveTimeout.bind(glc, event.offsetX, event.offsetY), glc.controller.htimeout);
             } else {
                // glc.clearHighlight();
             }
@@ -669,13 +669,11 @@ sap.ui.define([
          }
       }
 
-      onMouseMoveTimeout(event)
+      onMouseMoveTimeout(x, y)
       {
          delete this.mousemove_timeout;
 
-         let x = event.offsetX * this.canvas.pixelRatio;
-         let y = event.offsetY * this.canvas.pixelRatio;
-         let pstate = this.render_for_picking(x, y, false);
+         let pstate = this.render_for_picking(x * this.canvas.pixelRatio, y * this.canvas.pixelRatio, false);
 
          if ( ! pstate)
             return this.clearHighlight();
@@ -699,17 +697,17 @@ sap.ui.define([
          let offs  = (mouse.x > 0 || mouse.y < 0) ? this.getRelativeOffsets(dome) : null;
 
          if (mouse.x <= 0) {
-            this.ttip.style.left  = (event.offsetX + dome.offsetLeft + 10) + "px";
+            this.ttip.style.left  = (x + dome.offsetLeft + 10) + "px";
             this.ttip.style.right = null;
          } else {
-            this.ttip.style.right = (this.canvas.canvasDOM.clientWidth - event.offsetX + offs.right + 10) + "px";
+            this.ttip.style.right = (this.canvas.canvasDOM.clientWidth - x + offs.right + 10) + "px";
             this.ttip.style.left  = null;
          }
          if (mouse.y >= 0) {
-            this.ttip.style.top    = (event.offsetY + dome.offsetTop + 10) + "px";
+            this.ttip.style.top    = (y + dome.offsetTop + 10) + "px";
             this.ttip.style.bottom = null;
          } else {
-            this.ttip.style.bottom = (this.canvas.canvasDOM.clientHeight - event.offsetY + offs.bottom + 10) + "px";
+            this.ttip.style.bottom = (this.canvas.canvasDOM.clientHeight - y + offs.bottom + 10) + "px";
             this.ttip.style.top = null;
          }
 
