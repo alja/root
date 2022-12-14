@@ -329,11 +329,11 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(EveManager) {
       /** interactive handler */
       processElementHighlighted(eve_el, indx, event)
       {
-         if (this.mgr.MatchSelection(this.mgr.global_selection_id, eve_el, indx))
+         // RenderCore viewer is organizing selection on stack, the last selection will set the color
+         if (!this.mgr.is_rcore && this.mgr.MatchSelection(this.mgr.global_selection_id, eve_el, indx))
             return true;
 
          // Need check for duplicates before call server, else server will un-higlight highlighted element
-         // console.log("EveScene.processElementHighlighted", obj3d.eve_el.fElementId, indx, evnt);
          if (this.mgr.MatchSelection(this.mgr.global_highlight_id, eve_el, indx))
             return true;
 

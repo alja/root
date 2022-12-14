@@ -594,7 +594,7 @@ sap.ui.define([
       {
          let idx = this._selection_list.indexOf(sid);
          if (idx >= 0)
-            this._selection_list.splice(idx);
+            this._selection_list.splice(idx,1);
       }
 
       make_selection_last_in_list(sid)
