@@ -144,7 +144,7 @@ REveManager::REveManager()
    fWebWindow->UseServerThreads();
    fWebWindow->SetDefaultPage("file:rootui5sys/eve7/index.html");
 
-   const char *gl_viewer = gEnv->GetValue("WebEve.GLViewer", "Three");
+   const char *gl_viewer = gEnv->GetValue("WebEve.GLViewer", "RCore");
    const char *gl_dblclick = gEnv->GetValue("WebEve.DblClick", "Off");
    Int_t htimeout = gEnv->GetValue("WebEve.HTimeout", 250);
    Int_t table_row_height = gEnv->GetValue("WebEve.TableRowHeight", 0);
