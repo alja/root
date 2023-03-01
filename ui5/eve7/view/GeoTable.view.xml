@@ -9,14 +9,17 @@
     height="100%">
     <Toolbar id="tbar">
       <content>
-         <Label text="Table" id="titleLabel" width="100%" textAlign="Center"/>
+         <Label text="GeoTable" id="titleLabel" width="100%" textAlign="Center"/>
          <Button icon="sap-icon://move" press="switchSingle" tooltip="single view"/>
          <Button icon="sap-icon://arrow-right" press="swap" tooltip="swap"/>
          <Button icon="sap-icon://decline" press="detachViewer" tooltip="destroy"/>
       </content>
     </Toolbar>
     <table:TreeTable
-        id="table"
-        visibleRowCountMode="Auto">
-    </table:TeeTable>
+        id="geoTable"
+      >
+      <table:layoutData>
+        <m:FlexItemData growFactor="1"/>
+      </table:layoutData>
+    </table:TreeTable>
 </core:View>
