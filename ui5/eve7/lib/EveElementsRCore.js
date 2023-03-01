@@ -1289,6 +1289,12 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
          return mesh;
       }
 
+      makeGeoTopNode(topNode, rnr_data)
+      {
+         let json = atob(topNode.geomDescription);
+         let obj =  EVE.JSR.parse(json);
+         console.log("make REveGeoTopNode ", obj);
+      }
 
       //==============================================================================
       // makePolygonSetProjected
