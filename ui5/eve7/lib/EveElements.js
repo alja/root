@@ -803,6 +803,15 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(/*EveManager*/) {
       }
 
 
+      makeGeoTopNode(topNode, rnr_data)
+      {
+         let json = atob(topNode.geomDescription);
+         let obj =  EVE.JSR.parse(json);
+         let obj3d = EVE.JSR.build(obj);
+         console.log("make REveGeoTopNode ", obj);
+         return obj3d;
+      }
+
       makeFlatBox(ebox, rnrData, idxBegin, idxEnd)
       {
          let fcol = EVE.JSR.getColor(ebox.fMainColor);

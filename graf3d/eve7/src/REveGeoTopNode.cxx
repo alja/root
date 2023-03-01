@@ -43,12 +43,11 @@ TGeoNode *getNodeFromPath(TGeoNode *top, std::string path)
 
 Int_t REveGeoTopNode::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
 {
- 
-
+   // test
    TGeoNode* top = gGeoManager->GetTopVolume()->FindNode("CMSE_1");
    TGeoNode* n = getNodeFromPath(top, "TRAK_1/SVTX_1/TGBX_1/GAW1_1");
 
-// end of demo prep
+   // end of demo prep
 
    Int_t ret = REveElement::WriteCoreJson(j, rnr_offset);
 
@@ -57,8 +56,6 @@ Int_t REveGeoTopNode::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
    data.Build(n->GetVolume());
 
    std::string json = data.ProduceJson();
-
-   std::cout << "Geom Det Json" << json << "\n";
 
    j["geomDescription"] = TBase64::Encode(json.c_str());
    return ret;
