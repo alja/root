@@ -30,11 +30,17 @@ void eveGeoBrowser()
    gGeoManager->GetVolume("EAP4")->SetLineColor(7);
    gGeoManager->GetVolume("HTC1")->SetLineColor(2);
 
+   //GL data
+   auto glTopNode =  new REX::REveGeoTopNode();
+   eveMng->GetEventScene()->AddElement(glTopNode);
+
+
+   // table test
    auto topNode = new REX::REveGeoTopNode();
-
-
-
-   eveMng->GetEventScene()->AddElement(topNode);
+   auto scene = eveMng->SpawnNewScene("Geo");
+   auto view = eveMng->SpawnNewViewer("GeoTable");
+   scene->AddElement(topNode);
+   view->AddScene(scene);
 
    eveMng->Show();
 }
