@@ -17,6 +17,13 @@
     </Toolbar>
     <table:TreeTable
         id="geoTable"
+        rows="{/nodes}"
+        editable="false"
+        columnHeaderVisible="false"
+        selectionBehavior="RowOnly"
+        selectionMode="Single"
+        enableSelectAll="false"
+        visibleRowCountMode="Auto"
       >
       <table:layoutData>
         <m:FlexItemData growFactor="1"/>

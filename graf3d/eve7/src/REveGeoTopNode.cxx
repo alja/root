@@ -21,50 +21,53 @@ using namespace ROOT::Experimental;
 ////////////////////////////////////////////////////////////////////////////////
 /// Constructor.
 
-REveGeoTopNode::REveGeoTopNode(const Text_t* n, const Text_t* t) :
+REveGeoTopNodeData::REveGeoTopNodeData(const Text_t* n, const Text_t* t) :
    REveElement(n, t)
 {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Fill core part of JSON representation.
-namespace {
-TGeoNode *getNodeFromPath(TGeoNode *top, std::string path)
+
+Int_t REveGeoTopNodeData::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
 {
-   TGeoNode *node = top;
-   std::istringstream f(path);
-   std::string s;
-   while (getline(f, s, '/'))
-      node = node->GetVolume()->FindNode(s.c_str());
-
-   return node;
-}
-} // namespace
-
-Int_t REveGeoTopNode::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
-{
-   // test
-   TGeoNode* top = gGeoManager->GetTopVolume()->FindNode("CMSE_1");
-   TGeoNode* n = getNodeFromPath(top, "TRAK_1/SVTX_1/TGBX_1/GAW1_1");
-
-   // end of demo prep
-
    Int_t ret = REveElement::WriteCoreJson(j, rnr_offset);
+
+   if (!fGeoNode){ return ret;}
 
    ROOT::Experimental::RGeomDescription data;
 
-   data.Build(n->GetVolume());
+   data.Build(fGeoNode->GetVolume());
 
-   std::string json = data.ProduceJson();
+   std::string json = data.ProduceJson(true);
+
+   std::cout << json << "\n";
 
    j["geomDescription"] = TBase64::Encode(json.c_str());
+   j["UT_PostStream"] = "UT_GeoTopNode_PostStream";
    return ret;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-/// Crates 3D point array for rendering.
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+REveGeoTopNodeViz::REveGeoTopNodeViz(const Text_t* n, const Text_t* t) :
+   REveElement(n, t)
+{
+}
 
-void REveGeoTopNode::BuildRenderData()
+void REveGeoTopNodeViz::BuildRenderData()
 {
    fRenderData = std::make_unique<REveRenderData>("makeGeoTopNode");
+}
+
+int REveGeoTopNodeViz::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
+{
+   Int_t ret = REveElement::WriteCoreJson(j, rnr_offset);
+   if (!fGeoData)
+      j["dataId"] = -1;
+   else
+      j["dataId"] = fGeoData->GetElementId();
+
+   return ret;
 }
