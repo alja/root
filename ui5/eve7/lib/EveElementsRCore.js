@@ -1289,11 +1289,48 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
          return mesh;
       }
 
+      makeGeoTopNodeProcessObject(o3, ctx)
+      {
+         let orc;
+         if (o3 instanceof THREE.Mesh) {
+            if ( ! ctx.geomap.has(o3.geometry)) {
+               let g = new RC.Geometry();
+               g.vertices = new RC.BufferAttribute(o3.geometry.attributes.position.array, 3);
+               g.normals = new RC.BufferAttribute(o3.geometry.attributes.normal.array, 3);
+               delete o3.geometry.attributes;
+               ctx.geomap.set(o3.geometry, g);
+            } else {
+               ++ctx.n_geo_reuse;
+            }
+            let m3 = o3.material;
+            let mrc = this.RcFancyMaterial(new RC.Color(m3.color.r, m3.color.g, m3.color.b), m3.opacity);
+            orc = new RC.Mesh(ctx.geomap.get(o3.geometry), mrc);
+            ++ctx.n_mesh;
+         } else {
+            orc = new RC.Group();
+            ++ctx.n_o3d;
+         }
+         orc.matrixAutoUpdate = false;
+         orc.setMatrixFromArray( o3.matrix.elements );
+         for (let c of o3.children) {
+            orc.add(this.makeGeoTopNodeProcessObject(c, ctx));
+         }
+         return orc;
+      }
+
       makeGeoTopNode(topNode, rnr_data)
       {
-         let json = atob(topNode.geomDescription);
-         let obj =  EVE.JSR.parse(json);
-         console.log("make REveGeoTopNode ", obj);
+         let data = EVE.mgr.GetElement(topNode.dataId);
+         let o3 = EVE.JSR.build(data.objDesc);
+
+         // console.log("make REveGeoTopNode ", obj, o3, EVE);
+
+         let ctx = { geomap: new Map, n_o3d: 0, n_mesh: 0, n_geo_reuse: 0 };
+         let orc = this.makeGeoTopNodeProcessObject(o3, ctx);
+
+         // console.log("make REveGeoTopNode orc", orc, "loaded", ctx.n_o3d, "object3ds and", ctx.n_mesh, "meshes. N_geo_reuse", ctx.n_geo_reuse);
+
+         return orc;
       }
 
       //==============================================================================
