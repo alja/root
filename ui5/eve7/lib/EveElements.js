@@ -805,10 +805,10 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(/*EveManager*/) {
 
       makeGeoTopNode(topNode, rnr_data)
       {
-         let json = atob(topNode.geomDescription);
-         let obj =  EVE.JSR.parse(json);
-         let obj3d = EVE.JSR.build(obj);
-         console.log("make REveGeoTopNode ", obj);
+         console.log("make top node",  EVE.EveManager);
+         let data = EVE.mgr.GetElement(topNode.dataId);
+         let obj3d = EVE.JSR.build(data.objDesc);
+         console.log("make REveGeoTopNode ", obj3d);
          return obj3d;
       }
 
