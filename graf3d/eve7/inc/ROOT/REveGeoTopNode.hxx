@@ -4,20 +4,39 @@
 
 #include <ROOT/REveElement.hxx>
 
+class TGeoNode;
+
 namespace ROOT {
 namespace Experimental {
 
 
-class REveGeoTopNode : public REveElement
+class REveGeoTopNodeData : public REveElement,
+                           public REveAuntAsList
 {
-
 private:
-   REveGeoTopNode(const REveGeoTopNode &) = delete;
-   REveGeoTopNode &operator=(const REveGeoTopNode &) = delete;
+   REveGeoTopNodeData(const REveGeoTopNodeData &) = delete;
+   REveGeoTopNodeData &operator=(const REveGeoTopNodeData &) = delete;
 
+   TGeoNode* fGeoNode{nullptr};
 public:
-   REveGeoTopNode(const Text_t *n = "REveGeoTopNode", const Text_t *t = "");
-   virtual ~REveGeoTopNode() {}
+   REveGeoTopNodeData(const Text_t *n = "REveGeoTopNode", const Text_t *t = "");
+   virtual ~REveGeoTopNodeData() {}
+
+   Int_t WriteCoreJson(nlohmann::json &j, Int_t rnr_offset) override;
+   void SetTNode(TGeoNode* n) {fGeoNode = n;}
+};
+
+class REveGeoTopNodeViz : public REveElement
+{
+ private:
+   REveGeoTopNodeViz(const REveGeoTopNodeViz &) = delete;
+   REveGeoTopNodeViz &operator=(const REveGeoTopNodeViz &) = delete;
+
+   REveGeoTopNodeData* fGeoData{nullptr};
+
+ public:
+   REveGeoTopNodeViz(const Text_t *n = "REveGeoTopNodeViz", const Text_t *t = "");
+   void SetGeoData(REveGeoTopNodeData* d) {fGeoData = d;}
    Int_t WriteCoreJson(nlohmann::json &j, Int_t rnr_offset) override;
    void BuildRenderData() override;
 };
