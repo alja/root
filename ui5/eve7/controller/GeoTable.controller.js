@@ -4,8 +4,9 @@ sap.ui.define([
     'sap/m/Text',
     "sap/ui/core/ResizeHandler",
     'sap/ui/core/UIComponent',
-    'rootui5/geom/model/GeomBrowserModel'
-], function (Controller, tableColumn, mText, ResizeHandler, UIComponent,GeomBrowserModel) {
+    'rootui5/geom/model/GeomBrowserModel',
+    'rootui5/geom/lib/ColorBox'
+], function (Controller, tableColumn, mText, ResizeHandler, UIComponent,GeomBrowserModel,GeomColorBox) {
 
     "use strict";
 
@@ -21,7 +22,25 @@ sap.ui.define([
             this.geoTable.setModel(this.model);
             this.model.assignTreeTable(this.geoTable);
 
-            this.geoTable.addColumn(new tableColumn({label:"Description", tooltip: "test", template: new mText({text: "{name}", wrapping: false})}));
+            this.geoTable.addColumn(new tableColumn({
+                label: "Description",
+                tooltip: "test",
+                template: new mText({ text: "{name}", wrapping: false })
+            }));
+
+            this.geoTable.addColumn(new tableColumn({
+                label: "Color",
+                tooltip: "Color of geometry volumes",
+                width: "2rem",
+                template: new GeomColorBox({color: "{_elem/color}"})
+             }));
+
+             this.geoTable.addColumn(new tableColumn({
+                label: "Material",
+                tooltip: "Material of the volumes",
+                width: "6rem",
+                template: new mText({text: "{_elem/material}", wrapping: false})
+             }));
 
             let data = this.getView().getViewData();
             if (data) {
@@ -49,14 +68,17 @@ sap.ui.define([
             let scene = this.mgr.GetElement(sceneInfo.fSceneId);
             let topNodeEve = scene.childs[0];
 
-            let json = atob(topNodeEve.geomDescription);
-            let obj =  EVE.JSR.parse(json);
-            console.log("geoTable REveGeoTopNode ", obj);
+            let obj = topNodeEve.objDesc;
 
             let topNode = this.model.buildTree(obj.nodes);
+
+            console.log("geoTable top node ", topNode);
+
+            this.geoTable.setNoData("");
+            this.geoTable.setShowNoData(false);
+
             this.model.setFullModel(topNode);
-
-
+            this.model.refresh(true);
         },
         /*
         onResize : function() {
