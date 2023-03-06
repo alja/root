@@ -16,41 +16,18 @@ sap.ui.define([
             // disable narrowing axis range
             EVE.JSR.settings.Zooming = false;
 
-            this.model = new GeomBrowserModel();
-            this.model.useIndexSuffix = false;
-            this.geoTable = this.getView().byId("geoTable");
-            this.geoTable.setModel(this.model);
-            this.model.assignTreeTable(this.geoTable);
-
-            this.geoTable.addColumn(new tableColumn({
-                label: "Description",
-                tooltip: "test",
-                template: new mText({ text: "{name}", wrapping: false })
-            }));
-
-            this.geoTable.addColumn(new tableColumn({
-                label: "Color",
-                tooltip: "Color of geometry volumes",
-                width: "2rem",
-                template: new GeomColorBox({color: "{_elem/color}"})
-             }));
-
-             this.geoTable.addColumn(new tableColumn({
-                label: "Material",
-                tooltip: "Material of the volumes",
-                width: "6rem",
-                template: new mText({text: "{_elem/material}", wrapping: false})
-             }));
-
             let data = this.getView().getViewData();
             if (data) {
                 this.setupManagerAndViewType(data.eveViewerId, data.mgr);
             }
             else {
-                UIComponent.getRouterFor(this).getRoute("Lego").attachPatternMatched(this.onViewObjectMatched, this);
+                UIComponent.getRouterFor(this).getRoute("GeoTable").attachPatternMatched(this.onViewObjectMatched, this);
             }
+            // this.model = new GeomBrowserModel();
+            // this.model.useIndexSuffix = false;
 
-            // ResizeHandler.register(this.getView(), this.onResize.bind(this));
+
+        //    ResizeHandler.register(this.getView(), this.onResize.bind(this));
         },
 
         onViewObjectMatched: function (oEvent) {
@@ -68,17 +45,35 @@ sap.ui.define([
             let scene = this.mgr.GetElement(sceneInfo.fSceneId);
             let topNodeEve = scene.childs[0];
 
-            let obj = topNodeEve.objDesc;
+            // let obj = topNodeEve.objDesc;
 
-            let topNode = this.model.buildTree(obj.nodes);
+            // let topNode = this.model.buildTree(obj.nodes);
 
-            console.log("geoTable top node ", topNode);
+            //console.log("geoTable top node ", topNode);
 
-            this.geoTable.setNoData("");
-            this.geoTable.setShowNoData(false);
+            //this.geoTable.setNoData("");
+            //this.geoTable.setShowNoData(false);
 
-            this.model.setFullModel(topNode);
-            this.model.refresh(true);
+            //this.model.setFullModel(topNode);
+            //this.model.refresh(true);
+
+            let h = this.byId('geomHierarchyPanel');
+
+            let websocket = this.mgr.handle.createChannel();
+
+            h.getController().configure({
+               websocket,
+               // viewer: this,
+               // standalone: this.standalone,
+               show_columns: true,
+               jsroot: EVE.JSR
+            });
+
+            console.log('channel id is', websocket.getChannelId());
+            //let fcall = "SetChannel(" + websocket.getChannelId() + ")";
+
+            //this.mgr.SendMIR(fcall, topNodeEve.fElementId, topNodeEve._typename);
+            this.mgr.handle.send("SETCHANNEL:" + topNodeEve.fElementId + "," + websocket.getChannelId());
         },
         /*
         onResize : function() {
