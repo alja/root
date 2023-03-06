@@ -3,6 +3,8 @@
 #define ROOT7_REveGeoTopNode
 
 #include <ROOT/REveElement.hxx>
+#include <ROOT/RGeomData.hxx>
+#include <ROOT/RGeomHierarchy.hxx>
 
 class TGeoNode;
 
@@ -18,14 +20,19 @@ private:
    REveGeoTopNodeData &operator=(const REveGeoTopNodeData &) = delete;
 
    TGeoNode* fGeoNode{nullptr};
+   RGeomDescription fDesc;                        ///<! geometry description, send to the client as first message
+   std::shared_ptr<RGeomHierarchy> fWebHierarchy; ///<! web handle for hierarchy part
+
 public:
-   REveGeoTopNodeData(const Text_t *n = "REveGeoTopNode", const Text_t *t = "");
+   REveGeoTopNodeData(const Text_t *n = "REveGeoTopNodeData", const Text_t *t = "");
    virtual ~REveGeoTopNodeData() {}
 
    Int_t WriteCoreJson(nlohmann::json &j, Int_t rnr_offset) override;
-   void SetTNode(TGeoNode* n) {fGeoNode = n;}
-};
+   void SetTNode(TGeoNode* n);
 
+   void SetChannel(int chid);
+};
+//-------------------------------------------------------------------
 class REveGeoTopNodeViz : public REveElement
 {
  private:
