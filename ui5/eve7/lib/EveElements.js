@@ -808,7 +808,6 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(/*EveManager*/) {
          console.log("make top node",  EVE.EveManager);
          let data = EVE.mgr.GetElement(topNode.dataId);
          let obj3d = EVE.JSR.build(data.objDesc);
-         console.log("make REveGeoTopNode ", obj3d);
          return obj3d;
       }
 
