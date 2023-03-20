@@ -92,8 +92,13 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
             tooltip: "{name}",
             template: new HorizontalLayout({
                   content: [
+<<<<<<< HEAD
                      new Icon({ visible: '{top}', src: 'sap-icon://badge', tooltip: '{name} selected as top node' }).addStyleClass('sapUiTinyMarginEnd'),
                      new mText({ text: '{name}', tooltip: '{name}', wrapping: false })
+=======
+                     new Icon({ visible: "{top}", src: "sap-icon://badge", tooltip: "{name} selected as top node" }),
+                     new mText({text: "{name}", tooltip: "{name}", wrapping: false})
+>>>>>>> 4148773843 ([webgeom] add indicator for selected node)
                   ]
             })
          }));
@@ -565,11 +570,19 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
                select: () => {
                   this.setPhysTopNode(prop.path);
                   this.websocket.send('SETTOP:' + JSON.stringify(prop.path));
+<<<<<<< HEAD
 
                   let len = this.model?.getLength() ?? 0;
                   for (let n = 0; n < len; ++n)
                      this.model?.setProperty(`/nodes/${n}/top`, false);
                   this.model?.setProperty(ctxt.getPath() + '/top', true);
+=======
+                  this.model?.refresh(true);
+                  // workaround to refresh TreeTable, one has to find better solution
+                  let nodes = this.model.getProperty('/nodes');
+                  this.model.setProperty('/nodes', null);
+                  setTimeout(() => this.model.setProperty('/nodes', nodes), 1);
+>>>>>>> 4148773843 ([webgeom] add indicator for selected node)
                }
             }));
 
