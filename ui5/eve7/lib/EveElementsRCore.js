@@ -1318,13 +1318,16 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
          return orc;
       }
 
-      makeGeoTopNode(topNode, rnr_data)
+      makeGeoTopNode(tn, rnr_data)
       {
-         let data = EVE.mgr.GetElement(topNode.dataId);
-         let o3 = EVE.JSR.build(data.objDesc);
+        // let data = EVE.mgr.GetElement(topNode.dataId);
+         //let o3 = EVE.JSR.build(data.objDesc);
 
          // console.log("make REveGeoTopNode ", obj, o3, EVE);
 
+         let json = atob(tn.geomDescription);
+         let zz = EVE.JSR.parse(json);
+         let o3 = EVE.JSR.build(zz);
          let ctx = { geomap: new Map, n_o3d: 0, n_mesh: 0, n_geo_reuse: 0 };
          let orc = this.makeGeoTopNodeProcessObject(o3, ctx);
 
