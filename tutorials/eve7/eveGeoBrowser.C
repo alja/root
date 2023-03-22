@@ -174,23 +174,29 @@ void eveGeoBrowser()
 {
    auto eveMng = REX::REveManager::Create();
 
-  // TGeoNode* gn = testCmsGeo();
-   TGeoNode* gn = rootgeom();
+   TGeoNode* gn = testCmsGeo();
+  // TGeoNode* gn = rootgeom();
 
-   // table test
+   // table 
    auto data = new REX::REveGeoTopNodeData();
    data->SetTNode(gn);
-   auto scene = eveMng->SpawnNewScene("Geo");
+   {
+   auto scene = eveMng->SpawnNewScene("GeoSceneTable");
    auto view = eveMng->SpawnNewViewer("GeoTable");
-   scene->AddElement(data);
    view->AddScene(scene);
-
+   scene->AddElement(data);
+   }
    //GL data
+   {
+   //auto scene = eveMng->SpawnNewScene("GeoXX");
+   //auto view = eveMng->SpawnNewViewer("GeoXXX");
+   //view->AddScene(scene);
    auto geoViz =  new REX::REveGeoTopNodeViz();
    geoViz->SetGeoData(data);
    data->AddNiece(geoViz);
+   //scene->AddElement(geoViz);
    eveMng->GetEventScene()->AddElement(geoViz);
-
+   }
 
 
    eveMng->Show();

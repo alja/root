@@ -45,6 +45,7 @@ sap.ui.define(['sap/ui/core/Component',
       },
 
       initClientLog: function() {
+         return;
          let consoleObj = {};
          consoleObj.data = [];
 
