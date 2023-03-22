@@ -15,7 +15,8 @@ namespace Experimental {
 class REveGeoTopNodeData : public REveElement,
                            public REveAuntAsList
 {
-private:
+  friend class REveGeoTopNodeViz;
+protected:
    REveGeoTopNodeData(const REveGeoTopNodeData &) = delete;
    REveGeoTopNodeData &operator=(const REveGeoTopNodeData &) = delete;
 
@@ -29,6 +30,7 @@ public:
 
    Int_t WriteCoreJson(nlohmann::json &j, Int_t rnr_offset) override;
    void SetTNode(TGeoNode* n);
+   void ProcessSignal(const std::string &);
 
    void SetChannel(int chid);
 };
