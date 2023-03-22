@@ -31,17 +31,27 @@ void REveGeoTopNodeData::SetTNode(TGeoNode* n)
 {
    fGeoNode = n;
    fDesc.Build(fGeoNode->GetVolume());
+   fDesc.AddSignalHandler(this, [this](const std::string &kind) { ProcessSignal(kind); });
 }
+////////////////////////////////////////////////////////////////////////////////
 
 void REveGeoTopNodeData::SetChannel(int chid)
 {
    fWebHierarchy = std::make_shared<RGeomHierarchy>(fDesc);
-   printf(">> set channel %d\n", chid);
-   
    fWebHierarchy->Show({ gEve->GetWebWindow(), chid });
 }
+////////////////////////////////////////////////////////////////////////////////
 
-
+void REveGeoTopNodeData::ProcessSignal(const std::string &kind)
+{
+   if ((kind == "SelectTop") || (kind == "NodeVisibility")) {
+      REveManager::ChangeGuard ch;
+      StampObjProps();
+      for (auto &n : fNieces) {
+         n->StampObjProps();
+      }
+   }
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Fill core part of JSON representation.
@@ -51,13 +61,6 @@ Int_t REveGeoTopNodeData::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
    Int_t ret = REveElement::WriteCoreJson(j, rnr_offset);
 
    if (!fGeoNode){ return ret;}
-
-   std::string json = fDesc.ProduceJson();
-
-   //std::cout << json << "\n";
-
-   j["geomDescription"] = TBase64::Encode(json.c_str());
-   j["UT_PostStream"] = "UT_GeoTopNode_PostStream";
    return ret;
 }
 
@@ -77,10 +80,14 @@ void REveGeoTopNodeViz::BuildRenderData()
 int REveGeoTopNodeViz::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
 {
    Int_t ret = REveElement::WriteCoreJson(j, rnr_offset);
-   if (!fGeoData)
+   if (!fGeoData) {
       j["dataId"] = -1;
+   }
    else
+   {
+      std::string json = fGeoData->fDesc.ProduceJson();
+      j["geomDescription"] = TBase64::Encode(json.c_str());
       j["dataId"] = fGeoData->GetElementId();
-
+   }
    return ret;
 }
