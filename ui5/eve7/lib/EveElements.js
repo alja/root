@@ -803,11 +803,14 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(/*EveManager*/) {
       }
 
 
-      makeGeoTopNode(topNode, rnr_data)
+      makeGeoTopNode(tn, rnr_data)
       {
-         console.log("make top node",  EVE.EveManager);
-         let data = EVE.mgr.GetElement(topNode.dataId);
-         let obj3d = EVE.JSR.build(data.objDesc);
+         console.log("make top node");
+      //   let data = EVE.mgr.GetElement(topNode.dataId);
+         let json = atob(tn.geomDescription);
+         let zz = EVE.JSR.parse(json);
+      //   console.log("obj desc ", tn.objDesc);
+         let obj3d = EVE.JSR.build(zz);
          return obj3d;
       }
 

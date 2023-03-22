@@ -551,13 +551,6 @@ sap.ui.define([], function() {
          // XXXX MT check also for PostScene and PostUpdate, put them somewhere and delete them.
       }
 
-      UT_GeoTopNode_PostStream(el)
-      {
-         console.log("geo_poststream parse");
-         let json = atob(el.geomDescription);
-         el.objDesc = EVE.JSR.parse(json);
-      }
-
       UT_Selection_Refresh_State(sel)
       {
          // sel - rep of a REveSelection object.
