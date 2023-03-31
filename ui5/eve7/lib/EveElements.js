@@ -586,6 +586,56 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(/*EveManager*/) {
 
 
    //==============================================================================
+
+
+   class GeoTopNodeControl extends EveElemControl {
+      DrawForSelection(sec_idcs, res, extra) {
+         if (extra.stack.length > 0) {
+            let x = this.obj3d.children[0];
+            extra.stack.forEach((idx) => {
+               x = x.children[idx];
+            });
+            res.geom.push(x);
+         }
+      }
+      getTooltipText() {
+         return this.pick.object.name;
+      }
+      extractIndex(instance) {
+         this.pick = instance;
+      }
+
+      sendSocketMassage(t1, t2)
+      {
+         let topNode = this.obj3d.eve_el;
+         let aa = this.pick.object.stack || [];
+
+         let name = this.obj3d.clones.getStackName(aa);
+         const myArray = name.split("/");
+         let msg = '[';
+         let lastIdx = myArray.length - 1;
+         for (let p = 0; p < myArray.length; ++p) {
+            let np = "\"" + myArray[p] + "\"";
+            msg += np;
+            if (p == lastIdx)
+               msg += ']';
+            else
+               msg += ",";
+
+         }
+         let hbr = EVE.mgr.GetElement(topNode.dataId);
+         hbr.websocket.sendLast(t1, 200, t2 + msg);
+      }
+
+      elementSelected(idx, event) {
+         this.sendSocketMassage('click', 'CLICK:');
+      }
+
+      elementHighlighted(idx, event) {
+         this.sendSocketMassage('hover', 'HOVER:');
+      }
+   }
+   //==============================================================================
    // EveElements
    //==============================================================================
 
@@ -806,11 +856,10 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(/*EveManager*/) {
       makeGeoTopNode(tn, rnr_data)
       {
          console.log("make top node");
-      //   let data = EVE.mgr.GetElement(topNode.dataId);
          let json = atob(tn.geomDescription);
          let zz = EVE.JSR.parse(json);
-      //   console.log("obj desc ", tn.objDesc);
          let obj3d = EVE.JSR.build(zz);
+         obj3d.get_ctrl = function () { return new GeoTopNodeControl(this); };
          return obj3d;
       }
 
