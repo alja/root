@@ -52,6 +52,7 @@ sap.ui.define([
 
             console.log('channel id is', websocket.getChannelId());
             this.mgr.handle.send("SETCHANNEL:" + topNodeEve.fElementId + "," + websocket.getChannelId());
+            topNodeEve.websocket =  websocket;
         },
         switchSingle: function () {
             let oRouter = UIComponent.getRouterFor(this);

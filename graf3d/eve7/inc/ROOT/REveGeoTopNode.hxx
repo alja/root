@@ -48,6 +48,12 @@ class REveGeoTopNodeViz : public REveElement
    void SetGeoData(REveGeoTopNodeData* d) {fGeoData = d;}
    Int_t WriteCoreJson(nlohmann::json &j, Int_t rnr_offset) override;
    void BuildRenderData() override;
+
+   bool    RequiresExtraSelectionData() const override { return true; };
+   void FillExtraSelectionData(nlohmann::json& j, const std::set<int>& secondary_idcs) const override;
+
+   using REveElement::GetHighlightTooltip;
+   std::string GetHighlightTooltip(const std::set<int>& secondary_idcs) const override;
 };
 
 } // namespace Experimental
