@@ -727,7 +727,7 @@ Int_t REveSelection::WriteCoreJson(nlohmann::json &j, Int_t /* rnr_offset */)
 
    j["UT_PostStream"] = "UT_Selection_Refresh_State"; // XXXX to be canonized
 
-   // std::cout << j.dump(4) << std::endl;
+ std::cout << j.dump(4) << std::endl;
 
    return 0;
 }
