@@ -13,6 +13,7 @@
 #include "ROOT/REveShape.hxx"
 #include "ROOT/REveRenderData.hxx"
 #include "ROOT/REveRGBAPalette.hxx"
+#include "ROOT/REveManager.hxx"
 
 #include "TRandom.h"
 #include <cassert>
@@ -52,9 +53,6 @@ REveBoxSet::REveBoxSet(const char* n, const char* t) :
    REveDigitSet  (n, t),
 
    fBoxType      (kBT_Undef),
-   fDefWidth     (1),
-   fDefHeight    (1),
-   fDefDepth     (1),
 
    fBoxSkip      (0),
 
@@ -97,6 +95,8 @@ void REveBoxSet::Reset(REveBoxSet::EBoxType_e boxType, Bool_t valIsCol, Int_t ch
    fDefaultValue = valIsCol ? 0 : kMinInt;
    ReleaseIds();
    fPlex.Reset(SizeofAtom(fBoxType), chunkSize);
+
+   printf("reset boxtype %d \n", fBoxType);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -335,8 +335,24 @@ void REveBoxSet::ComputeBBox()
 
 Int_t REveBoxSet::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
 {
+   int N = fPlex.N();
+   if (Instanced())
+      REveRenderData::CalcTextureSize(N*2, 2, fTexX, fTexY); // AMT align ???
+
    Int_t ret = REveDigitSet::WriteCoreJson(j, rnr_offset);
    j["boxType"] = int(fBoxType);
+
+   if (Instanced()) {
+      REveRenderData::CalcTextureSize(N * 2, 2, fTexX, fTexY);
+
+      j["N"] = N;
+      j["texX"] = fTexX;
+      j["texY"] = fTexY;
+      j["scalePerDigit"] = (fBoxType == kBT_AABox); // AMT this needs to be more elaborate
+      j["defWidth"] = fDefWidth;
+      j["defHeight"] = fDefHeight;
+      j["defDepth"] = fDefDepth;
+   }
 
    return ret;
 }
@@ -369,6 +385,28 @@ void REveBoxSet::BuildRenderData()
          }
       }
    }
+   if (Instanced()) {
+      printf(" >>> resize render data %d \n", 2 * 4 * fTexX * fTexY);
+      fRenderData->ResizeV(2 * 4 * fTexX * fTexY);
+   }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Get int value for color. Used for case of instancing.
+///
+int REveBoxSet::GetColorFromDigit(REveDigitSet::DigitBase_t &digi)
+{
+   if (fSingleColor == false) {
+      if (fValueIsColor) {
+         return int(digi.fValue);
+      } else {
+         UChar_t c[4] = {0, 0, 0, 0};
+         fPalette->ColorFromValue(digi.fValue, fDefaultValue, c);
+         int value = c[0] + c[1] * 256 + c[2] * 256 * 256;
+         return value;
+      }
+   }
+   return int(GetMainColor()); // AMT perhaps this can be ignored
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -391,8 +429,11 @@ void REveBoxSet::WriteShapeData(REveDigitSet::DigitBase_t &digit)
       REveBoxSet::BAABox_t &b = (REveBoxSet::BAABox_t &)(digit);
       // position
       fRenderData->PushV(b.fA, b.fB, b.fC);
+      float col = GetColorFromDigit(b);
+      fRenderData->PushV(col); // color ?
       // dimensions
       fRenderData->PushV(b.fW, b.fH, b.fD);
+      fRenderData->PushV(2.f); // trasp ?
 
       break;
    }
@@ -400,7 +441,9 @@ void REveBoxSet::WriteShapeData(REveDigitSet::DigitBase_t &digit)
     case REveBoxSet::kBT_Hex: {
       REveBoxSet::BHex_t  &b = (REveBoxSet::BHex_t &)(digit);
       fRenderData->PushV(b.fPos);
+      fRenderData->PushV(1.f);// color ?
       fRenderData->PushV(b.fR, b.fAngle, b.fDepth);
+      fRenderData->PushV(2.f);// trasp ?
 
       break;
    }
@@ -430,4 +473,12 @@ void REveBoxSet::Test(Int_t nboxes)
       REveUtil::ColorFromIdx(rnd.Integer(256), (UChar_t*)&color);
       DigitValue(color);
    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Use instancing in RenderCore.
+
+bool REveBoxSet::Instanced()
+{
+   return gEve->IsRCore() && (fBoxType != kBT_FreeBox);
 }
