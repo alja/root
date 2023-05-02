@@ -55,16 +55,18 @@ public:
 protected:
    EBoxType_e        fBoxType;      // Type of rendered box.
 
-   Float_t           fDefWidth;     // Breadth assigned to first coordinate  (A).
-   Float_t           fDefHeight;    // Breadth assigned to second coordinate (B).
-   Float_t           fDefDepth;     // Breadth assigned to third coordinate  (C).
+   Float_t           fDefWidth  {1};     // Breadth assigned to first coordinate  (A).
+   Float_t           fDefHeight {1};    // Breadth assigned to second coordinate (B).
+   Float_t           fDefDepth  {1};     // Breadth assigned to third coordinate  (C).
 
    Int_t             fBoxSkip;      // Number of boxes to skip for each drawn box during scene rotation.
 
    Bool_t            fDrawConeCap;
 
+   int                     fTexX{0}, fTexY{0};
    static Int_t SizeofAtom(EBoxType_e bt);
    void WriteShapeData(REveDigitSet::DigitBase_t &digit);
+   int GetColorFromDigit(REveDigitSet::DigitBase_t &digit);
 
 public:
    REveBoxSet(const char* n="REveBoxSet", const char* t="");
@@ -102,6 +104,8 @@ public:
 
    Int_t WriteCoreJson(nlohmann::json &j, Int_t rnr_offset) override;
    void  BuildRenderData() override;
+
+   bool Instanced();
 };
 
 } // namespace Experimental
