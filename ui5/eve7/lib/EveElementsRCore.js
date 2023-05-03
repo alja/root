@@ -1068,8 +1068,6 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
          let SN = boxset.N;
          console.log("SN", SN, "texture dim =", boxset.texX, boxset.texY);
 
-         let textWidth = boxset.texX;
-         let textHeight = boxset.texY;
          let tex_insta_pos_shape = new RC.Texture(rnr_data.vtxBuff,
             RC.Texture.WRAPPING.ClampToEdgeWrapping,
             RC.Texture.WRAPPING.ClampToEdgeWrapping,
@@ -1085,6 +1083,8 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
             diffuse: new RC.Color(0, 0.6, 0.7),
             alpha: 0.5 // AMT, what is this used for
          });
+         if (boxset.scalePerDigit)
+            shm.addSBFlag("SCALE_PER_INSTANCE");
 
          if (boxset.fMainTransparency) {
             shm.transparent = true;
@@ -1093,11 +1093,14 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
          }
          shm.addInstanceData(tex_insta_pos_shape);
          shm.instanceData[0].flipy = false;
-         let geo = (boxset.boxType == 6)  ? RC.ZShape.makeHexagonGeometry() : RC.ZShape.makeCubeGeometry();
+         let geo = (boxset.boxType == 6) ? RC.ZShape.makeHexagonGeometry() : RC.ZShape.makeCubeGeometry();
          let zshape = new RC.ZShape(geo, shm);
          zshape.instanced = true;
          zshape.instanceCount = SN;
          zshape.frustumCulled = false;
+
+         this.RcPickable(boxset, zshape);
+
          return zshape;
       }
 
