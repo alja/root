@@ -284,8 +284,8 @@ void REveBoxSet::ComputeBBox()
             if (b.fR>rMax)    rMax=b.fR;
          }
          Float_t off = TMath::Sqrt(mag2Max + rMax*rMax);
-         fBBox[0] -= off;fBBox[2] -= off;fBBox[4] -= off;
-         fBBox[1] += off;fBBox[3] += off;fBBox[5] += off;
+         fBBox[0] -= off; fBBox[2] -= off; fBBox[4] -= off;
+         fBBox[1] += off; fBBox[3] += off; fBBox[5] += off;
          break;
       }
 
@@ -335,20 +335,20 @@ void REveBoxSet::ComputeBBox()
 
 Int_t REveBoxSet::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
 {
-   int N = fPlex.N();
+   int  N = fPlex.N();
+   bool scalePerDigit = (fBoxType == kBT_AABox); // AMT this needs to be more elaborate
+   int  N_tex = scalePerDigit ? 2*N : N;
    if (Instanced())
-      REveRenderData::CalcTextureSize(N*2, 2, fTexX, fTexY); // AMT align ???
+      REveRenderData::CalcTextureSize(N_tex, 2, fTexX, fTexY);
 
    Int_t ret = REveDigitSet::WriteCoreJson(j, rnr_offset);
    j["boxType"] = int(fBoxType);
 
    if (Instanced()) {
-      REveRenderData::CalcTextureSize(N * 2, 2, fTexX, fTexY);
-
       j["N"] = N;
       j["texX"] = fTexX;
       j["texY"] = fTexY;
-      j["scalePerDigit"] = (fBoxType == kBT_AABox); // AMT this needs to be more elaborate
+      j["scalePerDigit"] = scalePerDigit;
       j["defWidth"] = fDefWidth;
       j["defHeight"] = fDefHeight;
       j["defDepth"] = fDefDepth;
@@ -432,9 +432,10 @@ void REveBoxSet::WriteShapeData(REveDigitSet::DigitBase_t &digit)
       float col = GetColorFromDigit(b);
       fRenderData->PushV(col); // color ?
       // dimensions
-      fRenderData->PushV(b.fW, b.fH, b.fD);
-      fRenderData->PushV(2.f); // trasp ?
-
+      if ((fBoxType == kBT_AABox)) {
+         fRenderData->PushV(b.fW, b.fH, b.fD);
+         fRenderData->PushV(2.f); // trasp ?
+      }
       break;
    }
 
