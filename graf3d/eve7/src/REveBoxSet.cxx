@@ -336,7 +336,7 @@ void REveBoxSet::ComputeBBox()
 Int_t REveBoxSet::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
 {
    int  N = fPlex.N();
-   bool scalePerDigit = (fBoxType == kBT_AABox); // AMT this needs to be more elaborate
+   bool scalePerDigit = true;// AMT unresolved: think about how to pass other paramter to geomtery when false
    int  N_tex = scalePerDigit ? 2*N : N;
    if (Instanced())
       REveRenderData::CalcTextureSize(N_tex, 2, fTexX, fTexY);
@@ -394,20 +394,33 @@ void REveBoxSet::BuildRenderData()
 ////////////////////////////////////////////////////////////////////////////////
 /// Get int value for color. Used for case of instancing.
 ///
-int REveBoxSet::GetColorFromDigit(REveDigitSet::DigitBase_t &digi)
+unsigned int REveBoxSet::GetColorFromDigit(REveDigitSet::DigitBase_t &digi)
 {
    if (fSingleColor == false) {
       if (fValueIsColor) {
+         // printf("value is color %d\n", digi.fValue);
          return int(digi.fValue);
       } else {
-         UChar_t c[4] = {0, 0, 0, 0};
+         // printf("palette\n");
+                  UChar_t c[4] = {0, 0, 0, 0};
          fPalette->ColorFromValue(digi.fValue, fDefaultValue, c);
-         int value = c[0] + c[1] * 256 + c[2] * 256 * 256;
+         unsigned int value = c[0] + c[1] * 256 + c[2] * 256 * 256;
          return value;
       }
    }
-   return int(GetMainColor()); // AMT perhaps this can be ignored
+   // printf("main color %d\n", GetMainColor());
+   UChar_t c[4] = {0, 0, 0, 0};
+   REveUtil::ColorFromIdx(GetMainColor(), c);
+   // printf("rgb %d %d %d\n", c[0], c[1], c[2]);
+   return (c[0] << 16) + (c[1] << 8) + c[2]; // AMT perhaps this can be ignored
 }
+
+float REveBoxSet::GetColorFromDigitAsFloat(REveDigitSet::DigitBase_t &digit)
+{
+   unsigned int c = GetColorFromDigit(digit);
+   return *reinterpret_cast<float*>(&c);
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Write shape data for different cases
@@ -429,8 +442,7 @@ void REveBoxSet::WriteShapeData(REveDigitSet::DigitBase_t &digit)
       REveBoxSet::BAABox_t &b = (REveBoxSet::BAABox_t &)(digit);
       // position
       fRenderData->PushV(b.fA, b.fB, b.fC);
-      float col = GetColorFromDigit(b);
-      fRenderData->PushV(col); // color ?
+      fRenderData->PushV(GetColorFromDigitAsFloat(b)); // color ?
       // dimensions
       if ((fBoxType == kBT_AABox)) {
          fRenderData->PushV(b.fW, b.fH, b.fD);
@@ -442,8 +454,8 @@ void REveBoxSet::WriteShapeData(REveDigitSet::DigitBase_t &digit)
     case REveBoxSet::kBT_Hex: {
       REveBoxSet::BHex_t  &b = (REveBoxSet::BHex_t &)(digit);
       fRenderData->PushV(b.fPos);
-      fRenderData->PushV(1.f);// color ?
-      fRenderData->PushV(b.fR, b.fAngle, b.fDepth);
+      fRenderData->PushV(GetColorFromDigitAsFloat(b));
+      fRenderData->PushV(b.fR, b.fR, b.fDepth);
       fRenderData->PushV(2.f);// trasp ?
 
       break;
