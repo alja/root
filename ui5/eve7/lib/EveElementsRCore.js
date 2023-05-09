@@ -1066,7 +1066,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
       {
          // axis aligned box
          let SN = boxset.N;
-         console.log("SN", SN, "texture dim =", boxset.texX, boxset.texY);
+       //  console.log("SN", SN, "texture dim =", boxset.texX, boxset.texY);
 
          let tex_insta_pos_shape = new RC.Texture(rnr_data.vtxBuff,
             RC.Texture.WRAPPING.ClampToEdgeWrapping,
@@ -1078,10 +1078,10 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
 
          let shm = new RC.ZShapeBasicMaterial({
             ShapeSize: [boxset.defWidth, boxset.defHeight, boxset.defDepth],
-            color: new RC.Color(1, 0, 0),
+            color: RcCol(boxset.fMainColor),
             emissive: new RC.Color(0.07, 0.07, 0.06),
             diffuse: new RC.Color(0, 0.6, 0.7),
-            alpha: 0.5 // AMT, what is this used for
+            alpha: 0.5 // AMT, what is this used for ?
          });
          if (boxset.scalePerDigit)
             shm.addSBFlag("SCALE_PER_INSTANCE");

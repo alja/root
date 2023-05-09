@@ -66,7 +66,8 @@ protected:
    int                     fTexX{0}, fTexY{0};
    static Int_t SizeofAtom(EBoxType_e bt);
    void WriteShapeData(REveDigitSet::DigitBase_t &digit);
-   int GetColorFromDigit(REveDigitSet::DigitBase_t &digit);
+   unsigned int GetColorFromDigit(REveDigitSet::DigitBase_t &digit);
+   float GetColorFromDigitAsFloat(REveDigitSet::DigitBase_t &digit);
 
 public:
    REveBoxSet(const char* n="REveBoxSet", const char* t="");
