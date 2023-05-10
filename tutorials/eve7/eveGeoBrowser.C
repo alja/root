@@ -170,34 +170,75 @@ TGeoNode* rootgeom()
 }
 
 
+REX::REvePointSet *getPointSet(int npoints = 2, float s=2, int color=28)
+{
+   TRandom &r = *gRandom;
+
+   auto ps = new REX::REvePointSet("fu", "", npoints);
+
+   for (Int_t i=0; i<npoints; ++i)
+       ps->SetNextPoint(r.Uniform(-s,s), r.Uniform(-s,s), r.Uniform(-s,s));
+
+   ps->SetMarkerColor(color);
+   ps->SetMarkerSize(8 + r.Uniform(1, 8));
+   ps->SetMarkerStyle(4);
+   return ps;
+}
+
 void eveGeoBrowser()
 {
    auto eveMng = REX::REveManager::Create();
 
-   TGeoNode* gn = testCmsGeo();
-  // TGeoNode* gn = rootgeom();
+   TGeoNode* gn;
+   bool simple = true;
+   if (0)
+    gn = rootgeom();
+   else
+    gn = testCmsGeo();
 
-   // table 
+   //TGeoNode *gn = rootgeom();
+
+   // table
    auto data = new REX::REveGeoTopNodeData();
    data->SetTNode(gn);
+   data->RefDescription().SetVisLevel(8);
    {
-   auto scene = eveMng->SpawnNewScene("GeoSceneTable");
-   auto view = eveMng->SpawnNewViewer("GeoTable");
-   view->AddScene(scene);
-   scene->AddElement(data);
+       auto scene = eveMng->SpawnNewScene("GeoSceneTable");
+       auto view = eveMng->SpawnNewViewer("GeoTable");
+       view->AddScene(scene);
+       scene->AddElement(data);
    }
-   //GL data
+   // GL data
    {
-   //auto scene = eveMng->SpawnNewScene("GeoXX");
-   //auto view = eveMng->SpawnNewViewer("GeoXXX");
-   //view->AddScene(scene);
-   auto geoViz =  new REX::REveGeoTopNodeViz();
-   geoViz->SetGeoData(data);
-   data->AddNiece(geoViz);
-   //scene->AddElement(geoViz);
-   eveMng->GetEventScene()->AddElement(geoViz);
+       auto geoViz = new REX::REveGeoTopNodeViz();
+       geoViz->SetGeoData(data);
+       geoViz->SetPickable(true);
+       data->AddNiece(geoViz);
+       // scene->AddElement(geoViz);
+       eveMng->GetEventScene()->AddElement(geoViz);
    }
 
+// test points
+   {
+
+       REX::REveElement *event = eveMng->GetEventScene();
+
+       auto pntHolder = new REX::REveCompound("Hits");
+
+       auto ps1 = getPointSet(20, 100);
+       ps1->SetName("Points_1");
+       ps1->SetTitle("Points_1 title"); // used as tooltip
+
+       pntHolder->AddElement(ps1);
+
+       auto ps2 = getPointSet(10, 200, 4);
+       ps2->SetName("Points_2");
+       ps2->SetTitle("Points_2 title"); // used as tooltip
+       ps2->SetAlwaysSecSelect(true);
+       pntHolder->AddElement(ps2);
+
+       event->AddElement(pntHolder);
+   }
 
    eveMng->Show();
 }
