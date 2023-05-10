@@ -31,6 +31,7 @@ public:
    Int_t WriteCoreJson(nlohmann::json &j, Int_t rnr_offset) override;
    void SetTNode(TGeoNode* n);
    void ProcessSignal(const std::string &);
+   RGeomDescription& RefDescription() {return fDesc;}
 
    void SetChannel(int chid);
 };
