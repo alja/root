@@ -3098,6 +3098,7 @@ class ClonedNodes {
          let nchld = (lvl > 0) ? stack[lvl-1] : 0;
          // extract current node
          if (lvl > 0)  node = this.nodes[node.chlds[nchld]];
+         if (!node) return null;
 
          let obj3d = undefined;
 
