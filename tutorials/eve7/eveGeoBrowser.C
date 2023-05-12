@@ -41,7 +41,10 @@ TGeoNode* testCmsGeo()
    gGeoManager->GetVolume("HTC1")->SetLineColor(2);
 
    TGeoNode* top = gGeoManager->GetTopVolume()->FindNode("CMSE_1");
-   TGeoNode* n = getNodeFromPath(top, "TRAK_1/SVTX_1/TGBX_1/GAW1_1");
+ // TGeoNode* n = getNodeFromPath(top, "TRAK_1/SVTX_1/TGBX_1/GAW1_1");
+TGeoNode* n = getNodeFromPath(top, "TRAK_1/SVTX_1/TGBX_1");
+ //TGeoNode* n = getNodeFromPath(top, "MUON_1");
+//TGeoNode* n = top;
    return n;
 }
 
@@ -191,7 +194,7 @@ void eveGeoBrowser()
 
    TGeoNode* gn;
    bool simple = true;
-   if (0)
+   if (1)
     gn = rootgeom();
    else
     gn = testCmsGeo();
@@ -233,7 +236,7 @@ void eveGeoBrowser()
 
        auto ps2 = getPointSet(10, 200, 4);
        ps2->SetName("Points_2");
-       ps2->SetTitle("Points_2 title"); // used as tooltip
+       ps2->SetTitle("Points_2ftopno title"); // used as tooltip
        ps2->SetAlwaysSecSelect(true);
        pntHolder->AddElement(ps2);
 
