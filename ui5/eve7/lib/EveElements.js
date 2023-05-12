@@ -591,10 +591,15 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(/*EveManager*/) {
    class GeoTopNodeControl extends EveElemControl {
       DrawForSelection(sec_idcs, res, extra) {
          if (extra.stack.length > 0) {
+            /*
             let x = this.obj3d.children[0];
             extra.stack.forEach((idx) => {
                x = x.children[idx];
             });
+            */
+            let x = this.obj3d.clones.createObject3D(extra.stack, this.obj3d, 'force');
+            console.log("topnode controll res = ",x);
+            if (x)
             res.geom.push(x);
          }
       }
@@ -609,6 +614,8 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(/*EveManager*/) {
       {
          let topNode = this.obj3d.eve_el;
          let aa = this.pick.object.stack || [];
+         console.log("send message ", aa);
+         
 
          let name = this.obj3d.clones.getStackName(aa);
          const myArray = name.split("/");
@@ -858,7 +865,10 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(/*EveManager*/) {
          console.log("make top node");
          let json = atob(tn.geomDescription);
          let zz = EVE.JSR.parse(json);
+         console.log("build beg");
          let obj3d = EVE.JSR.build(zz);
+         delete tn.geomDescription;
+         console.log("build end");
          obj3d.get_ctrl = function () { return new GeoTopNodeControl(this); };
          return obj3d;
       }
