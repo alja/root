@@ -41,9 +41,9 @@ TGeoNode* testCmsGeo()
    gGeoManager->GetVolume("HTC1")->SetLineColor(2);
 
    TGeoNode* top = gGeoManager->GetTopVolume()->FindNode("CMSE_1");
- // TGeoNode* n = getNodeFromPath(top, "TRAK_1/SVTX_1/TGBX_1/GAW1_1");
-TGeoNode* n = getNodeFromPath(top, "TRAK_1/SVTX_1/TGBX_1");
- //TGeoNode* n = getNodeFromPath(top, "MUON_1");
+   // TGeoNode* n = getNodeFromPath(top, "TRAK_1/SVTX_1/TGBX_1/GAW1_1");
+// TGeoNode* n = getNodeFromPath(top, "TRAK_1/SVTX_1/TGBX_1");
+ TGeoNode* n = getNodeFromPath(top, "MUON_1");
 //TGeoNode* n = top;
    return n;
 }
@@ -190,11 +190,12 @@ REX::REvePointSet *getPointSet(int npoints = 2, float s=2, int color=28)
 
 void eveGeoBrowser()
 {
+   gEnv->SetValue("WebEve.GLViewer", "Three");
    auto eveMng = REX::REveManager::Create();
 
    TGeoNode* gn;
    bool simple = true;
-   if (1)
+   if (0)
     gn = rootgeom();
    else
     gn = testCmsGeo();
