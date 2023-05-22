@@ -33,7 +33,7 @@ public:
    void ProcessSignal(const std::string &);
    RGeomDescription& RefDescription() {return fDesc;}
 
-   void SetChannel(int chid);
+   void SetChannel(unsigned connid, int chid);
 };
 //-------------------------------------------------------------------
 class REveGeoTopNodeViz : public REveElement

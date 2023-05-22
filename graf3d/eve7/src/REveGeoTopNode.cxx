@@ -8,6 +8,7 @@
 
 
 #include "TMath.h"
+#include "TGeoManager.h"
 #include "TClass.h"
 #include "TGeoNode.h"
 #include "TGeoManager.h"
@@ -26,7 +27,10 @@ thread_local ElementId_t gSelId;
 ////////////////////////////////////////////////////////////////////////////////
 /// Constructor.
 
-REveGeoTopNodeData::REveGeoTopNodeData(const Text_t *n, const Text_t *t) : REveElement(n, t) {}
+REveGeoTopNodeData::REveGeoTopNodeData(const Text_t *n, const Text_t *t) : REveElement(n, t)
+{
+   fWebHierarchy = std::make_shared<RGeomHierarchy>(fDesc);
+}
 
 void REveGeoTopNodeData::SetTNode(TGeoNode *n)
 {
@@ -37,10 +41,9 @@ void REveGeoTopNodeData::SetTNode(TGeoNode *n)
 }
 ////////////////////////////////////////////////////////////////////////////////
 
-void REveGeoTopNodeData::SetChannel(int chid)
+void REveGeoTopNodeData::SetChannel(unsigned connid, int chid)
 {
-   fWebHierarchy = std::make_shared<RGeomHierarchy>(fDesc);
-   fWebHierarchy->Show({gEve->GetWebWindow(), chid});
+   fWebHierarchy->Show({gEve->GetWebWindow(), connid, chid});
 }
 ////////////////////////////////////////////////////////////////////////////////
 namespace {
@@ -133,6 +136,7 @@ int REveGeoTopNodeViz::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
    } else {
       std::string json = fGeoData->fDesc.ProduceJson();
       j["geomDescription"] = TBase64::Encode(json.c_str());
+      printf("REveGeoTopNodeViz::WriteCoreJson stream geomDescription json size = %lu\n", json.size());
       j["dataId"] = fGeoData->GetElementId();
    }
    return ret;
