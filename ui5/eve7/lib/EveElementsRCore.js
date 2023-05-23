@@ -479,7 +479,8 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
          for (let c of o3.children)
          {
             if (c.material) {
-               res.push(c);
+               console.log("add mesh ", c);
+               res.geom.push(c);
             }
             this.addMeshRec(c, res);
          }
@@ -501,8 +502,12 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
 
             // NOTE: this needs to be done diffeewnrly, this code is related to objects3d
             // TODO: make same logic fro RC objects 
-            // let x = topNode.clones.createObject3D(stack, topNode, 'force')
+            let x = topNode.clones.createRCObject3D(stack, topNode, 'force');
 
+            console.log("topnode controll res = ",x);
+            //if (x)
+            //res.geom.push(x);
+            this.addMeshRec(x, res);
          }
       }
       getTooltipText() {
@@ -1481,14 +1486,15 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
             orc = new RC.Mesh(ctx.geomap.get(o3.geometry), mrc);
             this.RcPickable(eveTopNode, orc, true, GeoTopNodeControl);
             orc.material.normalFlat = true;
-            orc.amt_debug_name = "mesh" + o3.name; // TODO debug
+            // orc.amt_debug_name = "mesh" + o3.name; // TODO debug
             ++ctx.n_mesh;
          } else {
             orc = new RC.Group();
-            orc.amt_debug_name = "group" + o3.name; // TODO debug
+            // orc.amt_debug_name = "group" + o3.name; // TODO debug
             ++ctx.n_o3d;
          }
 
+         orc.nchld = o3.nchld;
          orc.matrixAutoUpdate = false;
          orc.setMatrixFromArray(o3.matrix.elements);
          for (let c of o3.children) {
@@ -1496,7 +1502,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
          }
 
          // selection ... remore new ...
-         orc.stack = o3.stack;
+         orc.stack = o3.stack; // ?? AMT do we need this
          return orc;
       }
 
@@ -1508,9 +1514,62 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
          console.log("tgeo painter builder", o3);
          let ctx = { geomap: new Map, n_o3d: 0, n_mesh: 0, n_geo_reuse: 0 };
          let orc = this.makeGeoTopNodeProcessObject(o3, ctx, tn);
+         console.log("map summary ", ctx.geomap.size, ctx.n_o3d, ctx.n_mesh, ctx.n_geo_reuse);
          orc.get_ctrl = function () { return new GeoTopNodeControl(this, orc); };
 
          orc.clones = o3.clones;
+
+         // function to get stack
+         orc.clones.createRCObject3D = function (stack, toplevel, options) {
+            let node = this.nodes[0], three_prnt = toplevel, draw_depth = 0;
+
+            for (let lvl = 0; lvl <= stack.length; ++lvl) {
+               let nchld = (lvl > 0) ? stack[lvl - 1] : 0;
+               console.log("level ", lvl, "nchld", nchld);
+               // extract current node
+               if (lvl > 0) node = this.nodes[node.chlds[nchld]];
+               if (!node) return null;
+
+               let obj3d = undefined;
+
+               if (three_prnt.children)
+                  for (let i = 0; i < three_prnt.children.length; ++i) {
+                     console.log(i, "<< comapre ",three_prnt.children[i].nchld, nchld );
+                     if (three_prnt.children[i].nchld === nchld) {
+                        console.log("createRCObject3D .... reuse obj3d .... from clones ??");
+                        obj3d = three_prnt.children[i];
+                        break;
+                     }
+                  }
+
+               if (obj3d) {
+                  three_prnt = obj3d;
+                  console.log("set three");
+                  if (obj3d.$jsroot_drawable) draw_depth++;
+                  continue;
+               }
+
+               console.log("make NEW ode ", node);
+               obj3d = new RC.Object3D();
+
+               if (node.abs_matrix) {
+                  obj3d.absMatrix = new RC.Matrix4();
+                  obj3d.absMatrix.fromArray(node.matrix);
+               } else if (node.matrix) {
+                  obj3d.matrix.fromArray(node.matrix);
+                  obj3d.matrix.decompose(obj3d.position, obj3d.quaternion, obj3d.scale);
+               }
+
+               // add the mesh to the scene
+               three_prnt.add(obj3d);
+               obj3d.updateMatrixWorld();
+
+               three_prnt = obj3d;
+            }
+
+            return three_prnt;
+         } // end clones create obj3d
+
          return orc;
       }
 
