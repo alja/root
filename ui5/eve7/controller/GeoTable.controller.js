@@ -23,12 +23,37 @@ sap.ui.define([
             else {
                 UIComponent.getRouterFor(this).getRoute("GeoTable").attachPatternMatched(this.onViewObjectMatched, this);
             }
+
+
+            this.setPanelContextMenu();
+        },
+
+        setPanelContextMenu()
+        {
+            let panel = this.byId("geomHierarchyPanel").getController();
+            panel.eveParent = this;
+            panel.cellContextmenu = function (oEvent)
+            {
+                console.log("AMT override context menu", panel);
+            }
+            panel.onCellContextMenu = function (oEvent)
+            {
+                console.log("AMT vvv override context menu", panel);
+            }
+            console.log("panel ", panel);
         },
 
         onViewObjectMatched: function (oEvent) {
             let args = oEvent.getParameter("arguments");
             this.setupManagerAndViewType(EVE.$eve7tmp.eveViewerId, EVE.$eve7tmp.mgr);
             delete EVE.$eve7tmp;
+        },
+
+        setTopNode: function (path) {
+            let fcall = "SetTopNode(\"" + path + "\")";
+            console.log("MIRcalll", fcall);
+            let tn = this.topNodeEve;
+            this.mgr.SendMIR(fcall, tn.fElementId, tn._typename);
         },
 
         setupManagerAndViewType: function (eveViewerId, mgr) {
@@ -52,7 +77,8 @@ sap.ui.define([
 
             console.log('channel id is', websocket.getChannelId());
             this.mgr.handle.send("SETCHANNEL:" + topNodeEve.fElementId + "," + websocket.getChannelId());
-            topNodeEve.websocket =  websocket;
+            topNodeEve.websocket = websocket;
+            this.topNodeEve = topNodeEve;
         },
         switchSingle: function () {
             let oRouter = UIComponent.getRouterFor(this);

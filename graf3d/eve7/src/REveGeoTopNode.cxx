@@ -6,6 +6,7 @@
 
 #include <ROOT/REveSelection.hxx>
 
+#include <ROOT/RWebWindow.hxx>
 
 #include "TMath.h"
 #include "TGeoManager.h"
@@ -62,8 +63,18 @@ std::size_t getHash(std::vector<int> &vec)
 
 void REveGeoTopNodeData::ProcessSignal(const std::string &kind)
 {
+   if (kind == "SelectTop") {
+      StampObjProps();
+      for (auto &n : fNieces) {
+         n->StampObjProps();
+      }
+   return;
+   }
+
+// handle other cases the onld way
    REveManager::ChangeGuard ch;
-   if ((kind == "SelectTop") || (kind == "NodeVisibility")) {
+
+   if (kind == "NodeVisibility") {
       StampObjProps();
       for (auto &n : fNieces) {
          n->StampObjProps();
@@ -96,12 +107,34 @@ void REveGeoTopNodeData::ProcessSignal(const std::string &kind)
 
 Int_t REveGeoTopNodeData::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
 {
+   gEve->GetWebWindow()->Sync();
+
    Int_t ret = REveElement::WriteCoreJson(j, rnr_offset);
 
    if (!fGeoNode){ return ret;}
    return ret;
 }
 
+
+void REveGeoTopNodeData::SetTopNode(const char* path)
+{
+   printf("REveGeoTopNodeViz::SetTopNode %s \n", path);
+   std::string s(path), tmp;
+   std::stringstream ss(s);
+   std::vector<std::string> words;
+
+   while (getline(ss, tmp, ',')) {
+      words.push_back(tmp);
+   }
+   fDesc.SelectTop(words);
+   fDesc.IssueSignal(fWebHierarchy.get(), "SelectTop");
+
+      StampObjProps();
+      for (auto &n : fNieces) {
+         n->StampObjProps();
+      }
+
+}
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////

@@ -34,6 +34,8 @@ public:
    RGeomDescription& RefDescription() {return fDesc;}
 
    void SetChannel(unsigned connid, int chid);
+
+   void SetTopNode(const char* path);
 };
 //-------------------------------------------------------------------
 class REveGeoTopNodeViz : public REveElement

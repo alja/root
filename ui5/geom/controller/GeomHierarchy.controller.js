@@ -544,6 +544,7 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
       },
 
       onCellContextMenu(oEvent) {
+         console.log("orig context ment", this);
          if (Device.support.touch)
             return; //Do not use context menus on touch devices
 
@@ -559,12 +560,17 @@ sap.ui.define(['sap/ui/core/mvc/Controller',
          }
 
          this._oIdContextMenu.destroyItems();
+         let eveParent  = this.eveParent;
          if (!this.standalone)
             this._oIdContextMenu.addItem(new MenuItem({
                text: 'Set as top',
                select: () => {
+                  console.log("AMT panel websocket call");
                   this.setPhysTopNode(prop.path);
-                  this.websocket.send('SETTOP:' + JSON.stringify(prop.path));
+                  if (eveParent)
+                     eveParent.setTopNode(prop.path);
+                  else
+                     this.websocket.send('SETTOP:' + JSON.stringify(prop.path));
 
                   let len = this.model?.getLength() ?? 0;
                   for (let n = 0; n < len; ++n)
