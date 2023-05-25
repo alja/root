@@ -24,7 +24,8 @@ TGeoNode* testCmsGeo()
    TGeoManager::Import("https://root.cern/files/cms.root");
 
    gGeoManager->DefaultColors();
-   gGeoManager->SetVisLevel(4);
+   gGeoManager->SetVisLevel(3);
+   gGeoManager->SetMaxVisNodes(10000);
    gGeoManager->GetVolume("TRAK")->InvisibleAll();
    gGeoManager->GetVolume("HVP2")->SetTransparency(20);
    gGeoManager->GetVolume("HVEQ")->SetTransparency(20);
@@ -40,11 +41,11 @@ TGeoNode* testCmsGeo()
    gGeoManager->GetVolume("EAP4")->SetLineColor(7);
    gGeoManager->GetVolume("HTC1")->SetLineColor(2);
 
-   TGeoNode* top = gGeoManager->GetTopVolume()->FindNode("CMSE_1");
-   // TGeoNode* n = getNodeFromPath(top, "TRAK_1/SVTX_1/TGBX_1/GAW1_1");
-// TGeoNode* n = getNodeFromPath(top, "TRAK_1/SVTX_1/TGBX_1");
- TGeoNode* n = getNodeFromPath(top, "MUON_1");
-//TGeoNode* n = top;
+   TGeoNode *top = gGeoManager->GetTopVolume()->FindNode("CMSE_1");
+   //   TGeoNode* n = getNodeFromPath(top, "TRAK_1/SVTX_1/TGBX_1/GAW1_1");
+   // TGeoNode* n = getNodeFromPath(top, "TRAK_1/SVTX_1/TGBX_1");
+   // TGeoNode* n = getNodeFromPath(top, "MUON_1");
+   TGeoNode *n = top;
    return n;
 }
 
@@ -191,6 +192,7 @@ REX::REvePointSet *getPointSet(int npoints = 2, float s=2, int color=28)
 void eveGeoBrowser()
 {
    gEnv->SetValue("WebEve.GLViewer", "Three");
+  gEnv->SetValue("WebGui.HttpPort", "1095");
    auto eveMng = REX::REveManager::Create();
 
    TGeoNode* gn;
@@ -204,8 +206,9 @@ void eveGeoBrowser()
 
    // table
    auto data = new REX::REveGeoTopNodeData();
+
    data->SetTNode(gn);
-   data->RefDescription().SetVisLevel(8);
+   data->RefDescription().SetVisLevel(2);
    {
        auto scene = eveMng->SpawnNewScene("GeoSceneTable");
        auto view = eveMng->SpawnNewViewer("GeoTable");
