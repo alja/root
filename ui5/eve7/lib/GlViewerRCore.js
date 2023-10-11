@@ -551,7 +551,7 @@ sap.ui.define([
                      yPos: 0,
                      fontSize: 350,
                      cellAspect: 8 / 16,
-                     mode: RC.TEXT2D_SPACE_WORLD,
+                     mode: RC.ZTEXT_SPACE_WORLD,
                      fontHinting: 1.0,
                      color: new RC.Color(0.0,0.0,0.0),
                      sdf_tex_width: fontTexture.image.width,
