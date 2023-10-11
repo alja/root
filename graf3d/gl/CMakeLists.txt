@@ -108,6 +108,7 @@ ROOT_STANDARD_LIBRARY_PACKAGE(RGL
     TH2GL.h
     TH3GL.h
     TPointSet3DGL.h
+    TGLSdfFontMaker.h
     ${RGL_EXTRA_HEADERS}
   SOURCES
     src/TArcBall.cxx
@@ -198,6 +199,7 @@ ROOT_STANDARD_LIBRARY_PACKAGE(RGL
     src/TKDEAdapter.cxx
     src/TKDEFGT.cxx
     src/TPointSet3DGL.cxx
+    src/TGLSdfFontMaker.cxx
     ${RGL_EXTRA_SOURCES}
   DICTIONARY_OPTIONS
     -writeEmptyRootPCM
@@ -208,6 +210,7 @@ ROOT_STANDARD_LIBRARY_PACKAGE(RGL
     ${GL2PS_LIBRARIES}
     ${X11_LIBRARIES}
     RGlew
+    -lpng16
   DEPENDENCIES
     Hist
     Gui
