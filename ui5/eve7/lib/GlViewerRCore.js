@@ -538,25 +538,31 @@ sap.ui.define([
                RC.Texture.FORMAT.RGBA,
                RC.Texture.FORMAT.RGBA,
                RC.Texture.TYPE.UNSIGNED_BYTE,
-               128,
-               256
+               image.width,
+               image.height
             );
 
             fontTexture._generateMipmaps = false;
             for (const ax of lines) {
-               const text = new RC.Text2D(
+               const text = new RC.ZText(
                   {
                      text: ax.text,
                      fontTexture: fontTexture,
                      xPos: 0,
                      yPos: 0,
-                     fontSize: 128,
+                     fontSize: 350,
                      cellAspect: 8 / 16,
-                     mode: RC.TEXT2D_SPACE_WORLD
+                     mode: RC.TEXT2D_SPACE_WORLD,
+                     fontHinting: 1.0,
+                     color: new RC.Color(0.0,0.0,0.0),
+                     sdf_tex_width: fontTexture.image.width,
+                     sdf_tex_height: fontTexture.image.height,
+                     font: RC.dejavu_font
                   }
                );
                text.position.copy(ax.p);
-               text.material.color = fgCol;
+               console.log("Position", ax.p);
+               //text.material.color = fgCol;
                ag.add(text);
             }
          });
