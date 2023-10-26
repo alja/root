@@ -104,6 +104,10 @@ sap.ui.define([
       {
          return this.scene;
       }
+      get_overlay_scene()
+      {
+         return this.overlay_scene;
+      }
 
       //==============================================================================
 
@@ -144,6 +148,7 @@ sap.ui.define([
          // always use black clear color except in tone map
          this.renderer.clearColor = "#00000000";
          this.scene = new RC.Scene();
+         this.overlay_scene = new RC.Scene();
 
          this.lights = new RC.Group;
          this.lights.name = "Light container";
@@ -218,7 +223,7 @@ sap.ui.define([
 
          this.rot_center = new RC.Vector3(0,0,0);
 
-         this.rqt = new RC.RendeQuTor(this.renderer, this.scene, this.camera);
+         this.rqt = new RC.RendeQuTor(this.renderer, this.scene, this.camera, this.overlay_scene);
          if (this.RQ_Mode == "Direct")
          {
             this.rqt.initDirectToScreen();
@@ -635,6 +640,15 @@ sap.ui.define([
          }
 
          this.rqt.render_main_and_blend_outline();
+
+         // XXXX here add rendering of overlay, e.g.:
+         if (this.rqt.queue.used_fail_count == 0 && this.overlay_scene.children.length > 0) {
+            this.rqt.render_overlay_and_blend_it();
+         }
+         // YYYY Or, it might be better to render overlay after the tone-mapping.
+         // Eventually, if only overlay changes, we don't need to render the base-scene but
+         // only overlay and re-merge them. Need to keep base textures alive in RendeQuTor.
+         // Note that rgt.render_end() releases all std textures.
 
          if (this.rqt.queue.used_fail_count == 0) {
             // AMT: All render passess are drawn with the black bg

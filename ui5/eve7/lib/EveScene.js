@@ -127,12 +127,14 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(EveManager) {
       /** method insert all objects into three.js container */
       redrawScene()
       {
+         let eveScene = this.mgr.GetElement(this.id);
+         console.log("redraw scene OVERLAY ?? ", eveScene);
          if (!this.glctrl) return;
 
          let res3d = this.create3DObjects(true);
          if ( ! res3d.length && this.first_time) return;
 
-         let cont = this.glctrl.getSceneContainer("scene" + this.id);
+         let cont = this.glctrl.getSceneContainer(this);
          while (cont.children.length > 0)
             cont.remove(cont.children[0]);
 
@@ -149,7 +151,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(EveManager) {
       {
          if (!this.glctrl) return;
 
-         let cont = this.glctrl.getSceneContainer("scene" + this.id);
+         let cont = this.glctrl.getSceneContainer(this);
          while (cont.children.length > 0)
             cont.remove(cont.children[0]);
 
@@ -212,7 +214,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(EveManager) {
          if ( ! obj3d) return;
 
          // let scene = this.mgr.GetElement(this.id);
-         let container = this.glctrl.getSceneContainer("scene" + this.id);
+         let container = this.glctrl.getSceneContainer(this);
 
          container.add(obj3d);
 
@@ -224,7 +226,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(EveManager) {
       replaceElement(el) {
          if (!this.glctrl) return;
 
-         let container = this.glctrl.getSceneContainer("scene" + this.id);
+         let container = this.glctrl.getSceneContainer(this);
 
          try {
             let obj3d = this.getObj3D(el.fElementId);
@@ -257,7 +259,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(EveManager) {
                continue;
             }
 
-            let container = this.glctrl.getSceneContainer("scene" + this.id);
+            let container = this.glctrl.getSceneContainer(this);
             container.remove(obj3d);
 
             this.id2obj_map.delete(elId);
