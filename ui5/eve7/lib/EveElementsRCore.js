@@ -774,6 +774,15 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
          if (o3d.outlineMaterial) o3d.outlineMaterial.addMap(tex);
       }
 
+      AddTextureToMaterialMap(o3d, tex)
+      {
+         if (o3d.material) 
+         {
+            o3d.material.clearMaps();
+            o3d.material.addMap(tex);
+         }
+      }
+
       //----------------------------------------------------------------------------
       // Builder functions
       //----------------------------------------------------------------------------
@@ -859,6 +868,80 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
          this.RcPickable(track, line);
 
          return line;
+      }
+
+      //==============================================================================
+      // makeZText
+      //==============================================================================
+
+      makeZText(ZText, rnr_data)
+      {
+         console.log("ZText", ZText);
+         let textureName;
+         let fontType;
+         let fontColor = RcCol(ZText.fFontColor);
+
+         if(ZText.fFont == 1)
+         {
+            fontType = RC.roboto_font;
+            textureName = "roboto.png";
+         }
+         else if(ZText.fFont == 2)
+         {
+            fontType = RC.roboto_bold_font;
+            textureName = "roboto-bold.png";
+         }
+         else if(ZText.fFont == 3)
+         {
+            fontType = RC.ubuntu_font;
+            textureName = "ubuntu.png";
+         }
+         else if(ZText.fFont == 4)
+         {
+            fontType = RC.ubuntu_bold_font;
+            textureName = "ubuntu-bold.png";
+         }
+         else if(ZText.fFont == 5)
+         {
+            fontType = RC.dejavu_font;
+            textureName = "dejavu-serif.png";
+         }
+         else if(ZText.fFont == 6)
+         {
+            fontType = RC.dejavu_italic_font;
+            textureName = "dejavu-serif-italic.png";
+         }
+         else 
+         {
+            fontType = RC.roboto_font;
+            textureName = "roboto.png";
+         }
+
+         let text = new RC.ZText(
+            {
+                text: ZText.fText, 
+                fontTexture: null, 
+                xPos: ZText.fPosX, 
+                yPos: ZText.fPosY, 
+                fontSize: ZText.fFontSize, 
+                cellAspect: 8/16, 
+                mode: ZText.fMode,
+                fontHinting: ZText.fFontHinting,
+                color: fontColor,
+                sdf_tex_width: 1024,
+                sdf_tex_height: 1024,
+                font: fontType,
+            }
+        );
+        text.positionX = ZText.fPosX;
+        text.positionY = ZText.fPosY;
+        text.positionZ = ZText.fPosZ;
+        text.pickingMaterial.side = RC.FRONT_AND_BACK_SIDE;
+
+        this.GetRgbaTexture(textureName, this.AddTextureToMaterialMap.bind(this, text));
+        let bool = this.RcPickable(ZText, text);
+        console.log("pick_bool", bool);
+        return text;
       }
 
       //==============================================================================
