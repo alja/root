@@ -9,6 +9,9 @@
 #include <ROOT/REveBox.hxx>
 #include <ROOT/REveScene.hxx>
 #include <ROOT/REveManager.hxx>
+#include <ROOT/REveTrackPropagator.hxx>
+#include <ROOT/REveTrack.hxx>
+#include <ROOT/REveJetCone.hxx>
 
 using namespace ROOT::Experimental;
 const Double_t kR_min = 240;
