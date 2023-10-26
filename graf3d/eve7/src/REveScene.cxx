@@ -59,6 +59,7 @@ REveScene::~REveScene()
 int REveScene::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
 {
    j["Mandatory"] = fMandatory;
+   j["IsOverlay"] = fIsOverlay;
 
    return REveElement::WriteCoreJson(j, rnr_offset);
 }

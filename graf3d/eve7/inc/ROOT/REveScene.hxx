@@ -81,6 +81,7 @@ protected:
    std::vector<SceneCommand> fCommands;   ///<!
 
    bool fMandatory{true};
+   bool fIsOverlay{false};
    // void RetransHierarchicallyRecurse(REveElement* el, const REveTrans& tp);
 
 public:
@@ -121,6 +122,9 @@ public:
 
    bool GetMandatory() { return fMandatory; }
    void SetMandatory(bool x) { fMandatory = x; }
+
+   bool GetIsOverlay() { return fIsOverlay; }
+   void SetIsOverlay(bool x) { fIsOverlay = x; }
 
    void AddCommand(const std::string &name, const std::string &icon, const REveElement *element, const std::string &action);
 };
