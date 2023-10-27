@@ -71,8 +71,11 @@ Int_t REveZText::WriteCoreJson(nlohmann::json &t, Int_t rnr_offset)
 void REveZText::BuildRenderData()
 {
 
+printf("ZText build render data \n");
 fRenderData = std::make_unique<REveRenderData>("makeZText");
 
+// TODO write fPosition and fFontSize here ...
+fRenderData->PushV(0.f, 0.f, 0.f); // frite floats so the data is not empty
 /*
    fRenderData = std::make_unique<REveRenderData>("makeZText", 3 * NP);
 
