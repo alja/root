@@ -936,7 +936,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
         text.positionX = ZText.fPosX;
         text.positionY = ZText.fPosY;
         text.positionZ = ZText.fPosZ;
-        text.pickingMaterial.side = RC.FRONT_AND_BACK_SIDE;
+
 
         this.GetRgbaTexture(textureName, this.AddTextureToMaterialMap.bind(this, text));
         let bool = this.RcPickable(ZText, text);

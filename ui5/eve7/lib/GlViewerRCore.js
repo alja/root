@@ -106,6 +106,7 @@ sap.ui.define([
       }
       get_overlay_scene()
       {
+         console.log("get_overlay_scene");
          return this.overlay_scene;
       }
 
@@ -164,7 +165,7 @@ sap.ui.define([
          // guides
          this.axis = new RC.Group();
          this.axis.name = "Axis";
-         this.scene.add(this.axis);
+         this.overlay_scene.add(this.axis);
 
          if (this.controller.isEveCameraPerspective())
          {
@@ -532,7 +533,7 @@ sap.ui.define([
          let ag = this.axis;
          let fgCol = this.fgCol;
          const fontImgLoader = new RC.ImageLoader();
-         let tname = this.eve_path + "textures/font2.png";
+         let tname = this.eve_path + "textures/dejavu-serif.png";
          fontImgLoader.load(tname, function (image) {
             const fontTexture = new RC.Texture(
                image,
@@ -547,7 +548,7 @@ sap.ui.define([
                image.height
             );
 
-            fontTexture._generateMipmaps = false;
+            fontTexture._generateMipmaps = true;
             for (const ax of lines) {
                const text = new RC.ZText(
                   {
@@ -678,36 +679,72 @@ sap.ui.define([
 
          let state = this.rqt.pick(x, y, detect_depth);
 
-         if (state.object === null) {
+         let state_overlay = this.rqt.pick_overlay(x, y, detect_depth);
+
+
+         console.log("pick state", state);
+         console.log("Overlay pick state", state_overlay);
+
+         if (state.object === null && state_overlay.object === null) {
             this.rqt.pick_end();
             return null;
          }
 
-         let top_obj = state.object;
-         while (top_obj.eve_el === undefined)
-            top_obj = top_obj.parent;
+         if(state_overlay.object !== null)
+         {
 
-         state.top_object = top_obj;
-         state.eve_el = top_obj.eve_el;
+            let top_obj = state_overlay.object;
+            while (top_obj.eve_el === undefined)
+               top_obj = top_obj.parent;
+   
+            state_overlay.top_object = top_obj;
+            state_overlay.eve_el = top_obj.eve_el;
+   
+            if (state_overlay.eve_el.fSecondarySelect)
+               this.rqt.pick_instance_overlay(state_overlay);
+   
+            this.rqt.pick_end();
+   
+            state_overlay.w = this.canvas.width;
+            state_overlay.h = this.canvas.height;
+            state_overlay.mouse = new RC.Vector2( ((x + 0.5) / state_overlay.w) * 2 - 1,
+                                         -((y + 0.5) / state_overlay.h) * 2 + 1 );
+   
+            let ctrl_obj = state_overlay.object;
+            while (ctrl_obj.get_ctrl === undefined)
+               ctrl_obj = ctrl_obj.parent;
+   
+            state_overlay.ctrl = ctrl_obj.get_ctrl(ctrl_obj, top_obj);
+            return state_overlay;
 
-         if (state.eve_el.fSecondarySelect)
-            this.rqt.pick_instance(state);
+         } else{
 
-         this.rqt.pick_end();
+            let top_obj = state.object;
+            while (top_obj.eve_el === undefined)
+               top_obj = top_obj.parent;
+   
+            state.top_object = top_obj;
+            state.eve_el = top_obj.eve_el;
+   
+            if (state.eve_el.fSecondarySelect)
+               this.rqt.pick_instance(state);
+   
+            this.rqt.pick_end();
+   
+            state.w = this.canvas.width;
+            state.h = this.canvas.height;
+            state.mouse = new RC.Vector2( ((x + 0.5) / state.w) * 2 - 1,
+                                         -((y + 0.5) / state.h) * 2 + 1 );
+   
+            let ctrl_obj = state.object;
+            while (ctrl_obj.get_ctrl === undefined)
+               ctrl_obj = ctrl_obj.parent;
+   
+            state.ctrl = ctrl_obj.get_ctrl(ctrl_obj, top_obj);
+            return state;
 
-         state.w = this.canvas.width;
-         state.h = this.canvas.height;
-         state.mouse = new RC.Vector2( ((x + 0.5) / state.w) * 2 - 1,
-                                      -((y + 0.5) / state.h) * 2 + 1 );
+         }
 
-         let ctrl_obj = state.object;
-         while (ctrl_obj.get_ctrl === undefined)
-            ctrl_obj = ctrl_obj.parent;
-
-         state.ctrl = ctrl_obj.get_ctrl(ctrl_obj, top_obj);
-
-         // console.log("pick result", state);
-         return state;
       }
 
       //==============================================================================
