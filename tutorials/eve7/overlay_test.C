@@ -117,6 +117,7 @@ void overlay_test()
 
    // add box to overlay
    REveScene* os = gEve->SpawnNewScene("Overly scene", "OverlayTitle");
+   ((REveViewer*)(gEve->GetViewers()->FirstChild()))->AddScene(os);
    os->SetIsOverlay(true);
 
    auto textHolder = new REveElement("texts");

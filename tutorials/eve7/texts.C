@@ -10,10 +10,11 @@
 #include <ROOT/REveScene.hxx>
 #include <ROOT/REveManager.hxx>
 #include <ROOT/REveZText.hxx>
+#include <ROOT/REveJetCone.hxx>
 
 namespace REX = ROOT::Experimental;
 
-
+using namespace ROOT::Experimental;
 void makeTexts(int N_Texts, REX::REveElement *textHolder)
 {
    TRandom &r = *gRandom;
@@ -30,6 +31,25 @@ void makeTexts(int N_Texts, REX::REveElement *textHolder)
       textHolder->AddElement(text);
    }
 }
+void makeJets(int N_Jets, REveElement *jetHolder)
+{
+   TRandom &r = *gRandom;
+
+   const Double_t kR_min = 240;
+   const Double_t kR_max = 250;
+   const Double_t kZ_d   = 300;
+   for (int i = 0; i < N_Jets; i++)
+   {
+      auto jet = new REveJetCone(Form("Jet_%d",i ));
+      jet->SetCylinder(2*kR_max, 2*kZ_d);
+      jet->AddEllipticCone(r.Uniform(-0.5, 0.5), r.Uniform(0, TMath::TwoPi()),
+                           0.1, 0.2);
+      jet->SetFillColor(kRed);
+      jet->SetLineColor(kRed);
+
+      jetHolder->AddElement(jet);
+   }
+}
 
 void texts()
 {
@@ -37,11 +57,16 @@ void texts()
 
    //add box to overlay
    REX::REveScene* os = eveMng->SpawnNewScene("OverlyScene", "OverlayTitle");
+   ((REveViewer*)(eveMng->GetViewers()->FirstChild()))->AddScene(os);
    os->SetIsOverlay(true);
 
    REX::REveElement *textHolder = new REX::REveElement("texts");
    makeTexts(30, textHolder);
    os->AddElement(textHolder);
+
+   auto jetHolder = new REveElement("jets");
+   makeJets(2,jetHolder);
+   eveMng->GetEventScene()->AddElement(jetHolder);
 
    eveMng->Show();
 }
