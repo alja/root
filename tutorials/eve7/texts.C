@@ -35,12 +35,13 @@ void texts()
 {
    auto eveMng = REX::REveManager::Create();
 
-   // add box to overlay
+   //add box to overlay
    REX::REveScene* os = eveMng->SpawnNewScene("OverlyScene", "OverlayTitle");
    os->SetIsOverlay(true);
 
    REX::REveElement *textHolder = new REX::REveElement("texts");
-   eveMng->GetEventScene()->AddElement(textHolder);
    makeTexts(30, textHolder);
+   os->AddElement(textHolder);
+
    eveMng->Show();
 }

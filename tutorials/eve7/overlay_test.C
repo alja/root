@@ -12,6 +12,8 @@
 #include <ROOT/REveTrackPropagator.hxx>
 #include <ROOT/REveTrack.hxx>
 #include <ROOT/REveJetCone.hxx>
+#include <ROOT/REveZText.hxx>
+
 
 using namespace ROOT::Experimental;
 const Double_t kR_min = 240;
@@ -90,6 +92,22 @@ void makeJets(int N_Jets, REveElement *jetHolder)
    }
 }
 
+void makeTexts(int N_Texts, REveElement *textHolder)
+{
+   TRandom &r = *gRandom;
+
+   for (int i = 0; i < N_Texts; i++)
+   {
+      auto text = new REveZText(Form("Text_%d",i ));
+      text -> SetFontColor(kViolet - r.Uniform(0, 50));
+      REveVector pos(r.Uniform(10, 4500), r.Uniform(150, 3500), 1);
+      text -> SetPosition(pos);
+      text -> SetFontSize(r.Uniform(50, 400));
+      text -> SetFont(r.Uniform(1, 6));
+      text -> SetText(Form("Text_%d",i ));
+      textHolder->AddElement(text);
+   }
+}
 
 void overlay_test()
 {   
@@ -97,16 +115,17 @@ void overlay_test()
 
    TRandom& r = * gRandom;
 
-// add box to overlay
-   REveScene* os = gEve->SpawnNewScene("OverlyScene", "OverlayTitle");
+   // add box to overlay
+   REveScene* os = gEve->SpawnNewScene("Overly scene", "OverlayTitle");
    os->SetIsOverlay(true);
 
-
+   auto textHolder = new REveElement("texts");
+   makeTexts(30, textHolder);
+   os ->AddElement(textHolder);
 
    auto jetHolder = new REveElement("jets");
    makeJets(2,jetHolder);
    gEve->GetEventScene()->AddElement(jetHolder);
-
 
    auto trackHolder = new REveElement("Tracks");
    gEve->GetEventScene()->AddElement(trackHolder);
