@@ -33,6 +33,7 @@ public:
       kBT_FreeBox,         // arbitrary box: specify 8*(x,y,z) box corners
       kBT_AABox,           // axis-aligned box: specify (x,y,z) and (w, h, d)
       kBT_AABoxFixedDim,   // axis-aligned box w/ fixed dimensions: specify (x,y,z)
+      kBT_Mat4Box,         // generic Mat4 transformation
       kBT_Cone,
       kBT_EllipticCone,
       kBT_Hex
@@ -42,9 +43,15 @@ public:
 
    struct BOrigin_t        : public DigitBase_t { Float_t fA, fB, fC; };
 
-   struct BAABox_t         : public BOrigin_t   { Float_t fW, fH, fD; };
+   struct BAABoxFixedDim_t : public BOrigin_t   {}; // save only position == INSTANCED_T
 
-   struct BAABoxFixedDim_t : public BOrigin_t   {};
+   struct BAABox_t         : public BOrigin_t   { Float_t fW, fH, fD; }; // scaled box INSTANCED_SCALED_T
+
+   struct BMat4Box_t       : public DigitBase_t   { Float_t fMat[16]; }; // INSTANCED_SCALEDROTATED
+
+ // ++ TODO add rotated
+
+   // .......................
 
    struct BCone_t          : public DigitBase_t { REveVector fPos, fDir; Float_t fR; };
 
@@ -79,6 +86,7 @@ public:
    void AddBox(const Float_t* verts);
    void AddBox(Float_t a, Float_t b, Float_t c, Float_t w, Float_t h, Float_t d);
    void AddBox(Float_t a, Float_t b, Float_t c);
+   void AddMat4Box(const Float_t* mat4);
 
    void AddCone(const REveVector& pos, const REveVector& dir, Float_t r);
    void AddEllipticCone(const REveVector& pos, const REveVector& dir, Float_t r, Float_t r2, Float_t angle=0);

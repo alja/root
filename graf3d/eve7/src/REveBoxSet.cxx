@@ -76,6 +76,7 @@ Int_t REveBoxSet::SizeofAtom(REveBoxSet::EBoxType_e bt)
       case kBT_FreeBox:              return sizeof(BFreeBox_t);
       case kBT_AABox:                return sizeof(BAABox_t);
       case kBT_AABoxFixedDim:        return sizeof(BAABoxFixedDim_t);
+      case kBT_Mat4Box:              return sizeof(BMat4Box_t);
       case kBT_Cone:                 return sizeof(BCone_t);
       case kBT_EllipticCone:         return sizeof(BEllipticCone_t);
       case kBT_Hex:                  return sizeof(BHex_t);
@@ -155,6 +156,19 @@ void REveBoxSet::AddBox(Float_t a, Float_t b, Float_t c)
 
    BAABoxFixedDim_t* box = (BAABoxFixedDim_t*) NewDigit();
    box->fA = a; box->fB = b; box->fC = c;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Create shape with arbitrary transformtaion
+///
+void REveBoxSet::AddMat4Box(const Float_t* arr)
+{
+   static const REveException eH("REveBoxSet::AddMat4Box ");
+   if (fBoxType != kBT_Mat4Box)
+      throw(eH + "expect Mat4 box-type.");
+
+   BMat4Box_t* b = (BMat4Box_t*) NewDigit();
+   memcpy(b->fMat, arr, sizeof(b->fMat));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -322,6 +336,16 @@ void REveBoxSet::ComputeBBox()
          break;
       }
 
+      case kBT_Mat4Box:
+      {
+         while (bi.next()) {
+            BMat4Box_t& b = * (BMat4Box_t*) bi();
+            float* a = b.fMat;
+            BBoxCheckPoint(a[12], a[13], a[14]);
+         }
+         break;
+      }
+
       default:
       {
          throw(eH + "unsupported box-type.");
@@ -335,25 +359,48 @@ void REveBoxSet::ComputeBBox()
 
 Int_t REveBoxSet::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
 {
-   int  N = fPlex.N();
-   bool scalePerDigit = true;// AMT unresolved: think about how to pass other paramter to geomtery when false
-   int  N_tex = scalePerDigit ? 2*N : N;
-   if (Instanced())
-      REveRenderData::CalcTextureSize(N_tex, 2, fTexX, fTexY);
-
-   Int_t ret = REveDigitSet::WriteCoreJson(j, rnr_offset);
    j["boxType"] = int(fBoxType);
+   j["instanced"] = Instanced();
+   if (Instanced())
+   {
+      int  N = fPlex.N();
+      int  N_tex = 0;
+      std::string instanceFlag;
+      switch (fBoxType)
+      {
+         case kBT_AABoxFixedDim:
+            instanceFlag = "FixedDimension";
+            N_tex = N;
+            break;
+         case kBT_AABox:
+            instanceFlag = "ScalePerDigit";
+            N_tex = 2*N;
+            break;
+         case kBT_Mat4Box:
+           instanceFlag = "Mat4Trans";
+           N_tex = 4*N;
+           break;
+         default:
+           std::cout << "Ereor:: Unhandled instanced case\n";
+      }
 
-   if (Instanced()) {
+      REveRenderData::CalcTextureSize(N_tex, 4, fTexX, fTexY);
+
       j["N"] = N;
       j["texX"] = fTexX;
       j["texY"] = fTexY;
-      j["scalePerDigit"] = scalePerDigit;
+      j["instanceFlag"] = instanceFlag;
       j["defWidth"] = fDefWidth;
       j["defHeight"] = fDefHeight;
       j["defDepth"] = fDefDepth;
+
+
+      std::cout << "TEXTURE SIZE X " << fTexX << "\n";
    }
 
+   // AMT:: the base class WroteCoreJson needs to be called after
+   // setting the texture value
+   Int_t ret = REveDigitSet::WriteCoreJson(j, rnr_offset);
    return ret;
 }
 
@@ -378,7 +425,6 @@ void REveBoxSet::BuildRenderData()
                fPalette->ColorFromValue(b->fValue, fDefaultValue, c);
 
                int value = c[0] + c[1] * 256 + c[2] * 256 * 256;
-
                // printf("box val [%d] values (%d, %d, %d) -> int <%d>\n", b.fValue, c[0], c[1], c[2],  value);
                fRenderData->PushI(value);
             }
@@ -386,8 +432,8 @@ void REveBoxSet::BuildRenderData()
       }
    }
    if (Instanced()) {
-      printf(" >>> resize render data %d \n", 2 * 4 * fTexX * fTexY);
-      fRenderData->ResizeV(2 * 4 * fTexX * fTexY);
+      // printf(" >>> resize render data %d \n", 4 * fTexX * fTexY);
+      fRenderData->ResizeV(4 * fTexX * fTexY);
    }
 }
 
@@ -443,10 +489,18 @@ void REveBoxSet::WriteShapeData(REveDigitSet::DigitBase_t &digit)
       // position
       fRenderData->PushV(b.fA, b.fB, b.fC);
       fRenderData->PushV(GetColorFromDigitAsFloat(b)); // color ?
-      // dimensions
-      if ((fBoxType == kBT_AABox)) {
-         fRenderData->PushV(b.fW, b.fH, b.fD);
-         fRenderData->PushV(2.f); // trasp ?
+      fRenderData->PushV(b.fW, b.fH, b.fD);
+      fRenderData->PushV(2.f); // trasp ?
+      break;
+   }
+   case REveBoxSet::kBT_Mat4Box: {
+      REveBoxSet::BMat4Box_t &b = (REveBoxSet::BMat4Box_t &)(digit);
+      float* a = b.fMat;
+      fRenderData->PushV(a[12], a[13], a[14]);
+      fRenderData->PushV(GetColorFromDigitAsFloat(b));
+      // write the first three columns
+      for (int i = 0; i < 12; i++) {
+         fRenderData->PushV(a[i]);
       }
       break;
    }
@@ -495,3 +549,15 @@ bool REveBoxSet::Instanced()
 {
    return gEve->IsRCore() && (fBoxType != kBT_FreeBox);
 }
+
+
+/*
+////////////////////////////////////////////////////////////////////////////////
+/// Set DigitShape
+
+bool REveBoxSet::SetDigitShape(const std::vector<float>& vrtBuff, const std::vector<int>& idxBuff)
+{
+   fGeoShape.v = v;
+
+}
+*/

@@ -723,7 +723,12 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
 
       TestRnr(name, obj, rnr_data)
       {
-         if (obj && rnr_data && rnr_data.vtxBuff) return false;
+         if (obj && rnr_data && rnr_data.vtxBuff) {
+            return false;
+         }
+         console.log("test rnr failed for obj =  ", obj);
+         console.log("test rnr failed for rnr_data =  ", rnr_data);
+         console.log("test rnr failed for rnr_data vtcBuff =  ", rnr_data.vtxBuff);
 
          let cnt = this[name] || 0;
          if (cnt++ < 5) console.log(name, obj, rnr_data);
@@ -1074,7 +1079,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
       {
          // axis aligned box
          let SN = boxset.N;
-       //  console.log("SN", SN, "texture dim =", boxset.texX, boxset.texY);
+         // console.log("SN", SN, "texture dim =", boxset.texX, boxset.texY);
 
          let tex_insta_pos_shape = new RC.Texture(rnr_data.vtxBuff,
             RC.Texture.WRAPPING.ClampToEdgeWrapping,
@@ -1091,8 +1096,10 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
             diffuse: new RC.Color(0, 0.6, 0.7),
             alpha: 0.5 // AMT, what is this used for ?
          });
-         if (boxset.scalePerDigit)
+         if (boxset.instanceFlag == "ScalePerDigit")
             shm.addSBFlag("SCALE_PER_INSTANCE");
+         else if(boxset.instanceFlag == "Mat4Trans")
+            shm.addSBFlag("MAT4_PER_INSTANCE");
 
          if (boxset.fMainTransparency) {
             shm.transparent = true;
@@ -1103,9 +1110,9 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
          shm.instanceData[0].flipy = false;
          let geo = (boxset.boxType == 6) ? RC.ZShape.makeHexagonGeometry() : RC.ZShape.makeCubeGeometry();
          let zshape = new RC.ZShape(geo, shm);
-         zshape.instanced = true;
          zshape.instanceCount = SN;
          zshape.frustumCulled = false;
+         zshape.instanced = true;
 
          this.RcPickable(boxset, zshape);
 
@@ -1115,11 +1122,15 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
       makeBoxSet(boxset, rnr_data)
       {
          if (this.TestRnr("boxset", boxset, rnr_data)) return null;
-
          // use instancing if texture coordinates
-         if (boxset.hasOwnProperty('texX'))
+         if (boxset.instanced === true)
             return this.makeBoxSetInstanced(boxset, rnr_data);
+         else
+            return this.makeFreeBoxset(boxset, rnr_data);
+      }
 
+      makeFreeBoxSet(boxset, rnr_data)
+      {
          let vBuff;
          let idxBuff;
          let nVerticesPerDigit = 0;
