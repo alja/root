@@ -30,13 +30,13 @@ private:
    REveZText &operator=(const REveZText &) = delete;
 
 protected:
-   std::string fText;
-   Int_t fFontSize;
-   Float_t fFontHinting;
-   Int_t fMode;
-   REveVector fPosition;
-   Color_t fFontColor;
-   Int_t fFont;
+   std::string fText{"INITIALIZE"};
+   Int_t fFontSize{80};
+   Float_t fFontHinting{1.0};
+   Int_t fMode{1};
+   REveVector fPosition{10, 1600,1};
+   Color_t fFontColor{kMagenta};
+   Int_t fFont{1};
 
 public:
    REveZText(const Text_t *n = "REveZText", const Text_t *t = "");

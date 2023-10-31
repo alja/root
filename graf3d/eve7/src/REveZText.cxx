@@ -27,13 +27,7 @@ using namespace ROOT::Experimental;
 /// Constructor.
 
 REveZText::REveZText(const Text_t* n, const Text_t* t) :
-   REveShape(n, t),
-   fFontHinting(1.0),
-   fMode(1),
-   fFontSize(80),
-   fText("INITILIZE"),
-   fPosition(10, 1600,1),
-   fFont(1)
+   REveShape(n, t)
 {
    fPickable  = true;
    fFontColor = kGreen;
