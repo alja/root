@@ -18,6 +18,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(EveManager) {
          this.creator = glctrl.viewer.creator;
          this.id2obj_map  = new Map; // base on element id
 
+         this.IsOverlay = mgr.GetElement(sceneInfo.fSceneId).IsOverlay;
          this.first_time = true;
          this.need_visibility_update = false;
 
@@ -128,7 +129,6 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(EveManager) {
       redrawScene()
       {
          let eveScene = this.mgr.GetElement(this.id);
-         console.log("redraw scene OVERLAY ?? ", eveScene);
          if (!this.glctrl) return;
 
          let res3d = this.create3DObjects(true);

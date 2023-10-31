@@ -100,9 +100,9 @@ void makeTexts(int N_Texts, REveElement *textHolder)
    {
       auto text = new REveZText(Form("Text_%d",i ));
       text -> SetFontColor(kViolet - r.Uniform(0, 50));
-      REveVector pos(r.Uniform(10, 4500), r.Uniform(150, 3500), 1);
+      REveVector pos(r.Uniform(500, 2500), r.Uniform(500, 1500), 1);
       text -> SetPosition(pos);
-      text -> SetFontSize(r.Uniform(50, 400));
+      text -> SetFontSize(r.Uniform(50, 200));
       text -> SetFont(r.Uniform(1, 6));
       text -> SetText(Form("Text_%d",i ));
       textHolder->AddElement(text);
@@ -120,9 +120,11 @@ void overlay_test()
    ((REveViewer*)(gEve->GetViewers()->FirstChild()))->AddScene(os);
    os->SetIsOverlay(true);
 
+
    auto textHolder = new REveElement("texts");
-   makeTexts(30, textHolder);
+   makeTexts(3, textHolder);
    os ->AddElement(textHolder);
+
 
    auto jetHolder = new REveElement("jets");
    makeJets(2,jetHolder);
@@ -130,7 +132,7 @@ void overlay_test()
 
    auto trackHolder = new REveElement("Tracks");
    gEve->GetEventScene()->AddElement(trackHolder);
-   makeTracks(100, trackHolder);
+   makeTracks(10, trackHolder);
 
    gEve->Show();
 }

@@ -39,6 +39,11 @@ sap.ui.define([
 
          this._selection_map = {};
          this._selection_list = [];
+
+         this.initialMouseX;
+         this.initialMouseY;
+         this.firstMouseDown = true;
+         this.pickedOverlayObj;
       }
 
       init(controller)
@@ -106,7 +111,6 @@ sap.ui.define([
       }
       get_overlay_scene()
       {
-         console.log("get_overlay_scene");
          return this.overlay_scene;
       }
 
@@ -165,7 +169,7 @@ sap.ui.define([
          // guides
          this.axis = new RC.Group();
          this.axis.name = "Axis";
-         this.overlay_scene.add(this.axis);
+         this.scene.add(this.axis);
 
          if (this.controller.isEveCameraPerspective())
          {
@@ -310,6 +314,18 @@ sap.ui.define([
          dome.addEventListener('dblclick', function() {
             //if (glc.controller.dblclick_action == "Reset")
             glc.resetRenderer();
+         });
+
+         dome.addEventListener("mouseup", function() {
+            glc.handleOverlayMouseUp();
+         });
+
+         dome.addEventListener("mousedown", function(event) {
+            glc.handleOverlayMouseDown(event);
+         });
+
+         dome.addEventListener("mousemove", function(event) {
+            glc.handleOverlayMouseMove(event);
          });
 
          // Key-handlers go on window ...
@@ -567,8 +583,8 @@ sap.ui.define([
                   }
                );
                text.position.copy(ax.p);
-               console.log("Position", ax.p);
                //text.material.color = fgCol;
+               text.material.side = RC.FRONT_AND_BACK_SIDE;
                ag.add(text);
             }
          });
@@ -678,22 +694,58 @@ sap.ui.define([
          this.rqt.pick_begin(x, y);
 
          let state = this.rqt.pick(x, y, detect_depth);
-
-         let state_overlay = this.rqt.pick_overlay(x, y, detect_depth);
-
-
+         
          console.log("pick state", state);
-         console.log("Overlay pick state", state_overlay);
 
-         if (state.object === null && state_overlay.object === null) {
+         if (state.object === null) {
             this.rqt.pick_end();
             return null;
          }
 
-         if(state_overlay.object !== null)
-         {
+         let top_obj = state.object;
+         while (top_obj.eve_el === undefined)
+            top_obj = top_obj.parent;
 
-            let top_obj = state_overlay.object;
+         state.top_object = top_obj;
+         state.eve_el = top_obj.eve_el;
+
+         if (state.eve_el.fSecondarySelect)
+            this.rqt.pick_instance(state);
+
+         this.rqt.pick_end();
+
+         state.w = this.canvas.width;
+         state.h = this.canvas.height;
+         state.mouse = new RC.Vector2( ((x + 0.5) / state.w) * 2 - 1,
+                                      -((y + 0.5) / state.h) * 2 + 1 );
+
+         let ctrl_obj = state.object;
+         while (ctrl_obj.get_ctrl === undefined)
+            ctrl_obj = ctrl_obj.parent;
+
+         state.ctrl = ctrl_obj.get_ctrl(ctrl_obj, top_obj);
+         return state;
+
+      }
+
+      render_for_Overlay_picking(x, y, detect_depth)
+      {
+         // console.log("RENDER FOR PICKING", this.scene, this.camera, this.canvas, this.renderer);
+
+         if (this.canvas.width <= 0 || this.canvas.height <= 0) return null;
+
+         this.rqt.pick_begin(x, y);
+
+         let state_overlay = this.rqt.pick_overlay(x, y, detect_depth);
+
+         console.log("Overlay pick state", state_overlay);
+
+         if (state_overlay.object === null) {
+            this.rqt.pick_end();
+            return null;
+         }
+
+         let top_obj = state_overlay.object;
             while (top_obj.eve_el === undefined)
                top_obj = top_obj.parent;
    
@@ -716,35 +768,6 @@ sap.ui.define([
    
             state_overlay.ctrl = ctrl_obj.get_ctrl(ctrl_obj, top_obj);
             return state_overlay;
-
-         } else{
-
-            let top_obj = state.object;
-            while (top_obj.eve_el === undefined)
-               top_obj = top_obj.parent;
-   
-            state.top_object = top_obj;
-            state.eve_el = top_obj.eve_el;
-   
-            if (state.eve_el.fSecondarySelect)
-               this.rqt.pick_instance(state);
-   
-            this.rqt.pick_end();
-   
-            state.w = this.canvas.width;
-            state.h = this.canvas.height;
-            state.mouse = new RC.Vector2( ((x + 0.5) / state.w) * 2 - 1,
-                                         -((y + 0.5) / state.h) * 2 + 1 );
-   
-            let ctrl_obj = state.object;
-            while (ctrl_obj.get_ctrl === undefined)
-               ctrl_obj = ctrl_obj.parent;
-   
-            state.ctrl = ctrl_obj.get_ctrl(ctrl_obj, top_obj);
-            return state;
-
-         }
-
       }
 
       //==============================================================================
@@ -986,6 +1009,54 @@ sap.ui.define([
 
             this.controller.created_scenes[0].processElementSelected(null, [], event);
          }
+
+
+      }
+
+      handleOverlayMouseUp()
+      {
+         console.log("handleOverlayMouseUp");
+         this.firstMouseDown = true;
+      }
+
+      handleOverlayMouseDown(event)
+      {
+         console.log("handleOverlayMouseDown");
+         let x = event.offsetX * this.canvas.pixelRatio;
+         let y = event.offsetY * this.canvas.pixelRatio;
+         //let overlay_pstate = this.render_for_Overlay_picking(x, y, false);
+         let overlay_pstate = this.render_for_picking(x, y, false); //change
+
+
+
+         if(overlay_pstate && this.firstMouseDown)
+         {
+             this.initialMouseX = x;
+             this.initialMouseY = y;
+             let c = overlay_pstate.ctrl;
+             this.pickedOverlayObj = overlay_pstate.object;
+             this.firstMouseDown = false;
+     
+         }
+      }
+
+      handleOverlayMouseMove(event)
+      {
+         console.log("handleOverlayMouseMove");
+
+         if(!this.firstMouseDown)
+         {
+            let speed = 0.3;
+            let x = event.offsetX * this.canvas.pixelRatio;
+            let y = event.offsetY * this.canvas.pixelRatio;
+    
+            this.pickedOverlayObj.translateX((x - this.initialMouseX)*speed);
+            this.pickedOverlayObj.translateY((this.initialMouseY - y)*speed);
+            this.initialMouseX = x;
+            this.initialMouseY = y;
+    
+            //textScreen.setOffset([x, canvas.height - y]);
+         } 
       }
 
       timeStampAttributesAndTextures() {
