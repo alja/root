@@ -880,7 +880,6 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
 
       makeZText(ZText, rnr_data)
       {
-         console.log("ZText", ZText);
          let textureName;
          let fontType;
          let fontColor = RcCol(ZText.fFontColor);
@@ -937,14 +936,15 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
                 font: fontType,
             }
         );
+        text.position.copy(new RC.Vector3(ZText.fPosX, ZText.fPosY, ZText.fPosZ));
+        /*
         text.positionX = ZText.fPosX;
         text.positionY = ZText.fPosY;
-        text.positionZ = ZText.fPosZ;
-
+        text.positionZ = ZText.fPosZ;*/
 
         this.GetRgbaTexture(textureName, this.AddTextureToMaterialMap.bind(this, text));
+        
         let bool = this.RcPickable(ZText, text);
-        console.log("pick_bool", bool);
         return text;
       }
 

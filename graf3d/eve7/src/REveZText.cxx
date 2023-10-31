@@ -76,18 +76,7 @@ fRenderData = std::make_unique<REveRenderData>("makeZText");
 
 // TODO write fPosition and fFontSize here ...
 fRenderData->PushV(0.f, 0.f, 0.f); // frite floats so the data is not empty
-/*
-   fRenderData = std::make_unique<REveRenderData>("makeZText", 3 * NP);
 
-   fRenderData->PushV(fApex);
-
-   Float_t angle_step = TMath::TwoPi() / fNDiv;
-   Float_t angle      = 0;
-   for (Int_t i = 0; i < fNDiv; ++i, angle += angle_step)
-   {
-      fRenderData->PushV( CalcBaseVec(angle) );
-   }
-   */
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -95,5 +84,5 @@ fRenderData->PushV(0.f, 0.f, 0.f); // frite floats so the data is not empty
 
 void REveZText::ComputeBBox()
 {
-   BBoxInit();
+   //BBoxInit();
 }
