@@ -42,6 +42,8 @@ sap.ui.define([
 
          this.initialMouseX;
          this.initialMouseY;
+         this.lastOffsetX;
+         this.lastOffsetY;
          this.firstMouseDown = true;
          this.pickedOverlayObj;
       }
@@ -1021,6 +1023,12 @@ sap.ui.define([
       {
          console.log("handleOverlayMouseUp");
          this.firstMouseDown = true;
+         this.overlay_scene.children[0].children[0].setNewPositionOffset(this.lastOffsetX, this.lastOffsetY); 
+
+         this.lastOffsetX = 0;
+         this.lastOffsetY = 0;
+         this.initialMouseX = 0;
+         this.initialMouseY = 0;
       }
 
       handleOverlayMouseDown(event)
@@ -1030,20 +1038,16 @@ sap.ui.define([
          let y = event.offsetY * this.canvas.pixelRatio;
          console.log("X Y", x, y);
          let overlay_pstate = this.render_for_Overlay_picking(x, y, false);
-         //let overlay_pstate = this.render_for_picking(x, y, false); //change
 
 
 
-         if(overlay_pstate && this.firstMouseDown)
+         if(this.firstMouseDown /*&& overlay_pstate*/)
          {
              this.initialMouseX = x;
              this.initialMouseY = y;
-             let c = overlay_pstate.ctrl;
-             this.pickedOverlayObj = overlay_pstate.object;
+             //let c = overlay_pstate.ctrl;
+             //this.pickedOverlayObj = overlay_pstate.object;
              this.firstMouseDown = false;
-
-
-             console.log("pickedOverlayObj 1", this.pickedOverlayObj, this.overlay_scene.children);
          }
       }
 
@@ -1053,18 +1057,17 @@ sap.ui.define([
 
          if(!this.firstMouseDown)
          {
-            let speed = 0.5;
+            let speed = 2;
             let x = event.offsetX * this.canvas.pixelRatio;
             let y = event.offsetY * this.canvas.pixelRatio;
-    
-            this.pickedOverlayObj.translateX((x - this.initialMouseX)*speed);
-            this.pickedOverlayObj.translateY((this.initialMouseY - y)*speed);
-            this.initialMouseX = x;
-            this.initialMouseY = y;  
 
-            console.log("pickedOverlayObj 2", this.pickedOverlayObj, this.overlay_scene.children);
+            this.lastOffsetX = (x - this.initialMouseX)*speed;
+            this.lastOffsetY = (this.initialMouseY - y)*speed;
 
-            //textScreen.setOffset([x, canvas.height - y]);
+            //this.pickedOverlayObj.setOffset([this.lastOffsetX, this.lastOffsetY]);
+            this.overlay_scene.children[0].children[0].setOffset([this.lastOffsetX, this.lastOffsetY]); 
+
+
          } 
       }
 
