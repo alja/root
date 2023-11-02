@@ -321,7 +321,11 @@ sap.ui.define([
          });
 
          dome.addEventListener("mousedown", function(event) {
-            glc.handleOverlayMouseDown(event);
+            if (event.button == 0)
+            {
+               glc.handleOverlayMouseDown(event);
+
+            }
          });
 
          dome.addEventListener("mousemove", function(event) {
@@ -734,14 +738,14 @@ sap.ui.define([
 
          if (this.canvas.width <= 0 || this.canvas.height <= 0) return null;
 
-         this.rqt.pick_begin(x, y);
+         //this.rqt.pick_begin(x, y);
 
          let state_overlay = this.rqt.pick_overlay(x, y, detect_depth);
 
          console.log("Overlay pick state", state_overlay);
 
          if (state_overlay.object === null) {
-            this.rqt.pick_end();
+            //this.rqt.pick_end();
             return null;
          }
 
@@ -755,7 +759,7 @@ sap.ui.define([
             if (state_overlay.eve_el.fSecondarySelect)
                this.rqt.pick_instance_overlay(state_overlay);
    
-            this.rqt.pick_end();
+            //this.rqt.pick_end();
    
             state_overlay.w = this.canvas.width;
             state_overlay.h = this.canvas.height;
@@ -1024,8 +1028,9 @@ sap.ui.define([
          console.log("handleOverlayMouseDown");
          let x = event.offsetX * this.canvas.pixelRatio;
          let y = event.offsetY * this.canvas.pixelRatio;
-         //let overlay_pstate = this.render_for_Overlay_picking(x, y, false);
-         let overlay_pstate = this.render_for_picking(x, y, false); //change
+         console.log("X Y", x, y);
+         let overlay_pstate = this.render_for_Overlay_picking(x, y, false);
+         //let overlay_pstate = this.render_for_picking(x, y, false); //change
 
 
 
@@ -1036,7 +1041,9 @@ sap.ui.define([
              let c = overlay_pstate.ctrl;
              this.pickedOverlayObj = overlay_pstate.object;
              this.firstMouseDown = false;
-     
+
+
+             console.log("pickedOverlayObj 1", this.pickedOverlayObj, this.overlay_scene.children);
          }
       }
 
@@ -1046,15 +1053,17 @@ sap.ui.define([
 
          if(!this.firstMouseDown)
          {
-            let speed = 0.3;
+            let speed = 0.5;
             let x = event.offsetX * this.canvas.pixelRatio;
             let y = event.offsetY * this.canvas.pixelRatio;
     
             this.pickedOverlayObj.translateX((x - this.initialMouseX)*speed);
             this.pickedOverlayObj.translateY((this.initialMouseY - y)*speed);
             this.initialMouseX = x;
-            this.initialMouseY = y;
-    
+            this.initialMouseY = y;  
+
+            console.log("pickedOverlayObj 2", this.pickedOverlayObj, this.overlay_scene.children);
+
             //textScreen.setOffset([x, canvas.height - y]);
          } 
       }
