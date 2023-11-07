@@ -100,7 +100,7 @@ void makeTexts(int N_Texts, REveElement *textHolder)
    {
       auto text = new REveZText(Form("Text_%d",i ));
       text -> SetFontColor(kViolet - r.Uniform(0, 50));
-      REveVector pos(r.Uniform(0.0, 1.0), r.Uniform(0.0, 1.0), r.Uniform(0.0, 1.0));
+      REveVector pos(r.Uniform(0.0, 0.7), r.Uniform(0.0, 1.0), r.Uniform(0.0, 1.0));
       text -> SetPosition(pos);
       text -> SetFontSize(r.Uniform(0.01, 0.1));
       text -> SetFont(r.Uniform(1, 6));

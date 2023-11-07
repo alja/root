@@ -40,10 +40,10 @@ sap.ui.define([
          this._selection_map = {};
          this._selection_list = [];
 
-         this.initialMouseX;
-         this.initialMouseY;
-         this.lastOffsetX;
-         this.lastOffsetY;
+         this.initialMouseX = 0;
+         this.initialMouseY = 0;
+         this.lastOffsetX = 0;
+         this.lastOffsetY = 0;
          this.firstMouseDown = true;
          this.pickedOverlayObj;
       }
