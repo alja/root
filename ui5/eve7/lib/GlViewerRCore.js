@@ -577,14 +577,16 @@ sap.ui.define([
                      fontTexture: fontTexture,
                      xPos: 0,
                      yPos: 0,
-                     fontSize: 350,
+                     fontSize: 0.03,
                      cellAspect: 8 / 16,
                      mode: RC.ZTEXT_SPACE_WORLD,
                      fontHinting: 1.0,
                      color: new RC.Color(0.0,0.0,0.0),
                      sdf_tex_width: fontTexture.image.width,
                      sdf_tex_height: fontTexture.image.height,
-                     font: RC.dejavu_font
+                     font: RC.dejavu_font,
+                     screenW: this.canvas.width,
+                     screenH: this.canvas.height
                   }
                );
                text.position.copy(ax.p);
@@ -1055,16 +1057,15 @@ sap.ui.define([
 
       handleOverlayMouseMove(event)
       {
-         console.log("handleOverlayMouseMove");
+         //console.log("handleOverlayMouseMove");
 
          if(!this.firstMouseDown)
          {
-            let speed = 2;
             let x = event.offsetX * this.canvas.pixelRatio;
             let y = event.offsetY * this.canvas.pixelRatio;
 
-            this.lastOffsetX = (x - this.initialMouseX)*speed;
-            this.lastOffsetY = (this.initialMouseY - y)*speed;
+            this.lastOffsetX = (x - this.initialMouseX)/this.canvas.width;
+            this.lastOffsetY = (this.initialMouseY - y)/this.canvas.height;
 
             //this.pickedOverlayObj.setOffset([this.lastOffsetX, this.lastOffsetY]);
             this.overlay_scene.children[0].children[0].setOffset([this.lastOffsetX, this.lastOffsetY]); 

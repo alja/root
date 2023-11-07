@@ -31,12 +31,16 @@ private:
 
 protected:
    std::string fText{"INITIALIZE"};
-   Int_t fFontSize{80};
+   Float_t fFontSize{80};
    Float_t fFontHinting{1.0};
    Int_t fMode{1};
    REveVector fPosition{10, 1600,1};
    Color_t fFontColor{kMagenta};
    Int_t fFont{1};
+   Int_t fScreenWidth{1425};
+   Int_t fScreenHeight{822};
+
+
 
 public:
    REveZText(const Text_t *n = "REveZText", const Text_t *t = "");
@@ -47,8 +51,8 @@ public:
 
    void ComputeBBox() override;
 
-   Int_t GetFontSize() const { return fFontSize; }
-   void SetFontSize(Int_t size) { fFontSize = size; }
+   Float_t GetFontSize() const { return fFontSize; }
+   void SetFontSize(Float_t size) { fFontSize = size; }
 
    Int_t GetMode() const { return fMode; }
    void SetMode(Int_t mode) { fMode = mode;}
@@ -68,8 +72,11 @@ public:
    Int_t GetFont() const { return fFont; }
    void SetFont(Int_t font) { fFont = font;}
 
+   Int_t GetScreenWidth() const { return fScreenWidth; }
+   void SetScreenWidth(Int_t screenW) { fScreenWidth = screenW;}
 
-
+   Int_t GetScreenHeight() const { return fScreenHeight; }
+   void SetScreenHeight(Int_t screenH) { fScreenHeight = screenH;}
 };
 
 }// namespace Experimental

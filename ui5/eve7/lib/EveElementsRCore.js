@@ -934,13 +934,11 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
                 sdf_tex_width: 1024,
                 sdf_tex_height: 1024,
                 font: fontType,
+                screenW: ZText.fScreenW,
+                screenH: ZText.fScreenH
             }
         );
         text.position.copy(new RC.Vector3(ZText.fPosX, ZText.fPosY, ZText.fPosZ));
-        /*
-        text.positionX = ZText.fPosX;
-        text.positionY = ZText.fPosY;
-        text.positionZ = ZText.fPosZ;*/
 
         this.GetRgbaTexture(textureName, this.AddTextureToMaterialMap.bind(this, text));
         

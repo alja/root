@@ -54,7 +54,8 @@ Int_t REveZText::WriteCoreJson(nlohmann::json &t, Int_t rnr_offset)
    t["fPosX"] = pos.fX;
    t["fPosY"] = pos.fY;
    t["fPosZ"] = pos.fZ;
-
+   t["fScreenW"] = GetScreenWidth();
+   t["fScreenH"] = GetScreenHeight();
 
    return ret;
 }
