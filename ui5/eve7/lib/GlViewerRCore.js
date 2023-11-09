@@ -706,7 +706,7 @@ sap.ui.define([
 
          let state = this.rqt.pick(x, y, detect_depth);
          
-         console.log("pick state", state);
+         console.log("pick state object", state.object);
 
          if (state.object === null) {
             this.rqt.pick_end();
@@ -741,18 +741,18 @@ sap.ui.define([
 
       render_for_Overlay_picking(x, y, detect_depth)
       {
-         // console.log("RENDER FOR PICKING", this.scene, this.camera, this.canvas, this.renderer);
+         // console.log("RENDER FOR OVERLAY PICKING", this.scene, this.camera, this.canvas, this.renderer);
 
          if (this.canvas.width <= 0 || this.canvas.height <= 0) return null;
 
-         //this.rqt.pick_begin(x, y);
+         this.rqt.pick_begin(x, y);
 
          let state_overlay = this.rqt.pick_overlay(x, y, detect_depth);
 
          console.log("Overlay pick state", state_overlay);
 
          if (state_overlay.object === null) {
-            //this.rqt.pick_end();
+            this.rqt.pick_end();
             return null;
          }
 
@@ -766,7 +766,7 @@ sap.ui.define([
             if (state_overlay.eve_el.fSecondarySelect)
                this.rqt.pick_instance_overlay(state_overlay);
    
-            //this.rqt.pick_end();
+            this.rqt.pick_end();
    
             state_overlay.w = this.canvas.width;
             state_overlay.h = this.canvas.height;
