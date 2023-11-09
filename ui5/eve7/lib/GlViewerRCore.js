@@ -45,7 +45,9 @@ sap.ui.define([
          this.lastOffsetX = 0;
          this.lastOffsetY = 0;
          this.firstMouseDown = true;
+         this.scale = false;
          this.pickedOverlayObj;
+         this.initialSize = 0;
       }
 
       init(controller)
@@ -323,7 +325,8 @@ sap.ui.define([
          });
 
          dome.addEventListener("mousedown", function(event) {
-            if (event.button == 0)
+            console.log("event mousedown", event);
+            if (event.button == 0 || event.button == 2)
             {
                glc.handleOverlayMouseDown(event);
 
@@ -1031,6 +1034,9 @@ sap.ui.define([
          this.lastOffsetY = 0;
          this.initialMouseX = 0;
          this.initialMouseY = 0;
+         this.scale = false;
+         this.initialSize = 0;
+
       }
 
       handleOverlayMouseDown(event)
@@ -1038,7 +1044,6 @@ sap.ui.define([
          console.log("handleOverlayMouseDown");
          let x = event.offsetX * this.canvas.pixelRatio;
          let y = event.offsetY * this.canvas.pixelRatio;
-         console.log("X Y", x, y);
          let overlay_pstate = this.render_for_Overlay_picking(x, y, false);
 
 
@@ -1050,6 +1055,13 @@ sap.ui.define([
              //let c = overlay_pstate.ctrl;
              //this.pickedOverlayObj = overlay_pstate.object;
              this.firstMouseDown = false;
+
+             if(event.button == 2)
+             {
+               this.scale = true;
+               this.initialSize = this.overlay_scene.children[0].children[0].fontSize;
+
+             }
          }
       }
 
@@ -1062,11 +1074,18 @@ sap.ui.define([
             let x = event.offsetX * this.canvas.pixelRatio;
             let y = event.offsetY * this.canvas.pixelRatio;
 
-            this.lastOffsetX = (x - this.initialMouseX)/this.canvas.width;
-            this.lastOffsetY = (this.initialMouseY - y)/this.canvas.height;
+            if(!this.scale)
+            {
+               this.lastOffsetX = (x - this.initialMouseX)/this.canvas.width;
+               this.lastOffsetY = (this.initialMouseY - y)/this.canvas.height;
+               //this.pickedOverlayObj.setOffset([this.lastOffsetX, this.lastOffsetY]);
+               this.overlay_scene.children[0].children[0].setOffset([this.lastOffsetX, this.lastOffsetY]); 
+            }
+            else 
+            {
+               this.overlay_scene.children[0].children[0].fontSize = this.initialSize + (x - this.initialMouseX);
+            }
 
-            //this.pickedOverlayObj.setOffset([this.lastOffsetX, this.lastOffsetY]);
-            this.overlay_scene.children[0].children[0].setOffset([this.lastOffsetX, this.lastOffsetY]); 
 
 
          } 
