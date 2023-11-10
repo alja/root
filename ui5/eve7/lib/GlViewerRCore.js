@@ -1036,6 +1036,10 @@ sap.ui.define([
          this.initialMouseY = 0;
          this.scale = false;
          this.initialSize = 0;
+         this.controls.enablePan = true;
+         this.controls.enableRotate = true;
+
+
 
       }
 
@@ -1059,9 +1063,13 @@ sap.ui.define([
              if(event.button == 2)
              {
                this.scale = true;
+               this.controls.enablePan = false;
                this.initialSize = this.overlay_scene.children[0].children[0].fontSize;
 
              }
+             else
+               this.controls.enableRotate = false;
+
          }
       }
 
@@ -1085,6 +1093,7 @@ sap.ui.define([
             {
                this.overlay_scene.children[0].children[0].fontSize = this.initialSize + (x - this.initialMouseX);
             }
+            this.render();
 
 
 
