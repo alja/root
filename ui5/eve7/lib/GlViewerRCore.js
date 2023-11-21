@@ -173,7 +173,7 @@ sap.ui.define([
          // guides
          this.axis = new RC.Group();
          this.axis.name = "Axis";
-         this.scene.add(this.axis);
+         this.overlay_scene.add(this.axis);
 
          if (this.controller.isEveCameraPerspective())
          {
@@ -556,6 +556,7 @@ sap.ui.define([
          }
 
          let ag = this.axis;
+         let canvas = this.canvas;
          let fgCol = this.fgCol;
          const fontImgLoader = new RC.ImageLoader();
          let tname = this.eve_path + "textures/dejavu-serif.png";
@@ -589,8 +590,8 @@ sap.ui.define([
                      sdf_tex_width: fontTexture.image.width,
                      sdf_tex_height: fontTexture.image.height,
                      font: RC.dejavu_font,
-                     screenW: this.canvas.width,
-                     screenH: this.canvas.height
+                     screenW: canvas.width,
+                     screenH: canvas.height
                   }
                );
                text.position.copy(ax.p);
@@ -745,14 +746,14 @@ sap.ui.define([
 
          if (this.canvas.width <= 0 || this.canvas.height <= 0) return null;
 
-         //this.rqt.pick_begin(x, y);
+         this.rqt.pick_begin(x, y);
 
          let state_overlay = this.rqt.pick_overlay(x, y, detect_depth);
 
          console.log("Overlay pick state", state_overlay);
 
          if (state_overlay.object === null) {
-            //this.rqt.pick_end();
+            this.rqt.pick_end();
             return null;
          }
 
@@ -766,7 +767,7 @@ sap.ui.define([
             if (state_overlay.eve_el.fSecondarySelect)
                this.rqt.pick_instance_overlay(state_overlay);
    
-            //this.rqt.pick_end();
+            this.rqt.pick_end();
    
             state_overlay.w = this.canvas.width;
             state_overlay.h = this.canvas.height;
@@ -1027,20 +1028,20 @@ sap.ui.define([
       handleOverlayMouseUp()
       {
          console.log("handleOverlayMouseUp");
-         this.firstMouseDown = true;
-         this.overlay_scene.children[0].children[0].setNewPositionOffset(this.lastOffsetX, this.lastOffsetY); 
-
-         this.lastOffsetX = 0;
-         this.lastOffsetY = 0;
-         this.initialMouseX = 0;
-         this.initialMouseY = 0;
-         this.scale = false;
-         this.initialSize = 0;
-         this.controls.enablePan = true;
-         this.controls.enableRotate = true;
-
-
-
+         if(this.firstMouseDown == false)
+         {
+            this.firstMouseDown = true;
+            //this.overlay_scene.children[0].children[0].setNewPositionOffset(this.lastOffsetX, this.lastOffsetY); 
+            this.pickedOverlayObj.setNewPositionOffset(this.lastOffsetX, this.lastOffsetY); 
+            this.lastOffsetX = 0;
+            this.lastOffsetY = 0;
+            this.initialMouseX = 0;
+            this.initialMouseY = 0;
+            this.scale = false;
+            this.initialSize = 0;
+            this.controls.enablePan = true;
+            this.controls.enableRotate = true;
+         }
       }
 
       handleOverlayMouseDown(event)
@@ -1052,20 +1053,20 @@ sap.ui.define([
 
 
 
-         if(this.firstMouseDown /*&& overlay_pstate*/)
+         if(this.firstMouseDown && overlay_pstate)
          {
              this.initialMouseX = x;
              this.initialMouseY = y;
              //let c = overlay_pstate.ctrl;
-             //this.pickedOverlayObj = overlay_pstate.object;
+             this.pickedOverlayObj = overlay_pstate.object;
              this.firstMouseDown = false;
 
              if(event.button == 2)
              {
                this.scale = true;
                this.controls.enablePan = false;
-               this.initialSize = this.overlay_scene.children[0].children[0].fontSize;
-
+               //this.initialSize = this.overlay_scene.children[0].children[0].fontSize;
+               this.initialSize = this.pickedOverlayObj.fontSize;
              }
              else
                this.controls.enableRotate = false;
@@ -1086,12 +1087,15 @@ sap.ui.define([
             {
                this.lastOffsetX = (x - this.initialMouseX)/this.canvas.width;
                this.lastOffsetY = (this.initialMouseY - y)/this.canvas.height;
-               //this.pickedOverlayObj.setOffset([this.lastOffsetX, this.lastOffsetY]);
-               this.overlay_scene.children[0].children[0].setOffset([this.lastOffsetX, this.lastOffsetY]); 
+               //this.overlay_scene.children[0].children[0].setOffset([this.lastOffsetX, this.lastOffsetY]); 
+               this.pickedOverlayObj.setOffset([this.lastOffsetX, this.lastOffsetY]); 
+
             }
             else 
             {
-               this.overlay_scene.children[0].children[0].fontSize = this.initialSize + (x - this.initialMouseX);
+               //this.overlay_scene.children[0].children[0].fontSize = this.initialSize + (x - this.initialMouseX);
+               this.pickedOverlayObj.fontSize = this.initialSize + (x - this.initialMouseX);
+
             }
             this.render();
 
