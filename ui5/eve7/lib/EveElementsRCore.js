@@ -1108,7 +1108,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
          }
          shm.addInstanceData(tex_insta_pos_shape);
          shm.instanceData[0].flipy = false;
-         let geo = (boxset.boxType == 6) ? RC.ZShape.makeHexagonGeometry() : RC.ZShape.makeCubeGeometry();
+         let geo = (boxset.shapeType == 1) ? RC.ZShape.makeHexagonGeometry() : RC.ZShape.makeCubeGeometry();
          let zshape = new RC.ZShape(geo, shm);
          zshape.instanceCount = SN;
          zshape.frustumCulled = false;

@@ -22,7 +22,7 @@ std::string customTooltip(const ROOT::Experimental::REveDigitSet *digitSet, int 
    return TString::Format("Custom tooltip:\n value %d idx %d\n", d->fValue, n).Data();
 }
 
-REveBoxSet* boxset(Int_t num=100)
+REveBoxSet* boxset_free(Int_t num=100)
 {
    auto eveMng = REveManager::Create();
 
@@ -56,7 +56,7 @@ REveBoxSet* boxset(Int_t num=100)
                            x - a + RND_BOX(d), y + a + RND_BOX(d), z + a + RND_BOX(d),
                            x + a + RND_BOX(d), y + a + RND_BOX(d), z + a + RND_BOX(d),
                            x + a + RND_BOX(d), y - a + RND_BOX(d), z + a + RND_BOX(d) };
-      q->AddBox(verts);
+      q->AddFreeBox(verts);
       q->DigitValue(r.Uniform(0, 130));
    }
    q->RefitPlex();
@@ -93,9 +93,9 @@ REveBoxSet* boxset_axisaligned(Float_t x=0, Float_t y=0, Float_t z=0,
    auto q = new REveBoxSet("BoxSet");
    q->SetPalette(pal);
    q->SetFrame(frm);
-   q->Reset(REveBoxSet::kBT_AABox, kFALSE, 64);
+   q->Reset(REveBoxSet::kBT_InstancedScaled, kFALSE, 64);
    for (Int_t i=0; i<num; ++i) {
-      q->AddBox(r.Uniform(-10, 10), r.Uniform(-10, 10), r.Uniform(-10, 10),
+      q->AddInstanceScaled(r.Uniform(-10, 10), r.Uniform(-10, 10), r.Uniform(-10, 10),
                 r.Uniform(0.2, 1),  r.Uniform(0.2, 1),  r.Uniform(0.2, 1));
       q->DigitValue(r.Uniform(0, 130));
    }
@@ -125,9 +125,9 @@ REveBoxSet* boxset_colisval(Float_t x=0, Float_t y=0, Float_t z=0,
    TRandom r(0);
 
    auto q = new REveBoxSet("BoxSet");
-   q->Reset(REveBoxSet::kBT_AABox, kTRUE, 64);
+   q->Reset(REveBoxSet::kBT_InstancedScaled, kTRUE, 64);
    for (Int_t i=0; i<num; ++i) {
-      q->AddBox(r.Uniform(-10, 10), r.Uniform(-10, 10), r.Uniform(-10, 10),
+      q->AddInstanceScaled(r.Uniform(-10, 10), r.Uniform(-10, 10), r.Uniform(-10, 10),
                 r.Uniform(0.2, 1),  r.Uniform(0.2, 1),  r.Uniform(0.2, 1));
       q->DigitColor(r.Uniform(20, 255), r.Uniform(20, 255),
                     r.Uniform(20, 255), r.Uniform(20, 255));
@@ -158,10 +158,10 @@ REveBoxSet* boxset_single_color(Float_t x=0, Float_t y=0, Float_t z=0,
    q->SetMainColorPtr(new Color_t);
    q->SetMainColor(kRed);
    q->SetMainTransparency(50);
-   q->Reset(REveBoxSet::kBT_AABox, kFALSE, 64);
+   q->Reset(REveBoxSet::kBT_InstancedScaled, kFALSE, 64);
 
    for (Int_t i=0; i<num; ++i) {
-      q->AddBox(r.Uniform(-10, 10), r.Uniform(-10, 10), r.Uniform(-10, 10),
+      q->AddInstanceScaled(r.Uniform(-10, 10), r.Uniform(-10, 10), r.Uniform(-10, 10),
                 r.Uniform(0.2, 1),  r.Uniform(0.2, 1),  r.Uniform(0.2, 1));
    }
    q->RefitPlex();
@@ -177,6 +177,36 @@ REveBoxSet* boxset_single_color(Float_t x=0, Float_t y=0, Float_t z=0,
    return q;
 }
 
+REveBoxSet* boxset_fixed_dim(Float_t x=0, Float_t y=0, Float_t z=0,
+                                Int_t num=100, Bool_t registerSet=kTRUE)
+{
+   auto eveMng = REveManager::Create();
+
+   TRandom r(0);
+
+   auto q = new REveBoxSet("BoxSet");
+   q->UseSingleColor();
+   q->SetMainColorPtr(new Color_t);
+   q->SetMainColor(kRed);
+   q->SetMainTransparency(50);
+   q->Reset(REveBoxSet::kBT_Instanced, kFALSE, 64);
+
+   for (Int_t i=0; i<num; ++i) {
+      q->AddInstance(r.Uniform(-10, 10), r.Uniform(-10, 10), r.Uniform(-10, 10));
+   }
+   q->RefitPlex();
+
+   q->SetPickable(1);
+   q->SetAlwaysSecSelect(1);
+   REveTrans& t = q->RefMainTrans();
+   t.SetPos(x, y, z);
+   if (registerSet) {
+      eveMng->GetEventScene()->AddElement(q);
+      eveMng->Show();
+   }
+
+   return q;
+}
 
 REveBoxSet* boxset_hex(Float_t x=0, Float_t y=0, Float_t z=0,
                        Int_t num=100, Bool_t registerSet=kTRUE)
@@ -184,9 +214,9 @@ REveBoxSet* boxset_hex(Float_t x=0, Float_t y=0, Float_t z=0,
    auto eveMng = REveManager::Create();
 
    TRandom r(0);
-
+  
    auto q = new REveBoxSet("BoxSet");
-   q->Reset(REveBoxSet::kBT_Hex, kTRUE, 64);
+   q->Reset(REveBoxSet::kBT_InstancedScaledRotated, kTRUE, 64);
 
    for (Int_t i=0; i<num; ++i) {
       q->AddHex(REveVector(r.Uniform(-10, 10), r.Uniform(-10, 10), r.Uniform(-10, 10)),
@@ -210,4 +240,79 @@ REveBoxSet* boxset_hex(Float_t x=0, Float_t y=0, Float_t z=0,
 
    return q;
 }
+
+
+REveBoxSet* boxset_gentrans(Float_t x=0, Float_t y=0, Float_t z=0, int num = 10)
+{
+   auto eveMng = REveManager::Create();
+
+   REvePointSet *ps = new REvePointSet("btpnts", "list of eve points", num);
+   ps->SetMarkerColor(kMagenta);
+   ps->SetMarkerSize(15);
+   ps->SetMarkerStyle(3);
+   eveMng->GetEventScene()->AddElement(ps);
+
+   auto q = new REveBoxSet("BoxSet-GenTrans");
+   q->Reset(REveBoxSet::kBT_InstancedScaledRotated, kTRUE, 64);
+
+   TRandom r(0);
+   for (Int_t i=0; i< num; ++i) {
+   printf("make gen trans for shape \n");
+     REveTrans t;
+     float x = 50 - i*10;
+     t.Move3LF(x, 0, 0);
+     ps->SetNextPoint(x, 0, 0);
+
+     t.Scale(1, 1, 10);
+     t.RotateLF(1, 2, r.Uniform(3.14));
+   //  t.RotateLF(2, 3, r.Uniform(1));
+     t.Print();
+
+     float farr[16];
+     for (int m=0; m<16; m++)farr[m] = t.Array()[m];
+     q->AddInstanceMat4(farr);
+     q->DigitColor(255, 0, 0, 100); // AMT how the treansparency handled, last ergument alpha
+   }
+   q->RefitPlex();
+   q->SetPickable(true);
+   q->SetAlwaysSecSelect(true);
+
+   REveTrans& t = q->RefMainTrans();
+   t.SetPos(x, y, z);
+
+   eveMng->GetEventScene()->AddElement(q);
+   eveMng->Show();
+
+   return q;
+}
+
+
+
+REvePointSet *createPointSet(int npoints = 20, float s = 20, int color = 28)
+{
+   TRandom &r = *gRandom;
+   REvePointSet *ps = new REvePointSet("MyTestPoints", "list of eve points", npoints);
+
+   for (Int_t i=0; i < npoints; ++i)
+      ps->SetNextPoint(r.Uniform(-s,s), r.Uniform(-s,s), r.Uniform(-s,s));
+
+   ps->SetMarkerColor(kBlue);
+   ps->SetMarkerSize(5 + r.Uniform(1, 15));
+   ps->SetMarkerStyle(4);
+    ROOT::Experimental::gEve->GetEventScene()->AddElement(ps);
+   return ps;
+}
+
+void boxset()
+{
+  // boxset_gentrans();
+ // boxset_free();
+ // boxset_axisaligned();
+  //boxset_hex();
+
+  boxset_fixed_dim();
+  //boxset_single_color();
+   createPointSet();
+}
+
 

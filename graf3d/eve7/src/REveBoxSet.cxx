@@ -14,6 +14,7 @@
 #include "ROOT/REveRenderData.hxx"
 #include "ROOT/REveRGBAPalette.hxx"
 #include "ROOT/REveManager.hxx"
+#include "ROOT/REveTrans.hxx"
 
 #include "TRandom.h"
 #include <cassert>
@@ -72,15 +73,12 @@ Int_t REveBoxSet::SizeofAtom(REveBoxSet::EBoxType_e bt)
    static const REveException eH("REveBoxSet::SizeofAtom ");
 
    switch (bt) {
-      case kBT_Undef:                return 0;
-      case kBT_FreeBox:              return sizeof(BFreeBox_t);
-      case kBT_AABox:                return sizeof(BAABox_t);
-      case kBT_AABoxFixedDim:        return sizeof(BAABoxFixedDim_t);
-      case kBT_Mat4Box:              return sizeof(BMat4Box_t);
-      case kBT_Cone:                 return sizeof(BCone_t);
-      case kBT_EllipticCone:         return sizeof(BEllipticCone_t);
-      case kBT_Hex:                  return sizeof(BHex_t);
-      default:                       throw(eH + "unexpected atom type.");
+      case kBT_Undef:                  return 0;
+      case kBT_FreeBox:                return sizeof(BFreeBox_t);
+      case kBT_Instanced:              return sizeof(Instanced_t);
+      case kBT_InstancedScaled:         return sizeof(InstancedScaled_t);
+      case kBT_InstancedScaledRotated:  return sizeof(InstancedScaledRotated_t);
+      default:                        throw(eH + "unexpected atom type.");
    }
    return 0;
 }
@@ -114,7 +112,7 @@ void REveBoxSet::Reset()
 /// Create a new box from a set of 8 vertices.
 /// To be used for box-type kBT_FreeBox.
 
-void REveBoxSet::AddBox(const Float_t* verts)
+void REveBoxSet::AddFreeBox(const Float_t* verts)
 {
    static const REveException eH("REveBoxSet::AddBox ");
 
@@ -131,15 +129,15 @@ void REveBoxSet::AddBox(const Float_t* verts)
 /// specified dimensions.
 /// To be used for box-type kBT_AABox.
 
-void REveBoxSet::AddBox(Float_t a, Float_t b, Float_t c, Float_t w, Float_t h, Float_t d)
+void REveBoxSet::AddInstanceScaled(Float_t a, Float_t b, Float_t c, Float_t w, Float_t h, Float_t d)
 {
    static const REveException eH("REveBoxSet::AddBox ");
 
-   if (fBoxType != kBT_AABox)
+   if (fBoxType != kBT_InstancedScaled)
       throw(eH + "expect axis-aligned box-type.");
 
-   BAABox_t* box = (BAABox_t*) NewDigit();
-   box->fA = a; box->fB = b; box->fC = c;
+   InstancedScaled_t* box = (InstancedScaled_t*) NewDigit();
+   box->fX = a; box->fY = b; box->fZ = c;
    box->fW = w; box->fH = h; box->fD = d;
 }
 
@@ -147,27 +145,27 @@ void REveBoxSet::AddBox(Float_t a, Float_t b, Float_t c, Float_t w, Float_t h, F
 /// Create a new axis-aligned box from at a given position.
 /// To be used for box-type kBT_AABoxFixedDim.
 
-void REveBoxSet::AddBox(Float_t a, Float_t b, Float_t c)
+void REveBoxSet::AddInstance(Float_t a, Float_t b, Float_t c)
 {
    static const REveException eH("REveBoxSet::AddBox ");
 
-   if (fBoxType != kBT_AABoxFixedDim)
+   if (fBoxType != kBT_Instanced)
       throw(eH + "expect axis-aligned fixed-dimension box-type.");
 
-   BAABoxFixedDim_t* box = (BAABoxFixedDim_t*) NewDigit();
-   box->fA = a; box->fB = b; box->fC = c;
+   Instanced_t* box = (Instanced_t*) NewDigit();
+   box->fX = a; box->fY = b; box->fZ = c;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Create shape with arbitrary transformtaion
 ///
-void REveBoxSet::AddMat4Box(const Float_t* arr)
+void REveBoxSet::AddInstanceMat4(const Float_t* arr)
 {
    static const REveException eH("REveBoxSet::AddMat4Box ");
-   if (fBoxType != kBT_Mat4Box)
+   if (fBoxType != kBT_InstancedScaledRotated)
       throw(eH + "expect Mat4 box-type.");
 
-   BMat4Box_t* b = (BMat4Box_t*) NewDigit();
+   InstancedScaledRotated_t* b = (InstancedScaledRotated_t*) NewDigit();
    memcpy(b->fMat, arr, sizeof(b->fMat));
 }
 
@@ -178,14 +176,15 @@ void REveBoxSet::AddMat4Box(const Float_t* arr)
 void REveBoxSet::AddCone(const REveVector& pos, const REveVector& dir, Float_t r)
 {
    static const REveException eH("REveBoxSet::AddCone ");
-
+/*
    if (fBoxType != kBT_Cone)
       throw(eH + "expect cone box-type.");
 
    BCone_t* cone = (BCone_t*) NewDigit();
    cone->fPos = pos;
    cone->fDir = dir;
-   cone->fR   = r;
+   cone->fR   = r;*/
+   throw (eH + "not implmented");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -197,6 +196,7 @@ void REveBoxSet::AddEllipticCone(const REveVector& pos, const REveVector& dir,
 {
    static const REveException eH("REveBoxSet::AddEllipticCone ");
 
+   /*
    if (fBoxType != kBT_EllipticCone)
       throw(eH + "expect elliptic-cone box-type.");
 
@@ -205,7 +205,8 @@ void REveBoxSet::AddEllipticCone(const REveVector& pos, const REveVector& dir,
    cone->fDir = dir;
    cone->fR   = r;
    cone->fR2  = r2;
-   cone->fAngle = angle;
+   cone->fAngle = angle;*/
+   throw (eH + "not implmented");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -215,18 +216,21 @@ void REveBoxSet::AddEllipticCone(const REveVector& pos, const REveVector& dir,
 
 void REveBoxSet::AddHex(const REveVector& pos, Float_t r, Float_t angle, Float_t depth)
 {
-   static const REveException eH("REveBoxSet::AddEllipticCone ");
+   static const REveException eH("REveBoxSet::AddHex ");
 
-   if (fBoxType != kBT_Hex)
+   if (fBoxType != kBT_InstancedScaledRotated)
       throw(eH + "expect hex box-type.");
 
-   BHex_t* hex = (BHex_t*) NewDigit();
-   hex->fPos   = pos;
-   hex->fR     = r;
-   hex->fAngle = angle;
-   hex->fDepth = depth;
-}
+   fShapeType = kHex; 
 
+   InstancedScaledRotated_t* hex = (InstancedScaledRotated_t*) NewDigit();
+   REveTrans t; // AMT do we need to reuse ???
+   t.SetPos(pos.fX, pos.fY, pos.fZ);
+   t.SetScale(r,r,depth);
+   t.RotatePF(1, 2, angle);
+   for(Int_t i=0; i<16; ++i)
+   hex->fMat[i] = t[i];
+}
 ////////////////////////////////////////////////////////////////////////////////
 /// Fill bounding-box information of the base-class TAttBBox (virtual method).
 /// If member 'REveFrameBox* fFrame' is set, frame's corners are used as bbox.
@@ -267,79 +271,30 @@ void REveBoxSet::ComputeBBox()
          break;
       }
 
-      case kBT_AABox:
+      case kBT_InstancedScaled:
       {
          while (bi.next()) {
-            BAABox_t& b = * (BAABox_t*) bi();
-            BBoxCheckPoint(b.fA, b.fB, b.fC);
-            BBoxCheckPoint(b.fA + b.fW, b.fB + b.fH , b.fC + b.fD);
+            InstancedScaled_t& b = * (InstancedScaled_t*) bi();
+            BBoxCheckPoint(b.fX, b.fY, b.fZ);
+            BBoxCheckPoint(b.fX + b.fW, b.fY + b.fH , b.fZ + b.fD);
          }
          break;
       }
 
-      case kBT_AABoxFixedDim:
+      case kBT_Instanced:
       {
          while (bi.next()) {
-            BAABoxFixedDim_t& b = * (BAABoxFixedDim_t*) bi();
-            BBoxCheckPoint(b.fA, b.fB, b.fC);
-            BBoxCheckPoint(b.fA + fDefWidth, b.fB + fDefHeight , b.fC + fDefDepth);
+            Instanced_t& b = * (Instanced_t*) bi();
+            BBoxCheckPoint(b.fX, b.fY, b.fZ);
+            BBoxCheckPoint(b.fX + fDefWidth, b.fY + fDefHeight , b.fZ + fDefDepth);
          }
          break;
       }
 
-      case kBT_Cone:
-      {
-         Float_t mag2=0, mag2Max=0, rMax=0;
-         while (bi.next()) {
-            BCone_t& b = * (BCone_t*) bi();
-            BBoxCheckPoint(b.fPos.fX, b.fPos.fY, b.fPos.fZ);
-            mag2 = b.fDir.Mag2();
-            if (mag2>mag2Max) mag2Max=mag2;
-            if (b.fR>rMax)    rMax=b.fR;
-         }
-         Float_t off = TMath::Sqrt(mag2Max + rMax*rMax);
-         fBBox[0] -= off; fBBox[2] -= off; fBBox[4] -= off;
-         fBBox[1] += off; fBBox[3] += off; fBBox[5] += off;
-         break;
-      }
-
-      case kBT_EllipticCone:
-      {
-         Float_t mag2=0, mag2Max=0, rMax=0;
-         while (bi.next()) {
-            BEllipticCone_t& b = * (BEllipticCone_t*) bi();
-            BBoxCheckPoint(b.fPos.fX, b.fPos.fY, b.fPos.fZ);
-            mag2 = b.fDir.Mag2();
-            if (mag2>mag2Max) mag2Max=mag2;
-            if (b.fR  > rMax) rMax = b.fR;
-            if (b.fR2 > rMax) rMax = b.fR2;
-         }
-         Float_t off = TMath::Sqrt(mag2Max + rMax*rMax);
-         fBBox[0] -= off;fBBox[2] -= off;fBBox[4] -= off;
-         fBBox[1] += off;fBBox[3] += off;fBBox[5] += off;
-         break;
-      }
-
-      case kBT_Hex:
+      case kBT_InstancedScaledRotated:
       {
          while (bi.next()) {
-            BHex_t& h = * (BHex_t*) bi();
-            BBoxCheckPoint(h.fPos.fX - h.fR, h.fPos.fY - h.fR, h.fPos.fZ);
-            BBoxCheckPoint(h.fPos.fX + h.fR, h.fPos.fY - h.fR, h.fPos.fZ);
-            BBoxCheckPoint(h.fPos.fX + h.fR, h.fPos.fY + h.fR, h.fPos.fZ);
-            BBoxCheckPoint(h.fPos.fX - h.fR, h.fPos.fY + h.fR, h.fPos.fZ);
-            BBoxCheckPoint(h.fPos.fX - h.fR, h.fPos.fY - h.fR, h.fPos.fZ + h.fDepth);
-            BBoxCheckPoint(h.fPos.fX + h.fR, h.fPos.fY - h.fR, h.fPos.fZ + h.fDepth);
-            BBoxCheckPoint(h.fPos.fX + h.fR, h.fPos.fY + h.fR, h.fPos.fZ + h.fDepth);
-            BBoxCheckPoint(h.fPos.fX - h.fR, h.fPos.fY + h.fR, h.fPos.fZ + h.fDepth);
-         }
-         break;
-      }
-
-      case kBT_Mat4Box:
-      {
-         while (bi.next()) {
-            BMat4Box_t& b = * (BMat4Box_t*) bi();
+            InstancedScaledRotated_t& b = * (InstancedScaledRotated_t*) bi();
             float* a = b.fMat;
             BBoxCheckPoint(a[12], a[13], a[14]);
          }
@@ -360,6 +315,7 @@ void REveBoxSet::ComputeBBox()
 Int_t REveBoxSet::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
 {
    j["boxType"] = int(fBoxType);
+   j["shapeType"] = int(fShapeType);
    j["instanced"] = Instanced();
    if (Instanced())
    {
@@ -368,15 +324,15 @@ Int_t REveBoxSet::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
       std::string instanceFlag;
       switch (fBoxType)
       {
-         case kBT_AABoxFixedDim:
+         case kBT_Instanced:
             instanceFlag = "FixedDimension";
             N_tex = N;
             break;
-         case kBT_AABox:
+         case kBT_InstancedScaled:
             instanceFlag = "ScalePerDigit";
             N_tex = 2*N;
             break;
-         case kBT_Mat4Box:
+         case kBT_InstancedScaledRotated:
            instanceFlag = "Mat4Trans";
            N_tex = 4*N;
            break;
@@ -484,17 +440,25 @@ void REveBoxSet::WriteShapeData(REveDigitSet::DigitBase_t &digit)
       break;
    }
 
-   case REveBoxSet::kBT_AABox: {
-      REveBoxSet::BAABox_t &b = (REveBoxSet::BAABox_t &)(digit);
+   case REveBoxSet::kBT_InstancedScaled: {
+      InstancedScaled_t &b = (InstancedScaled_t &)(digit);
       // position
-      fRenderData->PushV(b.fA, b.fB, b.fC);
+      fRenderData->PushV(b.fX, b.fY, b.fZ);
       fRenderData->PushV(GetColorFromDigitAsFloat(b)); // color ?
       fRenderData->PushV(b.fW, b.fH, b.fD);
       fRenderData->PushV(2.f); // trasp ?
       break;
    }
-   case REveBoxSet::kBT_Mat4Box: {
-      REveBoxSet::BMat4Box_t &b = (REveBoxSet::BMat4Box_t &)(digit);
+   case REveBoxSet::kBT_Instanced: {
+      Instanced_t &b =(Instanced_t &)(digit);
+      // position
+      fRenderData->PushV(b.fX, b.fY, b.fZ);
+      fRenderData->PushV(GetColorFromDigitAsFloat(b)); // color ?
+      fRenderData->PushV(2.f); // trasp ?
+      break;
+   }
+   case REveBoxSet::kBT_InstancedScaledRotated: {
+      InstancedScaledRotated_t &b = (InstancedScaledRotated_t &)(digit);
       float* a = b.fMat;
       fRenderData->PushV(a[12], a[13], a[14]);
       fRenderData->PushV(GetColorFromDigitAsFloat(b));
@@ -502,16 +466,6 @@ void REveBoxSet::WriteShapeData(REveDigitSet::DigitBase_t &digit)
       for (int i = 0; i < 12; i++) {
          fRenderData->PushV(a[i]);
       }
-      break;
-   }
-
-    case REveBoxSet::kBT_Hex: {
-      REveBoxSet::BHex_t  &b = (REveBoxSet::BHex_t &)(digit);
-      fRenderData->PushV(b.fPos);
-      fRenderData->PushV(GetColorFromDigitAsFloat(b));
-      fRenderData->PushV(b.fR, b.fR, b.fDepth);
-      fRenderData->PushV(2.f);// trasp ?
-
       break;
    }
 
@@ -524,13 +478,13 @@ void REveBoxSet::WriteShapeData(REveDigitSet::DigitBase_t &digit)
 
 void REveBoxSet::Test(Int_t nboxes)
 {
-   Reset(kBT_AABox, kTRUE, nboxes);
+   Reset(kBT_InstancedScaled, kTRUE, nboxes);
    TRandom rnd(0);
    const Float_t origin = 10, size = 2;
    Int_t color;
    for(Int_t i=0; i<nboxes; ++i)
    {
-      AddBox(origin * rnd.Uniform(-1, 1),
+      AddInstanceScaled(origin * rnd.Uniform(-1, 1),
              origin * rnd.Uniform(-1, 1),
              origin * rnd.Uniform(-1, 1),
              size   * rnd.Uniform(0.1, 1),
