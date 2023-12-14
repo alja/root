@@ -173,18 +173,21 @@ void REveBoxSet::AddInstanceMat4(const Float_t* arr)
 /// Create a cone with apex at pos, axis dir and radius r.
 /// To be used for box-type kBT_Cone.
 
-void REveBoxSet::AddCone(const REveVector& pos, const REveVector& idir, Float_t r)
+void REveBoxSet::AddCone(const REveVector& pos, const REveVector& dir, Float_t r)
 {
    static const REveException eH("REveBoxSet::AddCone ");
+   using namespace TMath;
    fShapeType = kCone;
 
-   REveVector dir( idir.fX, idir.fY, idir.fZ);
-   dir.Normalize();
-
    REveTrans t;
-   t.SetBaseVec(1, dir.fX, dir.fY, dir.fZ);
-   t.OrtoNorm3();
-   t.SetScale(idir.Mag(), r, r);
+   float  h = dir.Mag();
+   float phi   = ATan2(dir.fY, dir.fX);
+   float theta = ATan (dir.fZ / Sqrt(dir.fX*dir.fX + dir.fY*dir.fY));
+
+   t.SetScale(r, r, h);
+   theta =  Pi()/2 -theta;
+   t.RotateLF(3, 1, theta);
+   t.RotateLF(1, 2, phi);
    t.SetPos(pos.fX, pos.fY, pos.fZ);
 
    InstancedScaledRotated_t* cone = (InstancedScaledRotated_t*) NewDigit();
@@ -196,23 +199,22 @@ void REveBoxSet::AddCone(const REveVector& pos, const REveVector& idir, Float_t 
 /// Create a cone with apex at pos, axis dir and radius r.
 /// To be used for box-type kBT_EllipticCone.
 
-void REveBoxSet::AddEllipticCone(const REveVector& pos, const REveVector& idir,
+void REveBoxSet::AddEllipticCone(const REveVector& pos, const REveVector& dir,
                                  Float_t r, Float_t r2, Float_t angle)
 {
    static const REveException eH("REveBoxSet::AddEllipticCone ");
-
+   using namespace TMath;
    fShapeType = kCone;
-
-   REveVector dir( idir.fX, idir.fY, idir.fZ);
-   dir.Normalize();
-
    REveTrans t;
-   t.SetBaseVec(1, dir.fX, dir.fY, dir.fZ);
-   t.SetBaseVec(1, dir.fX, dir.fY, dir.fZ);
-   t.OrtoNorm3();
-   t.RotateLF(2, 3, angle * TMath::DegToRad());
+   float  h = dir.Mag();
+   float phi   = ATan2(dir.fY, dir.fX);
+   float theta = ATan (dir.fZ / Sqrt(dir.fX*dir.fX + dir.fY*dir.fY));
 
-   t.SetScale(idir.Mag(), r2, r);
+   theta =  Pi()/2 -theta;
+   t.RotateLF(1, 2, phi);
+   t.RotateLF(3, 1, theta);
+   t.RotateLF(1, 2, angle * TMath::DegToRad());
+   t.SetScale(r, r2, h);
    t.SetPos(pos.fX, pos.fY, pos.fZ);
 
    InstancedScaledRotated_t* cone = (InstancedScaledRotated_t*) NewDigit();
