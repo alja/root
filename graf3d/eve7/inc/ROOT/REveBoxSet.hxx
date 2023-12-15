@@ -39,7 +39,8 @@ public:
    enum EShape_e {
       kBox,
       kHex,
-      kCone
+      kCone,
+      kConeCapped
    };
 
    struct BFreeBox_t       : public DigitBase_t { Float_t fVertices[8][3]; };
@@ -62,7 +63,7 @@ protected:
 
    Int_t             fBoxSkip;      // Number of boxes to skip for each drawn box during scene rotation.
 
-   Bool_t            fDrawConeCap;
+   Bool_t            fDrawConeCap{false};
 
    int                     fTexX{0}, fTexY{0};
    static Int_t SizeofAtom(EBoxType_e bt);

@@ -1113,7 +1113,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
             geo = RC.ZShape.makeHexagonGeometry();
          }
          else if (boxset.shapeType == 2) {
-            geo = RC.ZShape.makeConeGeometry();
+            geo = RC.ZShape.makeConeGeometry(boxset.coneCap);
          }
          else {
             geo = RC.ZShape.makeCubeGeometry();
@@ -1122,6 +1122,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
          zshape.instanceCount = SN;
          zshape.frustumCulled = false;
          zshape.instanced = true;
+         zshape.material.normalFlat = true;
 
          this.RcPickable(boxset, zshape);
 
