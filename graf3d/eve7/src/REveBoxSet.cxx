@@ -394,7 +394,7 @@ void REveBoxSet::BuildRenderData()
 
             if (fValueIsColor) {
                fRenderData->PushI(int(b->fValue));
-            } else if (fSingleColor == false) {
+            } else {
                UChar_t c[4] = {0, 0, 0, 0};
                fPalette->ColorFromValue(b->fValue, fDefaultValue, c);
 
@@ -418,14 +418,13 @@ unsigned int REveBoxSet::GetColorFromDigit(REveDigitSet::DigitBase_t &digi)
 {
    if (fSingleColor == false) {
       if (fValueIsColor) {
-         // printf("value is color %d\n", digi.fValue);
-         return int(digi.fValue);
+        UChar_t* c = (UChar_t*) & digi.fValue;
+        return (c[0] << 16) + (c[1] << 8) + c[2];
       } else {
          // printf("palette\n");
-                  UChar_t c[4] = {0, 0, 0, 0};
+         UChar_t c[4] = {0, 0, 0, 0};
          fPalette->ColorFromValue(digi.fValue, fDefaultValue, c);
-         unsigned int value = c[0] + c[1] * 256 + c[2] * 256 * 256;
-         return value;
+         return (c[0] << 16) + (c[1] << 8) + c[2];
       }
    }
    // printf("main color %d\n", GetMainColor());
