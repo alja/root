@@ -94,6 +94,7 @@ REveBoxSet* boxset_axisaligned(Float_t x=0, Float_t y=0, Float_t z=0,
    q->SetPalette(pal);
    q->SetFrame(frm);
    q->Reset(REveBoxSet::kBT_InstancedScaled, kFALSE, 64);
+
    for (Int_t i=0; i<num; ++i) {
       q->AddInstanceScaled(r.Uniform(-10, 10), r.Uniform(-10, 10), r.Uniform(-10, 10),
                 r.Uniform(0.2, 1),  r.Uniform(0.2, 1),  r.Uniform(0.2, 1));
@@ -107,6 +108,7 @@ REveBoxSet* boxset_axisaligned(Float_t x=0, Float_t y=0, Float_t z=0,
    // Uncomment these two lines to get internal highlight / selection.
    q->SetPickable(1);
    q->SetAlwaysSecSelect(1);
+   q->SetTooltipCBFoo(customTooltip);
 
    if (registerSet)
    {
@@ -257,7 +259,6 @@ REveBoxSet* boxset_gentrans(Float_t x=0, Float_t y=0, Float_t z=0, int num = 10)
 
    TRandom r(0);
    for (Int_t i=0; i< num; ++i) {
-   printf("make gen trans for shape \n");
      REveTrans t;
      float x = 50 - i*10;
      t.Move3LF(x, 0, 0);
@@ -265,7 +266,6 @@ REveBoxSet* boxset_gentrans(Float_t x=0, Float_t y=0, Float_t z=0, int num = 10)
 
      t.Scale(1, 1, 10);
      t.RotateLF(1, 2, r.Uniform(3.14));
-   //  t.RotateLF(2, 3, r.Uniform(1));
      t.Print();
 
      float farr[16];
@@ -286,33 +286,24 @@ REveBoxSet* boxset_gentrans(Float_t x=0, Float_t y=0, Float_t z=0, int num = 10)
    return q;
 }
 
-
-
-REvePointSet *createPointSet(int npoints = 20, float s = 20, int color = 28)
-{
-   TRandom &r = *gRandom;
-   REvePointSet *ps = new REvePointSet("MyTestPoints", "list of eve points", npoints);
-
-   for (Int_t i=0; i < npoints; ++i)
-      ps->SetNextPoint(r.Uniform(-s,s), r.Uniform(-s,s), r.Uniform(-s,s));
-
-   ps->SetMarkerColor(kBlue);
-   ps->SetMarkerSize(5 + r.Uniform(1, 15));
-   ps->SetMarkerStyle(4);
-    ROOT::Experimental::gEve->GetEventScene()->AddElement(ps);
-   return ps;
-}
-
 void boxset()
 {
   // boxset_gentrans();
- // boxset_free();
- // boxset_axisaligned();
-  //boxset_hex();
+  // boxset_free();
+  boxset_axisaligned();
+  // boxset_hex();
+  // boxset_fixed_dim();
+  // boxset_single_color();
 
-  boxset_fixed_dim();
-  //boxset_single_color();
-   createPointSet();
+  // AMT temporary solution: add geo-shape to set scene bounding box
+  // digits at the moment have no bounding box calculation and lights are consequently 
+  // in wronf position
+   auto b1 = new REveGeoShape("Bounding Box Barrel");
+   b1->SetShape(new TGeoTube(30, 32, 10));
+   b1->SetMainColor(kCyan);
+   b1->SetNSegments(80);
+   b1->SetMainTransparency(95);
+   ROOT::Experimental::gEve->GetGlobalScene()->AddElement(b1);
 }
 
 

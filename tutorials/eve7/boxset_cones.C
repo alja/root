@@ -25,7 +25,8 @@ REveBoxSet* elliptic_boxset_cones(Float_t x=0, Float_t y=0, Float_t z=0,
    TRandom r(0);
 
    auto cones = new REveBoxSet("EllipticConeSet");
-   cones->Reset(REveBoxSet::kBT_InstancedScaledRotated, kTRUE, 64);
+   bool valIsColor = true;
+   cones->Reset(REveBoxSet::kBT_InstancedScaledRotated, valIsColor, 64);
 
    cones->SetPickable(kTRUE);
 
@@ -42,9 +43,10 @@ REveBoxSet* elliptic_boxset_cones(Float_t x=0, Float_t y=0, Float_t z=0,
       pos.Set(r.Uniform(-a,a), r.Uniform(-a, a), r.Uniform(-a, a));
 
       cones->AddEllipticCone(pos, dir, rad, 0.5*rad, r.Uniform(0,360));
-      cones->DigitColor(r.Uniform(20, 255), r.Uniform(20, 255),
-                      r.Uniform(20, 255), r.Uniform(20, 255));
-
+      if (i %2 == 0)
+      cones->DigitColor(kRed);
+      else
+      cones->DigitColor(kGreen);
       // draw axis line 30% longer than cone height
       REveVector end = pos + dir*1.3f;
       lines->AddLine(pos.fX, pos.fY, pos.fZ, end.fX, end.fY, end.fZ);
@@ -85,7 +87,8 @@ REveBoxSet* boxset_cones(Float_t x=0, Float_t y=0, Float_t z=0,
    auto pal   = new REveRGBAPalette(0, 500);
    auto cones = new REveBoxSet("ConeSet");
    cones->SetPalette(pal);
-   cones->Reset(REveBoxSet::kBT_InstancedScaledRotated, kTRUE, 64);
+   bool valIsColor = false;
+   cones->Reset(REveBoxSet::kBT_InstancedScaledRotated, valIsColor, 64);
 
    Float_t a = 40; // max distance between cones
    REveVector dir, pos;
