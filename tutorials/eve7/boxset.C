@@ -24,8 +24,6 @@ std::string customTooltip(const ROOT::Experimental::REveDigitSet *digitSet, int 
 
 REveBoxSet* boxset_free(Int_t num=100)
 {
-   auto eveMng = REveManager::Create();
-
    TRandom r(0);
 
    auto pal = new REveRGBAPalette(0, 130);
@@ -69,17 +67,11 @@ REveBoxSet* boxset_free(Int_t num=100)
 
    q->SetTooltipCBFoo(customTooltip);
 
-   eveMng->GetEventScene()->AddElement(q);
-
-   eveMng->Show();
    return q;
 }
 
-REveBoxSet* boxset_axisaligned(Float_t x=0, Float_t y=0, Float_t z=0,
-                   Int_t num=100, Bool_t registerSet=kTRUE)
+REveBoxSet* boxset_axisaligned(Float_t x=0, Float_t y=0, Float_t z=0, Int_t num=100)
 {
-   auto eveMng = REveManager::Create();
-
    TRandom r(0);
 
    auto pal = new REveRGBAPalette(0, 130);
@@ -110,20 +102,11 @@ REveBoxSet* boxset_axisaligned(Float_t x=0, Float_t y=0, Float_t z=0,
    q->SetAlwaysSecSelect(1);
    q->SetTooltipCBFoo(customTooltip);
 
-   if (registerSet)
-   {
-      eveMng->GetEventScene()->AddElement(q);
-      eveMng->Show();
-   }
-
    return q;
 }
 
-REveBoxSet* boxset_colisval(Float_t x=0, Float_t y=0, Float_t z=0,
-                            Int_t num=100, Bool_t registerSet=kTRUE)
+REveBoxSet* boxset_colisval(Float_t x=0, Float_t y=0, Float_t z=0, Int_t num=100)
 {
-   auto eveMng = REveManager::Create();
-
    TRandom r(0);
 
    auto q = new REveBoxSet("BoxSet");
@@ -139,20 +122,11 @@ REveBoxSet* boxset_colisval(Float_t x=0, Float_t y=0, Float_t z=0,
    REveTrans& t = q->RefMainTrans();
    t.SetPos(x, y, z);
 
-   if (registerSet)
-   {
-      eveMng->GetEventScene()->AddElement(q);
-      eveMng->Show();
-   }
-
    return q;
 }
 
-REveBoxSet* boxset_single_color(Float_t x=0, Float_t y=0, Float_t z=0,
-                                Int_t num=100, Bool_t registerSet=kTRUE)
+REveBoxSet* boxset_single_color(Float_t x=0, Float_t y=0, Float_t z=0, Int_t num=100)
 {
-   auto eveMng = REveManager::Create();
-
    TRandom r(0);
 
    auto q = new REveBoxSet("BoxSet");
@@ -171,19 +145,11 @@ REveBoxSet* boxset_single_color(Float_t x=0, Float_t y=0, Float_t z=0,
    REveTrans& t = q->RefMainTrans();
    t.SetPos(x, y, z);
 
-   if (registerSet) {
-      eveMng->GetEventScene()->AddElement(q);
-      eveMng->Show();
-   }
-
    return q;
 }
 
-REveBoxSet* boxset_fixed_dim(Float_t x=0, Float_t y=0, Float_t z=0,
-                                Int_t num=100, Bool_t registerSet=kTRUE)
+REveBoxSet* boxset_fixed_dim(Float_t x=0, Float_t y=0, Float_t z=0, Int_t num=100)
 {
-   auto eveMng = REveManager::Create();
-
    TRandom r(0);
 
    auto q = new REveBoxSet("BoxSet");
@@ -202,19 +168,11 @@ REveBoxSet* boxset_fixed_dim(Float_t x=0, Float_t y=0, Float_t z=0,
    q->SetAlwaysSecSelect(1);
    REveTrans& t = q->RefMainTrans();
    t.SetPos(x, y, z);
-   if (registerSet) {
-      eveMng->GetEventScene()->AddElement(q);
-      eveMng->Show();
-   }
-
    return q;
 }
 
-REveBoxSet* boxset_hex(Float_t x=0, Float_t y=0, Float_t z=0,
-                       Int_t num=100, Bool_t registerSet=kTRUE)
+REveBoxSet* boxset_hex(Float_t x=0, Float_t y=0, Float_t z=0, Int_t num=100)
 {
-   auto eveMng = REveManager::Create();
-
    TRandom r(0);
   
    auto q = new REveBoxSet("BoxSet");
@@ -233,43 +191,29 @@ REveBoxSet* boxset_hex(Float_t x=0, Float_t y=0, Float_t z=0,
 
    REveTrans& t = q->RefMainTrans();
    t.SetPos(x, y, z);
-
-   if (registerSet)
-   {
-      eveMng->GetEventScene()->AddElement(q);
-      eveMng->Show();
-   }
-
    return q;
 }
 
 
 REveBoxSet* boxset_gentrans(Float_t x=0, Float_t y=0, Float_t z=0, int num = 10)
 {
-   auto eveMng = REveManager::Create();
-
-   REvePointSet *ps = new REvePointSet("btpnts", "list of eve points", num);
-   ps->SetMarkerColor(kMagenta);
-   ps->SetMarkerSize(15);
-   ps->SetMarkerStyle(3);
-   eveMng->GetEventScene()->AddElement(ps);
-
    auto q = new REveBoxSet("BoxSet-GenTrans");
    q->Reset(REveBoxSet::kBT_InstancedScaledRotated, kTRUE, 64);
 
    TRandom r(0);
-   for (Int_t i=0; i< num; ++i) {
+   for (Int_t i=0; i< num; ++i)
+   {
+     // Create per digit transformation
      REveTrans t;
      float x = 50 - i*10;
      t.Move3LF(x, 0, 0);
-     ps->SetNextPoint(x, 0, 0);
-
      t.Scale(1, 1, 10);
      t.RotateLF(1, 2, r.Uniform(3.14));
-     t.Print();
-
+     // t.Print();
      float farr[16];
-     for (int m=0; m<16; m++)farr[m] = t.Array()[m];
+     for (int m=0; m<16; m++)
+        farr[m] = t.Array()[m];
+     
      q->AddInstanceMat4(farr);
      q->DigitColor(255, 0, 0, 100); // AMT how the treansparency handled, last ergument alpha
    }
@@ -280,24 +224,53 @@ REveBoxSet* boxset_gentrans(Float_t x=0, Float_t y=0, Float_t z=0, int num = 10)
    REveTrans& t = q->RefMainTrans();
    t.SetPos(x, y, z);
 
-   eveMng->GetEventScene()->AddElement(q);
-   eveMng->Show();
-
    return q;
 }
 
 void boxset()
 {
-  // boxset_gentrans();
-  // boxset_free();
-  boxset_axisaligned();
-  // boxset_hex();
-  // boxset_fixed_dim();
-  // boxset_single_color();
+   enum EBoxDemo_t {ScaledRotated, Free, AxisAligned, Hexagon, FixedDimension, SingleColor};
+   
+   // EBoxDemo_t demo = ScaledRotated;
+   EBoxDemo_t demo = SingleColor;
 
-  // AMT temporary solution: add geo-shape to set scene bounding box
-  // digits at the moment have no bounding box calculation and lights are consequently 
-  // in wronf position
+   auto eveMng = REveManager::Create();
+   REveBoxSet* b = nullptr;
+   switch (demo)
+   {
+      case ScaledRotated:
+         b = boxset_gentrans();
+         break;
+      case Free:
+         b = boxset_free();
+         break;
+      case AxisAligned:
+         b = boxset_axisaligned();
+         break;
+      case FixedDimension:
+         b = boxset_fixed_dim();
+         break;
+      case Hexagon:
+         b = boxset_hex();
+         break;
+      case SingleColor:
+         b = boxset_single_color();
+         break;
+      default:
+         printf("Unsupported demo type. \n");
+         return;
+   }
+
+
+   eveMng->GetEventScene()->AddElement(b);
+   eveMng->Show();
+
+   REveViewer* v = ROOT::Experimental::gEve->GetDefaultViewer();
+   v->SetAxesType(REveViewer::kAxesOrigin);
+
+   // AMT temporary solution: add geo-shape to set scene bounding box
+   // digits at the moment have no bounding box calculation and lights are consequently 
+   // in inital empty position at extend size of 1
    auto b1 = new REveGeoShape("Bounding Box Barrel");
    b1->SetShape(new TGeoTube(30, 32, 10));
    b1->SetMainColor(kCyan);
