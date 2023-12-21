@@ -94,8 +94,6 @@ void REveBoxSet::Reset(REveBoxSet::EBoxType_e boxType, Bool_t valIsCol, Int_t ch
    fDefaultValue = valIsCol ? 0 : kMinInt;
    ReleaseIds();
    fPlex.Reset(SizeofAtom(fBoxType), chunkSize);
-
-   printf("reset boxtype %d \n", fBoxType);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
