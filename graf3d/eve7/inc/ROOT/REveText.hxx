@@ -52,31 +52,33 @@ public:
    void ComputeBBox() override;
 
    Float_t GetFontSize() const { return fFontSize; }
-   void SetFontSize(Float_t size) { fFontSize = size; }
+   void SetFontSize(Float_t size) { fFontSize = size; StampObjProps();}
 
    Int_t GetMode() const { return fMode; }
    void SetMode(Int_t mode) { fMode = mode;}
 
    Float_t GetFontHinting() const { return fFontHinting; }
-   void SetFontHinting(Float_t fontHinting) { fFontHinting = fontHinting; }
+   void SetFontHinting(Float_t fontHinting) { fFontHinting = fontHinting; StampObjProps();}
 
    REveVector GetPosition() const { return fPosition; }
-   void SetPosition(REveVector& position) { fPosition = position; }
+   void SetPosition(REveVector& position) { fPosition = position;}
+   void SetPosX(double x);
+   void SetPosY(double y);
 
    Color_t GetFontColor() const { return fFontColor; }
-   void SetFontColor(Color_t color) { fFontColor = color; }
+   void SetFontColor(Color_t color) { fFontColor = color; StampObjProps();}
 
    std::string GetText() const { return fText; }
-   void SetText(const std::string &text) { fText = text; }
+   void SetText(const std::string &text) { fText = text; StampObjProps(); }
 
    Int_t GetFont() const { return fFont; }
-   void SetFont(Int_t font) { fFont = font;}
+   void SetFont(Int_t font) { fFont = font; StampObjProps();}
 
    Int_t GetScreenWidth() const { return fScreenWidth; }
-   void SetScreenWidth(Int_t screenW) { fScreenWidth = screenW;}
+   void SetScreenWidth(Int_t screenW) { fScreenWidth = screenW;  StampObjProps();}
 
    Int_t GetScreenHeight() const { return fScreenHeight; }
-   void SetScreenHeight(Int_t screenH) { fScreenHeight = screenH;}
+   void SetScreenHeight(Int_t screenH) { fScreenHeight = screenH; StampObjProps();}
 };
 
 }// namespace Experimental
