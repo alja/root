@@ -9,7 +9,7 @@
 #include <ROOT/REveElement.hxx>
 #include <ROOT/REveScene.hxx>
 #include <ROOT/REveManager.hxx>
-#include <ROOT/REveZText.hxx>
+#include <ROOT/REveText.hxx>
 #include <ROOT/REveJetCone.hxx>
 
 namespace REX = ROOT::Experimental;
@@ -21,7 +21,7 @@ void makeTexts(int N_Texts, REX::REveElement *textHolder)
 
    for (int i = 0; i < N_Texts; i++)
    {
-      auto text = new REX::REveZText(Form("Text_%d",i ));
+      auto text = new REX::REveText(Form("Text_%d",i ));
       text -> SetFontColor(kViolet - r.Uniform(0, 50));
       REX::REveVector pos(r.Uniform(10, 4500), r.Uniform(150, 3500), 1);
       text -> SetPosition(pos);

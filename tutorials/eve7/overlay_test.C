@@ -12,7 +12,7 @@
 #include <ROOT/REveTrackPropagator.hxx>
 #include <ROOT/REveTrack.hxx>
 #include <ROOT/REveJetCone.hxx>
-#include <ROOT/REveZText.hxx>
+#include <ROOT/REveText.hxx>
 
 
 using namespace ROOT::Experimental;
@@ -98,7 +98,7 @@ void makeTexts(int N_Texts, REveElement *textHolder)
 
    for (int i = 0; i < N_Texts; i++)
    {
-      auto text = new REveZText(Form("Text_%d",i ));
+      auto text = new REveText(Form("Text_%d",i ));
       text -> SetFontColor(kViolet - r.Uniform(0, 50));
       REveVector pos(r.Uniform(0.0, 0.7), r.Uniform(0.0, 1.0), r.Uniform(0.0, 1.0));
       text -> SetPosition(pos);
