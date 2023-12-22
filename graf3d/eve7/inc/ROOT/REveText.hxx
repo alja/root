@@ -9,8 +9,8 @@
  * For the list of contributors see $ROOTSYS/README/CREDITS.             *
  *************************************************************************/
 
-#ifndef ROOT7_REveZText
-#define ROOT7_REveZText
+#ifndef ROOT7_REveText
+#define ROOT7_REveText
 
 #include <ROOT/REveShape.hxx>
 #include <ROOT/REveVector.hxx>
@@ -19,15 +19,15 @@ namespace ROOT {
 namespace Experimental {
 
 //------------------------------------------------------------------------------
-// REveZText
+// REveText
 //------------------------------------------------------------------------------
 
-class REveZText : public REveShape
+class REveText : public REveShape
 {
 
 private:
-   REveZText(const REveZText &) = delete;
-   REveZText &operator=(const REveZText &) = delete;
+   REveText(const REveText &) = delete;
+   REveText &operator=(const REveText &) = delete;
 
 protected:
    std::string fText{"INITIALIZE"};
@@ -43,8 +43,8 @@ protected:
 
 
 public:
-   REveZText(const Text_t *n = "REveZText", const Text_t *t = "");
-   virtual ~REveZText() {}
+   REveText(const Text_t *n = "REveText", const Text_t *t = "");
+   virtual ~REveText() {}
 
     Int_t WriteCoreJson(nlohmann::json &t, Int_t rnr_offset) override;
    void BuildRenderData() override;

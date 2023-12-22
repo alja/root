@@ -10,7 +10,7 @@
  *************************************************************************/
 
 
-#include <ROOT/REveZText.hxx>
+#include <ROOT/REveText.hxx>
 #include <ROOT/REveTrans.hxx>
 #include <ROOT/REveRenderData.hxx>
 
@@ -26,7 +26,7 @@ using namespace ROOT::Experimental;
 ////////////////////////////////////////////////////////////////////////////////
 /// Constructor.
 
-REveZText::REveZText(const Text_t* n, const Text_t* t) :
+REveText::REveText(const Text_t* n, const Text_t* t) :
    REveShape(n, t)
 {
    fPickable  = true;
@@ -37,7 +37,7 @@ REveZText::REveZText(const Text_t* n, const Text_t* t) :
 ////////////////////////////////////////////////////////////////////////////////
 /// Fill core part of JSON representation.
 
-Int_t REveZText::WriteCoreJson(nlohmann::json &t, Int_t rnr_offset)
+Int_t REveText::WriteCoreJson(nlohmann::json &t, Int_t rnr_offset)
 {
    Int_t ret = REveElement::WriteCoreJson(t, rnr_offset);
 
@@ -63,7 +63,7 @@ Int_t REveZText::WriteCoreJson(nlohmann::json &t, Int_t rnr_offset)
 ////////////////////////////////////////////////////////////////////////////////
 /// Crates 3D point array for rendering.
 
-void REveZText::BuildRenderData()
+void REveText::BuildRenderData()
 {
 
 printf("ZText build render data \n");
@@ -77,7 +77,7 @@ fRenderData->PushV(0.f, 0.f, 0.f); // frite floats so the data is not empty
 ////////////////////////////////////////////////////////////////////////////////
 /// Compute bounding-box of the data.
 
-void REveZText::ComputeBBox()
+void REveText::ComputeBBox()
 {
    //BBoxInit();
 }
