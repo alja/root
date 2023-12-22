@@ -878,38 +878,38 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
       // makeZText
       //==============================================================================
 
-      makeZText(ZText, rnr_data)
+      makeZText(el, rnr_data)
       {
          let textureName;
          let fontType;
-         let fontColor = RcCol(ZText.fMainColor);
+         let fontColor = RcCol(el.fMainColor);
 
-         if(ZText.fFont == 1)
+         if(el.fFont == 1)
          {
             fontType = RC.roboto_font;
             textureName = "roboto.png";
          }
-         else if(ZText.fFont == 2)
+         else if(el.fFont == 2)
          {
             fontType = RC.roboto_bold_font;
             textureName = "roboto-bold.png";
          }
-         else if(ZText.fFont == 3)
+         else if(el.fFont == 3)
          {
             fontType = RC.ubuntu_font;
             textureName = "ubuntu.png";
          }
-         else if(ZText.fFont == 4)
+         else if(el.fFont == 4)
          {
             fontType = RC.ubuntu_bold_font;
             textureName = "ubuntu-bold.png";
          }
-         else if(ZText.fFont == 5)
+         else if(el.fFont == 5)
          {
             fontType = RC.dejavu_font;
             textureName = "dejavu-serif.png";
          }
-         else if(ZText.fFont == 6)
+         else if(el.fFont == 6)
          {
             fontType = RC.dejavu_italic_font;
             textureName = "dejavu-serif-italic.png";
@@ -922,27 +922,27 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
 
          let text = new RC.ZText(
             {
-                text: ZText.fText, 
+                text: el.fText, 
                 fontTexture: null, 
-                xPos: ZText.fPosX, 
-                yPos: ZText.fPosY, 
-                fontSize: ZText.fFontSize, 
+                xPos: el.fPosX, 
+                yPos: el.fPosY, 
+                fontSize: el.fFontSize, 
                 cellAspect: 8/16, 
-                mode: ZText.fMode,
-                fontHinting: ZText.fFontHinting,
+                mode: el.fMode,
+                fontHinting: el.fFontHinting,
                 color: fontColor,
                 sdf_tex_width: 1024,
                 sdf_tex_height: 1024,
                 font: fontType,
-                screenW: ZText.fScreenW,
-                screenH: ZText.fScreenH
+                screenW: el.fScreenW,
+                screenH: el.fScreenH
             }
         );
-        text.position.copy(new RC.Vector3(ZText.fPosX, ZText.fPosY, ZText.fPosZ));
+        text.position.copy(new RC.Vector3(el.fPosX, el.fPosY, el.fPosZ));
 
         this.GetRgbaTexture(textureName, this.AddTextureToMaterialMap.bind(this, text));
         
-        let bool = this.RcPickable(ZText, text);
+        let bool = this.RcPickable(el, text);
         return text;
       }
 
