@@ -31,7 +31,7 @@ ROOT_STANDARD_LIBRARY_PACKAGE(ROOTEve
     ROOT/REveGeoShape.hxx
     ROOT/REveGluTess.hxx
     ROOT/REveJetCone.hxx
-	ROOT/REveText.hxx
+	  ROOT/REveText.hxx
     ROOT/REveEllipsoid.hxx
     ROOT/REveLine.hxx
     ROOT/REveManager.hxx
@@ -94,7 +94,7 @@ ROOT_STANDARD_LIBRARY_PACKAGE(ROOTEve
     src/REveGeoShapeExtract.cxx
     src/REveGluTess.cxx
     src/REveJetCone.cxx
-	src/REveText.cxx
+	  src/REveText.cxx
     src/REveEllipsoid.cxx
     src/REveLine.cxx
     src/REveManager.cxx
