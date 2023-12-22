@@ -304,13 +304,15 @@ sap.ui.define([
       buildREveTextSetter : function(el)
       {
          this.buildREveElementSetter(el);
-         //this.makeNumberSetter(el.fFontSize, "FontSize");
-         let gedFrame = this.getView().byId("GED");
-         this.makeNumberSetter(el.fFont, "FontType", "SetFont");
-         this.makeNumberSetter(el.fPosX, "PosX", "SetPosX");
-         this.makeNumberSetter(el.fPosY, "PosY", "SetPosY");
-         
-        // this.makeNumberSetter(el.fPosY, "PosY", getFrame);
+         // write editor only for screen coordinates
+         this.makeStringSetter(el.fText, "Text");
+         if (el.fMode) {
+            let gedFrame = this.getView().byId("GED");
+            this.makeNumberSetter(el.fFont, "FontType", "SetFont");
+            this.makeNumberSetter(el.fFontSize, "FontSize");
+            this.makeNumberSetter(el.fPosX, "PosX", "SetPosX");
+            this.makeNumberSetter(el.fPosY, "PosY", "SetPosY");
+         }
       },
 
       buildREveTrackSetter : function(el)

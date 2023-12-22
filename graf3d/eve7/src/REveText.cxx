@@ -86,6 +86,13 @@ void REveText::SetPosY(double y)
    StampObjProps();
 }
 
+void REveText::SetFontSize(double s)
+{
+   std::cout << "Set Font Size "  << s << "\n";
+   fFontSize = s;
+   StampObjProps();
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Compute bounding-box of the data.
 

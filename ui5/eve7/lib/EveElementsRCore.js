@@ -880,6 +880,8 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
 
       makeZText(el, rnr_data)
       {
+         if (this.TestRnr("jet", el, rnr_data)) return null;
+      
          let textureName;
          let fontType;
          let fontColor = RcCol(el.fMainColor);

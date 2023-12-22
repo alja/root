@@ -101,7 +101,7 @@ void makeTexts(REveElement *textHolder)
       text -> SetPosition(pos);
       text -> SetFontSize(0.1);
       text -> SetFont(2);
-      text -> SetText(text->GetName());
+      text -> SetText(text->GetCName());
       textHolder->AddElement(text);
    }
 }
