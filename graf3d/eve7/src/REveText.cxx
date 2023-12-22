@@ -41,14 +41,12 @@ Int_t REveText::WriteCoreJson(nlohmann::json &t, Int_t rnr_offset)
 {
    Int_t ret = REveElement::WriteCoreJson(t, rnr_offset);
 
-   t["fMainColor"] = GetFillColor();
    t["fLineColor"] = GetLineColor();
 
    t["fFontHinting"] = GetFontHinting();
    t["fMode"] = GetMode();
    t["fFontSize"] = GetFontSize();
    t["fText"] = GetText();
-   t["fFontColor"] = GetFontColor();
    t["fFont"] = GetFont();
    REveVector pos = GetPosition();
    t["fPosX"] = pos.fX;
@@ -65,13 +63,27 @@ Int_t REveText::WriteCoreJson(nlohmann::json &t, Int_t rnr_offset)
 
 void REveText::BuildRenderData()
 {
+   printf("ZText build render data \n");
+   fRenderData = std::make_unique<REveRenderData>("makeZText");
 
-printf("ZText build render data \n");
-fRenderData = std::make_unique<REveRenderData>("makeZText");
+   // TODO write fPosition and fFontSize here ...
+   fRenderData->PushV(0.f, 0.f, 0.f); // frite floats so the data is not empty
+}
 
-// TODO write fPosition and fFontSize here ...
-fRenderData->PushV(0.f, 0.f, 0.f); // frite floats so the data is not empty
 
+////////////////////////////////////////////////////////////////////////////////
+/// Position Text
+/// Client Callback
+void REveText::SetPosX(double x)
+{
+   fPosition.fX = x;
+   StampObjProps();
+}
+
+void REveText::SetPosY(double y)
+{
+   fPosition.fY = y;
+   StampObjProps();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

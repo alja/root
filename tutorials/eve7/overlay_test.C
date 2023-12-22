@@ -92,22 +92,20 @@ void makeJets(int N_Jets, REveElement *jetHolder)
    }
 }
 
-void makeTexts(int N_Texts, REveElement *textHolder)
+void makeTexts(REveElement *textHolder)
 {
-   TRandom &r = *gRandom;
-
-   for (int i = 0; i < N_Texts; i++)
    {
-      auto text = new REveText(Form("Text_%d",i ));
-      text -> SetFontColor(kViolet - r.Uniform(0, 50));
-      REveVector pos(r.Uniform(0.0, 0.7), r.Uniform(0.0, 1.0), r.Uniform(0.0, 1.0));
+      auto text = new REveText(Form("Text_0"));
+      text -> SetMainColor(kViolet);
+      REveVector pos(0.5, 0.5, 0.2);
       text -> SetPosition(pos);
-      text -> SetFontSize(r.Uniform(0.01, 0.1));
-      text -> SetFont(r.Uniform(1, 6));
-      text -> SetText(Form("Text_%d",i ));
+      text -> SetFontSize(0.1);
+      text -> SetFont(2);
+      text -> SetText(text->GetName());
       textHolder->AddElement(text);
    }
 }
+
 
 void overlay_test()
 {   
@@ -115,16 +113,12 @@ void overlay_test()
 
    TRandom& r = * gRandom;
 
-   // add box to overlay
+   // create an overlay scene
    REveScene* os = gEve->SpawnNewScene("Overly scene", "OverlayTitle");
    ((REveViewer*)(gEve->GetViewers()->FirstChild()))->AddScene(os);
    os->SetIsOverlay(true);
 
-
-   auto textHolder = new REveElement("texts");
-   makeTexts(3, textHolder);
-   os ->AddElement(textHolder);
-
+   makeTexts(os);
 
    auto jetHolder = new REveElement("jets");
    makeJets(2,jetHolder);

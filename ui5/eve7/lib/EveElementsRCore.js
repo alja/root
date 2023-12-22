@@ -878,7 +878,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
       {
          let textureName;
          let fontType;
-         let fontColor = RcCol(ZText.fFontColor);
+         let fontColor = RcCol(ZText.fMainColor);
 
          if(ZText.fFont == 1)
          {
