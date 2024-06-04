@@ -510,10 +510,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
 
          RC = rc;
          this.viewer = viewer;
-
-         RC.Cache.enabled = true;
-
-         this.tex_cache = new RC.TextureCache;
+         this.tex_cache = viewer.tex_cache;
 
          this.POINT_SIZE_FAC = 1;
          this.LINE_WIDTH_FAC = 1;
@@ -614,7 +611,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
          mat._color = color;
          mat._specular = new RC.Color(0.3, 0.4, 0.3); // this.ColorWhite;
          mat._shininess = 64;
-   
+
          if (opacity !== undefined && opacity < 1.0) {
             mat._opacity = opacity;
             mat._transparent = true;
@@ -627,7 +624,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
       }
 
       RcMakeZSprite(colIdx, sSize, nInstance, vbuff, instX, instY, textureName)
-      { 
+      {
          let col = RcCol(colIdx);
          sSize *= this.POINT_SIZE_FAC;
          let sm = new RC.ZSpriteBasicMaterial( {
@@ -659,7 +656,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
 
          return s;
       }
-      
+
       RcMakeStripes(geom, line_width, line_color)
       {
          // Setup width for SSAA, scaled down for picking and outline materials.
@@ -780,7 +777,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
 
       AddTextureToMaterialMap(o3d, tex)
       {
-         if (o3d.material) 
+         if (o3d.material)
          {
             o3d.material.clearMaps();
             o3d.material.addMap(tex);
@@ -866,7 +863,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
 
          const geom = new RC.Geometry();
          geom.vertices = new RC.Float32Attribute(buf, 3);
- 
+
          const line = this.RcMakeStripes(geom, track_width, track_color);
          this.RcApplyStripesMaterials(track, line, 2);
          this.RcPickable(track, line);
@@ -880,71 +877,41 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
 
       makeZText(el, rnr_data)
       {
-         if (this.TestRnr("jet", el, rnr_data)) return null;
-      
-         let textureName;
-         let fontType;
-         let fontColor = RcCol(el.fMainColor);
+         // if (this.TestRnr("jet", el, rnr_data)) return null;
 
-         if(el.fFont == 1)
-         {
-            fontType = RC.roboto_font;
-            textureName = "roboto.png";
-         }
-         else if(el.fFont == 2)
-         {
-            fontType = RC.roboto_bold_font;
-            textureName = "roboto-bold.png";
-         }
-         else if(el.fFont == 3)
-         {
-            fontType = RC.ubuntu_font;
-            textureName = "ubuntu.png";
-         }
-         else if(el.fFont == 4)
-         {
-            fontType = RC.ubuntu_bold_font;
-            textureName = "ubuntu-bold.png";
-         }
-         else if(el.fFont == 5)
-         {
-            fontType = RC.dejavu_font;
-            textureName = "dejavu-serif.png";
-         }
-         else if(el.fFont == 6)
-         {
-            fontType = RC.dejavu_italic_font;
-            textureName = "dejavu-serif-italic.png";
-         }
-         else 
-         {
-            fontType = RC.roboto_font;
-            textureName = "roboto.png";
-         }
+         let fontColor = RcCol(el.fTextColor);
 
-         let text = new RC.ZText(
-            {
-                text: el.fText, 
-                fontTexture: null, 
-                xPos: el.fPosX, 
-                yPos: el.fPosY, 
-                fontSize: el.fFontSize, 
-                cellAspect: 8/16, 
-                mode: el.fMode,
-                fontHinting: el.fFontHinting,
-                color: fontColor,
-                sdf_tex_width: 1024,
-                sdf_tex_height: 1024,
-                font: fontType,
-                screenW: el.fScreenW,
-                screenH: el.fScreenH
-            }
-        );
+         let fallback = false;
+         let ff = el.fFont / 10 >> 0;
+         if (ff > 2) fallback = true;
+         ff = [ "Mono", "Sans", "Serif" ][ff];
+         let ft = el.fFont % 10;
+         if (ft > 3) fallback = true;
+         ft = [ "Regular", "Italic", "Bold", "BoldItalic" ][ft];
+
+         let fn = fallback ? "comic" : "Liberation" + ff + "-" + ft;
+
+         let text = new RC.ZText({
+            text: el.fText,
+            xPos: el.fPosX,
+            yPos: el.fPosY,
+            fontSize: el.fFontSize,
+            mode: el.fMode,
+            fontHinting: el.fFontHinting,
+            color: fontColor,
+         });
+         let url_base = this.viewer.eve_path + 'fonts/' + fn;
+         this.tex_cache.deliver_font(url_base,
+            (texture, font_metrics) => {
+               text.setTextureAndFont(texture, font_metrics);
+               if (el.fMode == 0) text.material.side = RC.FRONT_AND_BACK_SIDE;
+            },
+            (img) => RC.ZText.createDefaultTexture(img),
+            () => this.viewer.request_render()
+         );
+
         text.position.copy(new RC.Vector3(el.fPosX, el.fPosY, el.fPosZ));
-
-        this.GetRgbaTexture(textureName, this.AddTextureToMaterialMap.bind(this, text));
-        
-        let bool = this.RcPickable(el, text);
+        if (el.fPickable) this.RcPickable(el, text);
         return text;
       }
 
@@ -1275,7 +1242,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
 
             let protoIdcs = [0,1,2, 0,2,3, 0,3,4, 0,4,5, 0,5,6, 0,6,1];
             let protoIdcs2 = [2,1,0,  3,2,0,  4,3, 0,   5,4,0,  6, 5, 0,  1, 6, 0];
-            let sideIdcs = [8,1,2,2,9,8,  9,2,3,3,10,9,  10,3,4,4,11,10,  
+            let sideIdcs = [8,1,2,2,9,8,  9,2,3,3,10,9,  10,3,4,4,11,10,
                             11,4,5,5,12,11,  5,6,13,5,13,12, 13,6,1,1,8,13 ];
             let idxBuffSize =  N_hex * (protoIdcs.length * 2 + sideIdcs.length);
             idxBuff = new Uint32Array(idxBuffSize);

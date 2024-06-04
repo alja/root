@@ -77,22 +77,26 @@ sap.ui.define([
 
       bootstrap()
       {
-         this.creator = new EveElements(RC, this);
-         // this.creator.useIndexAsIs = EVE.JSR.decodeUrl().has('useindx');
-
          RC.GLManager.sCheckFrameBuffer = false;
          RC.Object3D.sDefaultPickable = false;
          RC.PickingShaderMaterial.DEFAULT_PICK_MODE = RC.PickingShaderMaterial.PICK_MODE.UINT;
 
          this.createRCoreRenderer();
+
+         this.creator = new EveElements(RC, this);
+         // this.creator.useIndexAsIs = EVE.JSR.decodeUrl().has('useindx');
+         if (this.RQ_Mode != "Direct") {
+            this.creator.SetupPointLineFacs(this.RQ_SSAA,
+                                            this.RQ_MarkerScale * this.canvas.pixelRatio,
+                                            this.RQ_LineScale   * this.canvas.pixelRatio);
+         }
+         this.updateViewerAttributes();
+
          this.controller.createScenes();
          this.controller.redrawScenes();
          this.setupEventHandlers();
 
          this.controller.glViewerInitDone();
-
-         let eveView = this.controller.mgr.GetElement(this.controller.eveViewerId);
-         if (eveView.AxesType > 0) this.makeAxis();
       }
 
       cleanup() {
@@ -140,6 +144,9 @@ sap.ui.define([
          this.renderer._logLevel = 0;
          this.renderer.addShaderLoaderUrls(this.eve_path + RC.REveShaderPath);
          this.renderer.pickObject3D = true;
+
+         RC.Cache.enabled = true;
+         this.tex_cache = new RC.TextureCache;
 
          // add dat GUI option to set background
          let eveView = this.controller.mgr.GetElement(this.controller.eveViewerId);
@@ -240,16 +247,10 @@ sap.ui.define([
          else if (this.RQ_Mode == "Simple")
          {
             this.rqt.initSimple(this.RQ_SSAA);
-            this.creator.SetupPointLineFacs(this.RQ_SSAA,
-                                            this.RQ_MarkerScale * this.canvas.pixelRatio,
-                                            this.RQ_LineScale   * this.canvas.pixelRatio);
          }
          else
          {
             this.rqt.initFull(this.RQ_SSAA);
-            this.creator.SetupPointLineFacs(this.RQ_SSAA,
-                                            this.RQ_MarkerScale * this.canvas.pixelRatio,
-                                            this.RQ_LineScale   * this.canvas.pixelRatio);
          }
          this.rqt.updateViewport(w, h);
       }
@@ -490,13 +491,13 @@ sap.ui.define([
          let eveView = this.controller.mgr.GetElement(this.controller.eveViewerId);
          if (eveView.BlackBg)
          {
-            this.fgCol = new RC.Color(1, 1, 1);//"#FFFFFF00";
-            this.bgCol = new RC.Color(0, 0, 0);
+            this.fgCol = this.creator.ColorWhite;
+            this.bgCol = this.creator.ColorBlack;
          }
          else
          {
-            this.bgCol =  new RC.Color(1, 1, 1);//"#FFFFFF00";
-            this.fgCol = new RC.Color(0,0,0);
+            this.bgCol = this.creator.ColorWhite;
+            this.fgCol = this.creator.ColorBlack;
          }
 
          this.axis.clear();
@@ -506,7 +507,8 @@ sap.ui.define([
          this.request_render();
       }
 
-      makeAxis() {
+      makeAxis()
+      {
          function formatFloat(val) {
             let lg = Math.log10(Math.abs(val));
             let fs = "undef";
@@ -537,11 +539,10 @@ sap.ui.define([
          bb.setFromObject(this.scene);
 
          let lines = [];
-         let test = ~bb.min.x;
          lines.push({ "p": new RC.Vector3(bb.min.x, 0, 0), "c": new RC.Color(1, 0, 0), "text": "X " + formatFloat(bb.min.x) });
          lines.push({ "p": new RC.Vector3(bb.max.x, 0, 0), "c": new RC.Color(1, 0, 0), "text": "X " + formatFloat(bb.max.x) });
-         lines.push({ "p": new RC.Vector3(0, bb.min.y, 0), "c":new RC.Color(0, 1, 0), "text": "Y " + formatFloat(bb.min.y) });
-         lines.push({ "p": new RC.Vector3(0, bb.max.y, 0), "c":new RC.Color(0, 1, 0), "text": "Y " + formatFloat(bb.max.y) });
+         lines.push({ "p": new RC.Vector3(0, bb.min.y, 0), "c": new RC.Color(0, 1, 0), "text": "Y " + formatFloat(bb.min.y) });
+         lines.push({ "p": new RC.Vector3(0, bb.max.y, 0), "c": new RC.Color(0, 1, 0), "text": "Y " + formatFloat(bb.max.y) });
          lines.push({ "p": new RC.Vector3(0, 0, bb.min.z), "c": new RC.Color(0, 0, 1), "text": "Z " + formatFloat(bb.min.z) });
          lines.push({ "p": new RC.Vector3(0, 0, bb.max.z), "c": new RC.Color(0, 0, 1), "text": "Z " + formatFloat(bb.max.z) });
 
@@ -554,52 +555,33 @@ sap.ui.define([
             this.axis.add(ss);
          }
 
-         let ag = this.axis;
-         let canvas = this.canvas;
-         let fgCol = this.fgCol;
-         const fontImgLoader = new RC.ImageLoader();
-         let tname = this.eve_path + "textures/dejavu-serif.png";
-         fontImgLoader.load(tname, function (image) {
-            const fontTexture = new RC.Texture(
-               image,
-               RC.Texture.WRAPPING.ClampToEdgeWrapping,
-               RC.Texture.WRAPPING.ClampToEdgeWrapping,
-               RC.Texture.FILTER.NearestFilter,
-               RC.Texture.FILTER.NearestFilter,
-               RC.Texture.FORMAT.RGBA,
-               RC.Texture.FORMAT.RGBA,
-               RC.Texture.TYPE.UNSIGNED_BYTE,
-               image.width,
-               image.height
-            );
-
-            fontTexture._generateMipmaps = true;
-            for (const ax of lines) {
-               const text = new RC.ZText(
-                  {
+         let url_base = this.eve_path + 'fonts/LiberationSans-Regular';
+         this.tex_cache.deliver_font(url_base,
+            (texture, font_metrics) => {
+               let diag = new RC.Vector3;
+               bb.getSize(diag);
+               diag = diag.length() / 40;
+               let ag = this.axis;
+               for (const ax of lines) {
+                  const text = new RC.ZText({
                      text: ax.text,
-                     fontTexture: fontTexture,
+                     fontTexture: texture,
                      xPos: 0,
                      yPos: 0,
-                     fontSize: 0.03,
-                     cellAspect: 8 / 16,
-                     mode: RC.ZTEXT_SPACE_WORLD,
+                     fontSize: diag,
+                     mode: RC.TEXT2D_SPACE_WORLD,
                      fontHinting: 1.0,
-                     color: new RC.Color(0.0,0.0,0.0),
-                     sdf_tex_width: fontTexture.image.width,
-                     sdf_tex_height: fontTexture.image.height,
-                     font: RC.dejavu_font,
-                     screenW: canvas.width,
-                     screenH: canvas.height
-                  }
-               );
-               text.position.copy(ax.p);
-               //text.material.color = fgCol;
-               text.material.side = RC.FRONT_AND_BACK_SIDE;
-               ag.add(text);
-            }
-         });
-      }
+                     color: this.fgCol,
+                     font: font_metrics,
+                  });
+                  text.position.copy(ax.p);
+                  text.material.side = RC.FRONT_AND_BACK_SIDE;
+                  ag.add(text);
+               }
+            },
+            (img) => RC.ZText.createDefaultTexture(img)
+         );
+      };
 
       //==============================================================================
 
@@ -681,7 +663,7 @@ sap.ui.define([
 
          if (this.rqt.queue.used_fail_count == 0) {
             // AMT: All render passess are drawn with the black bg
-            //      except of the tone map render pass    
+            //      except of the tone map render pass
             this.renderer.clearColor = '#' +  this.bgCol.getHexString() + '00';
             this.rqt.render_tone_map_to_screen();
             this.renderer.clearColor = "#00000000";
@@ -708,7 +690,7 @@ sap.ui.define([
          this.rqt.pick_begin(x, y);
 
          let state = this.rqt.pick(x, y, detect_depth);
-         
+
          console.log("pick state", state);
 
          if (state.object === null) {
@@ -762,24 +744,24 @@ sap.ui.define([
          let top_obj = state_overlay.object;
             while (top_obj.eve_el === undefined)
                top_obj = top_obj.parent;
-   
+
             state_overlay.top_object = top_obj;
             state_overlay.eve_el = top_obj.eve_el;
-   
+
             if (state_overlay.eve_el.fSecondarySelect)
                this.rqt.pick_instance_overlay(state_overlay);
-   
+
             this.rqt.pick_end();
-   
+
             state_overlay.w = this.canvas.width;
             state_overlay.h = this.canvas.height;
             state_overlay.mouse = new RC.Vector2( ((x + 0.5) / state_overlay.w) * 2 - 1,
                                          -((y + 0.5) / state_overlay.h) * 2 + 1 );
-   
+
             let ctrl_obj = state_overlay.object;
             while (ctrl_obj.get_ctrl === undefined)
                ctrl_obj = ctrl_obj.parent;
-   
+
             state_overlay.ctrl = ctrl_obj.get_ctrl(ctrl_obj, top_obj);
             return state_overlay;
       }
@@ -1033,8 +1015,8 @@ sap.ui.define([
          if(this.firstMouseDown == false)
          {
             this.firstMouseDown = true;
-            //this.overlay_scene.children[0].children[0].setNewPositionOffset(this.lastOffsetX, this.lastOffsetY); 
-            this.pickedOverlayObj.setNewPositionOffset(this.lastOffsetX, this.lastOffsetY); 
+            //this.overlay_scene.children[0].children[0].setNewPositionOffset(this.lastOffsetX, this.lastOffsetY);
+            this.pickedOverlayObj.setNewPositionOffset(this.lastOffsetX, this.lastOffsetY);
             this.lastOffsetX = 0;
             this.lastOffsetY = 0;
             this.initialMouseX = 0;
@@ -1089,11 +1071,11 @@ sap.ui.define([
             {
                this.lastOffsetX = (x - this.initialMouseX)/this.canvas.width;
                this.lastOffsetY = (this.initialMouseY - y)/this.canvas.height;
-               //this.overlay_scene.children[0].children[0].setOffset([this.lastOffsetX, this.lastOffsetY]); 
-               this.pickedOverlayObj.setOffset([this.lastOffsetX, this.lastOffsetY]); 
+               //this.overlay_scene.children[0].children[0].setOffset([this.lastOffsetX, this.lastOffsetY]);
+               this.pickedOverlayObj.setOffset([this.lastOffsetX, this.lastOffsetY]);
 
             }
-            else 
+            else
             {
                //this.overlay_scene.children[0].children[0].fontSize = this.initialSize + (x - this.initialMouseX);
                this.pickedOverlayObj.fontSize = this.initialSize + (x - this.initialMouseX);
@@ -1103,7 +1085,7 @@ sap.ui.define([
 
 
 
-         } 
+         }
       }
 
       timeStampAttributesAndTextures() {
@@ -1160,10 +1142,10 @@ sap.ui.define([
    }</script>
 </head>
 <body>
-   <form name="myform"> 
+   <form name="myform">
       <input type="text" id="filename" name="Filename" value="programs${extra}">
       <input type="button" onClick="save();" value="Save">
-   </form> 
+   </form>
    <pre> ${json} </pre>
 </body>
          </html>`);
