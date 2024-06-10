@@ -16,9 +16,18 @@ namespace REX = ROOT::Experimental;
 
 using namespace ROOT::Experimental;
 
+// Text bluprs to choose from:
+const char *blurbs[] = { "Love", "Peace", "ROOT", "Code", "Courage", "Quiche" };
+// Diacritcis and most greek letter available through unicode.
+// const char *blurbs[] = { "ČŠŽčšžüéèëàá", "Αβρασαξ", "πφηθωμβτ" };
+
+// For available fonts see: $ROOTSYS/ui5/eve7/fonts
+const char *font_family = "Liberation";
+const char *font_styles[] = { "Mono", "Sans", "Serif" };
+const char *font_weight[] = { "Regular", "Italic", "Bold", "BoldItalic" };
+
 void makeTexts(int N_Texts, REX::REveElement *textHolder)
 {
-   const char *bla[] = { "Love", "Peace", "ROOT", "Code" };
    const double pi = TMath::Pi();
    const double lim = 300;
 
@@ -26,10 +35,15 @@ void makeTexts(int N_Texts, REX::REveElement *textHolder)
 
    for (int i = 0; i < N_Texts; i++)
    {
-      auto name_text = Form("%s_%d", bla[r.Integer(sizeof(bla)/sizeof(char*))], i);
+      auto name_text = Form("%s_%d", blurbs[r.Integer(sizeof(blurbs)/sizeof(char*))], i);
       auto text = new REX::REveText(name_text);
       text->SetText(name_text);
-      // text->SetFontColor(kViolet - r.Uniform(0, 50));
+
+      text->SetFont(TString::Format("%s%s-%s",
+                                    font_family,
+                                    font_styles[r.Integer(sizeof(font_styles)/sizeof(char*))],
+                                    font_weight[r.Integer(sizeof(font_weight)/sizeof(char*))]));
+
       int mode = r.Integer(2);
       text->SetMode(mode);
       if (mode == 0) { // world
@@ -41,8 +55,14 @@ void makeTexts(int N_Texts, REX::REveElement *textHolder)
          text->SetPosition(REX::REveVector(r.Uniform(-0.1, 0.9), r.Uniform(0.1, 1.1), r.Uniform(0.0, 1.0)));
          text->SetFontSize(r.Uniform(0.001, 0.05));
       }
-      text->SetFont(10 * r.Uniform(0, 3) + r.Uniform(0, 4));
       text->SetTextColor(TColor::GetColor((float) r.Uniform(0, 0.5), (float) r.Uniform(0, 0.5), (float) r.Uniform(0, 0.5)));
+      // text->SetMainTransparency();
+      // text->SetLineColor(text->GetTextColor());
+      text->SetLineColor(TColor::GetColor((float) r.Uniform(0, 0.2), (float) r.Uniform(0, 0.2), (float) r.Uniform(0, 0.2)));
+      text->SetLineAlpha(192);
+      text->SetFillColor(TColor::GetColor((float) r.Uniform(0.7, 1.0), (float) r.Uniform(0.7, 1.0), (float) r.Uniform(0.7, 1.0)));
+      text->SetFillAlpha(128);
+      text->SetDrawFrame(true);
       textHolder->AddElement(text);
    }
 }
@@ -77,7 +97,7 @@ void texts()
    os->SetIsOverlay(true);
 
    REX::REveElement *textHolder = new REX::REveElement("texts");
-   makeTexts(200, textHolder);
+   makeTexts(100, textHolder);
    // os->AddElement(textHolder);
    eveMng->GetEventScene()->AddElement(textHolder);
 
