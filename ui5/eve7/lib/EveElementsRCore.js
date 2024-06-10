@@ -879,18 +879,6 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
       {
          // if (this.TestRnr("jet", el, rnr_data)) return null;
 
-         let fontColor = RcCol(el.fTextColor);
-
-         let fallback = false;
-         let ff = el.fFont / 10 >> 0;
-         if (ff > 2) fallback = true;
-         ff = [ "Mono", "Sans", "Serif" ][ff];
-         let ft = el.fFont % 10;
-         if (ft > 3) fallback = true;
-         ft = [ "Regular", "Italic", "Bold", "BoldItalic" ][ft];
-
-         let fn = fallback ? "comic" : "Liberation" + ff + "-" + ft;
-
          let text = new RC.ZText({
             text: el.fText,
             xPos: el.fPosX,
@@ -898,11 +886,15 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
             fontSize: el.fFontSize,
             mode: el.fMode,
             fontHinting: el.fFontHinting,
-            color: fontColor,
+            color: RcCol(el.fTextColor),
          });
-         let url_base = this.viewer.eve_path + 'fonts/' + fn;
+         let url_base = this.viewer.eve_path + 'fonts/' + el.fFont;
          this.tex_cache.deliver_font(url_base,
             (texture, font_metrics) => {
+               text.setupFrameStuff((100 - el.fMainTransparency) / 100.0, el.fDrawFrame,
+                                    RcCol(el.fFillColor), el.fFillAlpha / 255.0,
+                                    RcCol(el.fLineColor), el.fLineAlpha / 255.0,
+                                    el.fExtraBorder, el.fLineWidth);
                text.setTextureAndFont(texture, font_metrics);
                if (el.fMode == 0) text.material.side = RC.FRONT_AND_BACK_SIDE;
             },

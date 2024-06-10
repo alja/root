@@ -31,7 +31,6 @@ ROOT_STANDARD_LIBRARY_PACKAGE(ROOTEve
     ROOT/REveGeoShape.hxx
     ROOT/REveGluTess.hxx
     ROOT/REveJetCone.hxx
-	  ROOT/REveText.hxx
     ROOT/REveEllipsoid.hxx
     ROOT/REveLine.hxx
     ROOT/REveManager.hxx
@@ -53,6 +52,7 @@ ROOT_STANDARD_LIBRARY_PACKAGE(ROOTEve
     ROOT/REveSystem.hxx
     ROOT/REveTableInfo.hxx
     ROOT/REveTableProxyBuilder.hxx
+    ROOT/REveText.hxx
     ROOT/REveTrack.hxx
     ROOT/REveTrackProjected.hxx
     ROOT/REveTrackPropagator.hxx
@@ -94,7 +94,6 @@ ROOT_STANDARD_LIBRARY_PACKAGE(ROOTEve
     src/REveGeoShapeExtract.cxx
     src/REveGluTess.cxx
     src/REveJetCone.cxx
-	  src/REveText.cxx
     src/REveEllipsoid.cxx
     src/REveLine.cxx
     src/REveManager.cxx
@@ -115,6 +114,7 @@ ROOT_STANDARD_LIBRARY_PACKAGE(ROOTEve
     src/REveStraightLineSet.cxx
     src/REveTableInfo.cxx
     src/REveTableProxyBuilder.cxx
+    src/REveText.cxx
     src/REveTrack.cxx
     src/REveTrackProjected.cxx
     src/REveTrackPropagator.cxx

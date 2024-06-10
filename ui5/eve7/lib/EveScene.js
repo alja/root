@@ -93,7 +93,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(EveManager) {
             let elem = prnt.childs[k];
             if (elem.render_data)
             {
-               let fname = elem.render_data.rnr_func, obj3d = null;
+               let fname = elem.render_data.rnr_func;
                if ( ! this.creator[fname])
                {
                   console.error("Function " + fname + " missing in creator");
@@ -254,7 +254,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(EveManager) {
             if (!obj3d) {
                let el = this.mgr.GetElement(elId);
                if (el && el.render_data) {
-                  console.log("ERROR EveScene.elementsRemoved can't find obj3d ", this.mgr.GetElement(el));
+                  console.warning("EveScene.elementsRemoved can't find obj3d ", this.mgr.GetElement(el));
                }
                continue;
             }
@@ -295,22 +295,22 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(EveManager) {
       // Selection handling
       //==============================================================================
 
-      sanitizeIndx(indx)
+      sanitizeIndex(index)
       {
-         if (Array.isArray(indx))    return indx.length > 0 ? indx : undefined;
-         if (Number.isInteger(indx)) return [ indx ];
+         if (Array.isArray(index))    return index.length > 0 ? index : undefined;
+         if (Number.isInteger(index)) return [ index ];
          return undefined;
       }
 
-      sendSelectMIR(sel_id, eve_el, is_multi, indx)
+      sendSelectMIR(sel_id, eve_el, is_multi, index)
       {
-         indx = this.sanitizeIndx(indx);
-         let is_secsel = indx !== undefined;
+         index = this.sanitizeIndex(index);
+         let is_secsel = index !== undefined;
 
          let fcall = "NewElementPickedStr(" + (eve_el ? eve_el.fElementId : 0) + `, ${is_multi}, ${is_secsel}`;
          if (is_secsel)
          {
-            fcall += ", \"" + indx.join(",") + "\"";
+            fcall += ", \"" + index.join(",") + "\"";
          }
          fcall += ")";
 
@@ -318,32 +318,32 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function(EveManager) {
       }
 
       /** interactive handler. Calculates selection state, apply to element and distribute to other scene */
-      processElementSelected(eve_el, indx, event)
+      processElementSelected(eve_el, index, event)
       {
-         // console.log("EveScene.processElementSelected", obj3d, col, indx, evnt);
+         // console.log("EveScene.processElementSelected", obj3d, col, index, evnt);
 
          let is_multi  = event && event.ctrlKey ? true : false;
-         this.sendSelectMIR(this.mgr.global_selection_id, eve_el, is_multi, indx);
+         this.sendSelectMIR(this.mgr.global_selection_id, eve_el, is_multi, index);
 
          return true;
       }
 
       /** interactive handler */
-      processElementHighlighted(eve_el, indx, event)
+      processElementHighlighted(eve_el, index, event)
       {
          // RenderCore viewer is organizing selection on stack, the last selection will set the color
-         if (!this.mgr.is_rcore && this.mgr.MatchSelection(this.mgr.global_selection_id, eve_el, indx))
+         if (!this.mgr.is_rcore && this.mgr.MatchSelection(this.mgr.global_selection_id, eve_el, index))
             return true;
 
          // Need check for duplicates before call server, else server will un-higlight highlighted element
-         if (this.mgr.MatchSelection(this.mgr.global_highlight_id, eve_el, indx))
+         if (this.mgr.MatchSelection(this.mgr.global_highlight_id, eve_el, index))
             return true;
 
          // when send queue below threshold, ignore highlight
          if (this.mgr.CheckSendThreshold())
             return true;
 
-         this.sendSelectMIR(this.mgr.global_highlight_id, eve_el, false, indx);
+         this.sendSelectMIR(this.mgr.global_highlight_id, eve_el, false, index);
 
          return true;
       }

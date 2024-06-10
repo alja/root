@@ -31,25 +31,26 @@ REveText::REveText(const Text_t* n, const Text_t* t) :
 {
    // MainColor set to FillColor in Shape.
    fPickable  = true;
-   fFillColor = kGreen;
+   fLineWidth = 0.05; // override, in text-size units
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Fill core part of JSON representation.
 
-Int_t REveText::WriteCoreJson(nlohmann::json &t, Int_t rnr_offset)
+Int_t REveText::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
 {
-   Int_t ret = REveElement::WriteCoreJson(t, rnr_offset);
+   Int_t ret = REveShape::WriteCoreJson(j, rnr_offset);
 
-   t["fText"] = fText;
-   t["fPosX"] = fPosition.fX;
-   t["fPosY"] = fPosition.fY;
-   t["fPosZ"] = fPosition.fZ;
-   t["fFontSize"] = fFontSize;
-   t["fFontHinting"] = fFontHinting;
-   t["fMode"] = fMode;
-   t["fFont"] = fFont;
-   t["fTextColor"] = fTextColor;
+   j["fText"] = fText;
+   j["fFont"] = fFont;
+   j["fPosX"] = fPosition.fX;
+   j["fPosY"] = fPosition.fY;
+   j["fPosZ"] = fPosition.fZ;
+   j["fFontSize"] = fFontSize;
+   j["fFontHinting"] = fFontHinting;
+   j["fExtraBorder"] = fExtraBorder;
+   j["fMode"] = fMode;
+   j["fTextColor"] = fTextColor;
 
    return ret;
 }
