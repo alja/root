@@ -23,8 +23,7 @@ const char *blurbs[] = { "Love", "Peace", "ROOT", "Code", "Courage", "Quiche" };
 
 // For available fonts see: $ROOTSYS/ui5/eve7/fonts
 const char *font_family = "Liberation";
-const char *font_styles[] = { "Mono", "Sans", "Serif" };
-const char *font_weight[] = { "Regular", "Italic", "Bold", "BoldItalic" };
+const char *font_styles[] = { "Mono", "Serif" };
 
 void makeTexts(int N_Texts, REX::REveElement *textHolder)
 {
@@ -39,10 +38,9 @@ void makeTexts(int N_Texts, REX::REveElement *textHolder)
       auto text = new REX::REveText(name_text);
       text->SetText(name_text);
 
-      text->SetFont(TString::Format("%s%s-%s",
+      text->SetFont(TString::Format("%s%s-Regular",
                                     font_family,
-                                    font_styles[r.Integer(sizeof(font_styles)/sizeof(char*))],
-                                    font_weight[r.Integer(sizeof(font_weight)/sizeof(char*))]));
+                                    font_styles[r.Integer(sizeof(font_styles)/sizeof(char*))]));
 
       int mode = r.Integer(2);
       text->SetMode(mode);
