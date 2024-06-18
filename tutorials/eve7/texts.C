@@ -109,8 +109,12 @@ void texts()
       REX::REveText::AssertSdfFont(fonts2[i], rf_dir + fonts2[i] + ".ttf");
    }
 
+   pid_t pid = fork();
+   if (pid != 0) sleep(5000000);
+
    auto eveMng = REX::REveManager::Create();
    eveMng->AllowMultipleRemoteConnections(false, false);
+   eveMng->GetWebWindow()->SetConnToken("got742fa");
 
    //add box to overlay
    REX::REveScene* os = eveMng->SpawnNewScene("OverlyScene", "OverlayTitle");

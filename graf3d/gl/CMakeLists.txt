@@ -210,12 +210,12 @@ ROOT_STANDARD_LIBRARY_PACKAGE(RGL
     ${GL2PS_LIBRARIES}
     ${X11_LIBRARIES}
     RGlew
-    -lpng16
   DEPENDENCIES
     Hist
     Gui
     Ged
     RCsg
+    ASImage
   INSTALL_OPTIONS
     ${installoptions}
 )

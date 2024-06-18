@@ -1,14 +1,12 @@
 #include "TGLSdfFontMaker.h"
 #include "TGLWidget.h"
 #include "TGClient.h"
-//#include "TImage.h"
-#include "TSystem.h"
+#include "TASPngWriter.h"
+#include "RZip.h"
 
 #include <cstdio>
 
 #include "TGLSdfFontMakerLowLevel.icxx"
-
-#include "RZip.h"
 
 namespace { // cloned from THttpCallArg::CompressWithGzip()
 
@@ -64,78 +62,6 @@ void gzip_compress_buffer(const char *objbuf, const size_t objlen,
    result.shrink_to_fit();
 }
 }
-
-#include <png.h>
-
-namespace { // adopted from https://gist.github.com/niw/5963798
-
-struct PngWriter
-{
-    int width = 0;
-    int height = 0;
-    png_byte color_type = 0;
-    png_byte bit_depth = 8;
-    std::vector<unsigned char*> row_pointers;
-
-    PngWriter() = default;
-    PngWriter(int w, int h, png_byte t = 2, png_byte d = 8) :
-        width(w), height(h), color_type(t), bit_depth(d)
-    {}
-
-    void set_type(bool is_rgb, bool has_alpha) {
-        color_type = is_rgb ? 2 : 0;
-        if (has_alpha) color_type |= 4;
-    }
-    void set_luminance()       { color_type = 0; }
-    void set_luminance_alpha() { color_type = 4; }
-    void set_rgb()             { color_type = 2; }
-    void set_rgba()            { color_type = 6; }
-
-    int write_png_file(std::string_view filename)
-    {
-        FILE *fp = fopen(filename.data(), "w");
-        if(!fp) return(errno);
-
-        png_structp png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-        if (!png) return(errno);
-
-        png_infop info = png_create_info_struct(png);
-        if (!info) return(errno);
-
-        if (setjmp(png_jmpbuf(png))) abort();
-
-        png_init_io(png, fp);
-
-        png_set_IHDR(
-            png,
-            info,
-            width, height,
-            bit_depth,
-            color_type,
-            PNG_INTERLACE_NONE,
-            PNG_COMPRESSION_TYPE_DEFAULT,
-            PNG_FILTER_TYPE_DEFAULT
-        );
-        png_write_info(png, info);
-
-        // To remove the alpha channel for PNG_COLOR_TYPE_RGB format,
-        // Use png_set_filler().
-        // png_set_filler(png, 0, PNG_FILLER_AFTER);
-
-        if (row_pointers.empty()) return 1;
-
-        png_write_image(png, row_pointers.data());
-        png_write_end(png, NULL);
-
-        fclose(fp);
-
-        png_destroy_write_struct(&png, &info);
-
-        return 0;
-    }
-};
-}
-
 
 // struct SdfCreator
 // {
@@ -257,10 +183,10 @@ int TGLSdfFontMaker::MakeFont(const char* ttf_font, const char* output_prefix, b
     if (verbose)
         printf("Resulting GL buffer: w=%d, h=%d\n", sc.width, sc.height);
 
-    PngWriter pw(sc.width, sc.height, 0, 8);
-    pw.row_pointers.resize(sc.height);
+    TASPngWriter pw(sc.width, sc.height, 0, 8);
+    pw.ref_row_pointers().resize(sc.height);
     for ( int iy = 0; iy < sc.height; ++iy ) {
-        pw.row_pointers[sc.height - iy - 1] = picbuf + iy * sc.width;
+        pw.ref_row_pointers()[sc.height - iy - 1] = picbuf + iy * sc.width;
     }
 
     pw.write_png_file(res_filename + ".png");
