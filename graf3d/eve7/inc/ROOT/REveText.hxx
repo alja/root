@@ -39,6 +39,10 @@ protected:
    Color_t     fTextColor {kMagenta};
    // UChar_t     fTextAlpha {255}; // Better than main transparency -- to be fixed.
 
+   static std::string sSdfFontDir;
+
+   static bool SetDefaultSdfFontDir();
+
 public:
    REveText(const Text_t *n = "REveText", const Text_t *t = "");
    virtual ~REveText() {}
@@ -78,6 +82,7 @@ public:
    // UChar_t GetTextAlpha() const { return fTextAlpha; }
    // void SetTextAlpha(UChar_t c) { fTextAlpha = c; StampObjProps(); }
 
+   static bool SetSdfFontDir(std::string_view dir, bool require_write_access = true);
    static bool AssertSdfFont(std::string_view font_name, std::string_view ttf_font);
 };
 

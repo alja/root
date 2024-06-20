@@ -28,7 +28,8 @@ sap.ui.define([
 
          let jsrp = EVE.JSR.source_dir;
          // take out 'jsrootsys' and replace it with 'rootui5sys/eve7/'
-         this.eve_path = jsrp.substring(0, jsrp.length - 10) + 'rootui5sys/eve7/';
+         this.top_path = jsrp.substring(0, jsrp.length - 10);
+         this.eve_path = this.top_path + 'rootui5sys/eve7/';
 
          this._logLevel = 1; // 0 - error, 1 - warning, 2 - info, 3 - debug
 

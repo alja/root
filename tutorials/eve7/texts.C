@@ -27,7 +27,7 @@ const int   n_fonts = sizeof(fonts) / sizeof(char*);
 
 // 2. Fonts with diacritcis and most greek letter available through unicode.
 // Not all fonts have them -- most that ship with ROOT don't.
-const char *blurbs2[] = { "Čüšéž! Šèëàá", "Αβρασαξ", "πφηθωμβτ" };
+const char *blurbs2[] = { "Čüšék! Šèžëçàgïlá", "Αβρασαξ", "πφηθωμβτ" };
 const int   n_blurbs2 = sizeof(blurbs2) / sizeof(char*);
 
 const char *fonts2[] = { "LiberationMono-Regular", "LiberationSerif-Regular" };
@@ -101,6 +101,21 @@ void makeJets(int N_Jets, REveElement *jetHolder)
 
 void texts()
 {
+   auto eveMng = REX::REveManager::Create();
+   eveMng->AllowMultipleRemoteConnections(false, false);
+
+   // Initialize SDF fonts.
+   // REveManager needs to be already created as location redirect needs to be set up.
+   // a) When REveText::AssertSdfFont() is called one of the two default locations
+   //    will be chosen, if it is writable by the current user:
+   //    - $ROOTSYS/ui5/eve7/sdf-fonts/
+   //    - sdf-fonts/ in the current working directory.
+   //    If neither location is writable, an error will be issued.
+   // b) Alternatively, REveText::SetSdfFontDir(std::string_view dir, bool require_write_access)
+   //    can be called to set this directory manually. If the directory is already pre-populated
+   //    with fonts one can set the `require_write_access` argument to false to avoid the
+   //    requirement of having write access to that directory.
+
    std::string rf_dir = gSystem->ExpandPathName("${ROOTSYS}/fonts/");
    for (int i = 0; i < n_fonts; ++i) {
       REX::REveText::AssertSdfFont(fonts[i], rf_dir + fonts[i] + ".ttf");
@@ -108,13 +123,6 @@ void texts()
    for (int i = 0; i < n_fonts2; ++i) {
       REX::REveText::AssertSdfFont(fonts2[i], rf_dir + fonts2[i] + ".ttf");
    }
-
-   pid_t pid = fork();
-   if (pid != 0) sleep(5000000);
-
-   auto eveMng = REX::REveManager::Create();
-   eveMng->AllowMultipleRemoteConnections(false, false);
-   eveMng->GetWebWindow()->SetConnToken("got742fa");
 
    //add box to overlay
    REX::REveScene* os = eveMng->SpawnNewScene("OverlyScene", "OverlayTitle");

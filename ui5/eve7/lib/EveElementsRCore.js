@@ -888,7 +888,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
             fontHinting: el.fFontHinting,
             color: RcCol(el.fTextColor),
          });
-         let url_base = this.viewer.eve_path + 'fonts/' + el.fFont;
+         let url_base = this.viewer.top_path + 'sdf-fonts/' + el.fFont;
          this.tex_cache.deliver_font(url_base,
             (texture, font_metrics) => {
                text.setupFrameStuff((100 - el.fMainTransparency) / 100.0, el.fDrawFrame,
