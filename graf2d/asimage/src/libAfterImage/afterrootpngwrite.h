@@ -14,4 +14,5 @@ int after_root_png_write(FILE *fp, int width, int height,
 #ifdef __cplusplus
 }
 #endif
+
 #endif

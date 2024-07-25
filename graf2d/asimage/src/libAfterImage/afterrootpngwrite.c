@@ -1,3 +1,9 @@
+#ifdef _WIN32
+#include "win32/config.h"
+#else
+#include "config.h"
+#endif
+
 #include "afterrootpngwrite.h"
 
 # ifdef HAVE_BUILTIN_PNG
