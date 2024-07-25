@@ -1196,7 +1196,6 @@ void bindAttribs( VertexAttrib *attribs, size_t attrib_count, size_t offset ) {
 }
 
 
-
 void SdfAtlas::init( Font *i_font, float i_tex_width, float i_row_height, float i_sdf_size ) {
     font = i_font;
 
