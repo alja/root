@@ -13,16 +13,18 @@ LUMINANCE, LUMINANCE_ALPHA, RGB, and RGBA.
 
 int TASPngWriter::write_png_file(std::string_view filename)
 {
-    if ((int) row_pointers.size() != height)
-        return 1;
+   if ((int)row_pointers.size() != height)
+      return 1;
 
-    FILE *fp = fopen(filename.data(), "w");
-    if (!fp) return errno;
+   FILE *fp = fopen(filename.data(), "w");
+   if (!fp)
+      return errno;
 
-    int ret = after_root_png_write(fp, width, height, color_type, bit_depth, row_pointers.data());
-    if (ret) return ret;
+   int ret = after_root_png_write(fp, width, height, color_type, bit_depth, row_pointers.data());
+   if (ret)
+      return ret;
 
-    fclose(fp);
+   fclose(fp);
 
-    return 0;
+   return 0;
 }
