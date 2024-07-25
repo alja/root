@@ -142,6 +142,7 @@ bool REveText::SetDefaultSdfFontDir()
 
    return true;
 }
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Check if font exists, otherwise try to create it.
 /// If SDF font dir is not yet set, an attempt will be made to set it to

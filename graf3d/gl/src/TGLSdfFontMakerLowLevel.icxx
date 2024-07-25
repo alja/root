@@ -42,7 +42,6 @@
 namespace root_sdf_fonts
 {
 
-
 struct Float2 {
 
     float x, y;

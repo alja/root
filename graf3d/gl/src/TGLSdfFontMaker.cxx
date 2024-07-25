@@ -8,7 +8,16 @@
 
 #include "TGLSdfFontMakerLowLevel.icxx"
 
-namespace { // cloned from THttpCallArg::CompressWithGzip()
+/** \class TGLSdfFontMaker
+\ingroup opengl
+
+Helper class for generation of Signed Distance Field (SDF) fonts for REve.
+
+*/
+
+namespace {
+
+// cloned from THttpCallArg::CompressWithGzip()
 
 void gzip_compress_buffer(const char *objbuf, const size_t objlen,
                           std::vector<char> &result)
@@ -77,6 +86,10 @@ void gzip_compress_buffer(const char *objbuf, const size_t objlen,
 //        default: '31:126,0xffff'
 // };
 
+////////////////////////////////////////////////////////////////////////////////
+/// Converts TTF font 'ttf_font' into a SDF font texture atlas (png format) and
+/// a compressed font metrics JSON file. Both files are put into the directory
+/// given by 'output_prefix'.
 
 int TGLSdfFontMaker::MakeFont(const char* ttf_font, const char* output_prefix, bool verbose)
 {
