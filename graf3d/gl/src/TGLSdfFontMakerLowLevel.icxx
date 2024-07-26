@@ -30,8 +30,6 @@
 #include <cwctype>
 #include <fstream>
 #include <functional>
-#include <GL/glew.h>
-#include <GL/gl.h>
 #include <iostream>
 #include <sstream>
 #include <string>

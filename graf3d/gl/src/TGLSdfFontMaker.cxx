@@ -1,6 +1,7 @@
 #include "TGLSdfFontMaker.h"
 #include "TGLWidget.h"
 #include "TGClient.h"
+#include "TGLIncludes.h"
 #include "TASPngWriter.h"
 #include "RZip.h"
 
