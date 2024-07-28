@@ -212,7 +212,7 @@ int TGLSdfFontMaker::MakeFont(const char *ttf_font, const char *output_prefix, b
    gzip_compress_buffer(json.data(), json.size(), json_gz);
 
    std::string json_filename = res_filename + ".js.gz";
-   FILE *json_file = fopen(json_filename.c_str(), "w");
+   FILE *json_file = fopen(json_filename.c_str(), "wb");
    if (!json_file) {
       perror("Error writing json file.");
       return errno;

@@ -16,7 +16,7 @@ int TASPngWriter::write_png_file(std::string_view filename)
    if ((int)row_pointers.size() != height)
       return 1;
 
-   FILE *fp = fopen(filename.data(), "w");
+   FILE *fp = fopen(filename.data(), "wb");
    if (!fp)
       return errno;
 

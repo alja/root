@@ -169,8 +169,15 @@ bool REveText::AssertSdfFont(std::string_view font_name, std::string_view ttf_fo
       }
       // Invoke through interpreter to avoid REve dependece on RGL.
       char command[8192];
-      snprintf(command, 8192, "TGLSdfFontMaker::MakeFont(\"%s\", \"%s\");",
-               ttf_font.data(), base.data());
+      int cl = snprintf(command, 8192, "TGLSdfFontMaker::MakeFont(\"%s\", \"%s\");",
+                        ttf_font.data(), base.data());
+      if (cl < 0) {
+         ::Warning(tpfx, "Error generating interpreter command for TGLSdfFontMaker::MakeFont(), ret=%d.", cl);
+         return false;
+      }
+#ifdef WIN32
+      while (--cl >= 0) if (command[cl] == '\\') command[cl] = '/';
+#endif
       gROOT->ProcessLine(command);
       if (gSystem->AccessPathName(png.data()) || gSystem->AccessPathName(js.data())) {
          ::Warning(tpfx, "Creation of font '%s' failed.", font_name.data());

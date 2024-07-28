@@ -2233,7 +2233,7 @@ bool Font::load_ttf_mem( const uint8_t *ttf ) {
         int iglyph = cgpair.second;
         if ( iglyph < 0 ) continue;
         if ( iglyph >= (int)glyphs.size()) {
-            fprintf(stderr, "Gylph out of range: %d, glyphs.size\%d\n"
+            fprintf(stderr, "Gylph out of range: %d, glyphs.size %d\n"
                     "  This seems to happen with some old ttf files of semi-unknown origin.\n",
                     iglyph, (int)glyphs.size());
             exit(1);
