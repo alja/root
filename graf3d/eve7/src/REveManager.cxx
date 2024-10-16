@@ -1018,6 +1018,7 @@ void REveManager::SendSceneChanges()
       jobj["log"] = nlohmann::json::array();
       std::stringstream strm;
       for (auto entry : gEveLogEntries) {
+         strm.str("");
          nlohmann::json item = {};
          item["lvl"] = entry.fLevel;
          int cappedLevel = std::min(static_cast<int>(entry.fLevel), numLevels - 1);
@@ -1028,11 +1029,9 @@ void REveManager::SendSceneChanges()
          strm << " " << entry.fMessage;
          item["msg"] = strm.str();
          jobj["log"].push_back(item);
-         strm.clear();
       }
       gEveLogEntries.clear();
    }
-
    fWebWindow->Send(0, jobj.dump());
 }
 
@@ -1239,7 +1238,7 @@ REveManager::ChangeGuard::~ChangeGuard()
    gEve->EndChange();
 }
 
-// Error handler streams error-level messages to client log
+// gInterpreter error handlder
 void REveManager::ErrorHandler(Int_t level, Bool_t abort, const char * location, const char *msg)
 {
    if (level >= kError)
@@ -1274,11 +1273,12 @@ TStdExceptionHandler::EStatus REveManager::RExceptionHandler::Handle(std::except
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Utility to stream loggs to client.
+/// Return false to supress further emission
 
 bool REveManager::Logger::Handler::Emit(const RLogEntry &entry)
 {
    gEveLogEntries.emplace_back(entry);
-   return true;
+   return false;
 }
 
 
