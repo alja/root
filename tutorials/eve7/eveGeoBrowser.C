@@ -24,7 +24,7 @@ TGeoNode* testCmsGeo()
    TGeoManager::Import("https://root.cern/files/cms.root");
 
    gGeoManager->DefaultColors();
-   gGeoManager->SetVisLevel(4);
+   gGeoManager->SetVisLevel(2);
    gGeoManager->GetVolume("TRAK")->InvisibleAll();
    gGeoManager->GetVolume("HVP2")->SetTransparency(20);
    gGeoManager->GetVolume("HVEQ")->SetTransparency(20);
@@ -192,10 +192,11 @@ void eveGeoBrowser()
 {
    gEnv->SetValue("WebEve.GLViewer", "Three");
    auto eveMng = REX::REveManager::Create();
+   eveMng->AllowMultipleRemoteConnections(false, false);
 
    TGeoNode* gn;
    bool simple = true;
-   if (0)
+   if (1)
     gn = rootgeom();
    else
     gn = testCmsGeo();
