@@ -537,7 +537,7 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
          }
          
          // console.log("senf last AMT ", msg);
-         let hbr = EVE.mgr.GetElement(topNode.eve_el.dataId);
+         let hbr = topNode.scene.mgr.GetElement(topNode.eve_el.dataId);
          hbr.websocket.sendLast(t1, 200, t2 + msg);
       }
 
