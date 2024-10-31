@@ -37,7 +37,7 @@ TGeoNode *getNodeFromPath(TGeoNode *top, std::string path)
 void geoTopNode()
 {
    auto eveMng = REX::REveManager::Create();
-   eveMng->AllowMultipleRemoteConnections(false, false);
+   // eveMng->AllowMultipleRemoteConnections(false, false);
 
    TFile::SetCacheFileDir(".");
 
@@ -45,14 +45,15 @@ void geoTopNode()
    TGeoNode *top = gGeoManager->GetTopVolume()->FindNode("CMSE_1");
    setDetColors();
 
+   // tracker barrel
    {
-      // web geom representation
+      // Init RGeomDescription object
       auto data = new REX::REveGeoTopNodeData("TRACK GeoNode-Data ");
       data->SetTNode(getNodeFromPath(top, "TRAK_1/SVTX_1"));
       data->RefDescription().SetVisLevel(2);
       eveMng->GetWorld()->AddElement(data); // data can be added to any scene
 
-      // reve representation
+      // 3D GL representation
       auto geoViz = new REX::REveGeoTopNodeViz("CaloTopNode");
       geoViz->SetGeoData(data);
       geoViz->SetPickable(true);
@@ -60,14 +61,15 @@ void geoTopNode()
       eveMng->GetEventScene()->AddElement(geoViz);
    }
 
+   // muon barrel
    {
-      // web geom representation
+      // Init RGeomDescription object
       auto data = new REX::REveGeoTopNodeData("MUON GeoNode-Data");
       data->SetTNode(getNodeFromPath(top, "MUON_1/MB_1"));
       data->RefDescription().SetVisLevel(2);
       eveMng->GetWorld()->AddElement(data);
 
-      // reve representation
+      // 3D GL representation
       auto geoViz = new REX::REveGeoTopNodeViz("MUON TopNode");
       geoViz->SetGeoData(data);
       geoViz->SetPickable(true);

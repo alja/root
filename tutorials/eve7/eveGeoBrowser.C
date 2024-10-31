@@ -48,7 +48,6 @@ TGeoNode* rootgeom()
 {
    TGeoManager *geom = new TGeoManager("simple1", "Simple geometry");
 
-
    TGeoMaterial *matVacuum = new TGeoMaterial("Vacuum", 0,0,0);
    TGeoMaterial *matAl = new TGeoMaterial("Al", 26.98,13,2.7);
 //   //--- define some media
@@ -169,9 +168,8 @@ TGeoNode* rootgeom()
 
 void eveGeoBrowser(bool showDet = true)
 {
-   // gEnv->SetValue("WebEve.GLViewer", "Three");
    auto eveMng = REX::REveManager::Create();
-   eveMng->AllowMultipleRemoteConnections(false, false);
+   // eveMng->AllowMultipleRemoteConnections(false, false);
 
    TGeoNode *gn;
    int vislevel = 4;
@@ -183,25 +181,23 @@ void eveGeoBrowser(bool showDet = true)
       vislevel = 8;
    }
 
-   // geo - table
+   // initialize RGeomDesc from TGeoNode
    auto data = new REX::REveGeoTopNodeData();
    data->SetTNode(gn);
    data->RefDescription().SetVisLevel(vislevel);
    
-   {
-       auto scene = eveMng->SpawnNewScene("GeoSceneTable");
-       auto view = eveMng->SpawnNewViewer("GeoTable");
-       view->AddScene(scene);
-       scene->AddElement(data);
-   }
-   // GL - data
-   {
-       auto geoViz = new REX::REveGeoTopNodeViz();
-       geoViz->SetGeoData(data);
-       geoViz->SetPickable(true);
-       data->AddNiece(geoViz);
-       eveMng->GetEventScene()->AddElement(geoViz);
-   }
+   // make geoTable
+   auto scene = eveMng->SpawnNewScene("GeoSceneTable");
+   auto view = eveMng->SpawnNewViewer("GeoTable");
+   view->AddScene(scene);
+   scene->AddElement(data);
+
+   // 3D representation
+   auto geoViz = new REX::REveGeoTopNodeViz();
+   geoViz->SetGeoData(data);
+   geoViz->SetPickable(true);
+   data->AddNiece(geoViz);
+   eveMng->GetEventScene()->AddElement(geoViz);
 
    eveMng->Show();
 }
