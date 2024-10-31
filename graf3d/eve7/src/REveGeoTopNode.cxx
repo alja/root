@@ -161,36 +161,6 @@ void REveGeoTopNodeViz::FillExtraSelectionData(nlohmann::json &j, const std::set
 
    auto tnPath = fGeoData->fDesc.GetSelectedStack();
 
-   /*
-      if  (tnPath.empty()) {
-         for (auto i : stack)
-            j["stack"].push_back(i);
-      } else {
-         printf("top node: ");
-         for (auto i : fGeoData->fDesc.GetSelectedStack())
-            printf(" %d ", i);
-         printf("\n");
-
-         j["stack"].push_back(0);
-         j["stack"].push_back(0); // ????
-
-         size_t off = fGeoData->fDesc.GetSelectedStack().size();
-
-         for (size_t i = 0; i < stack.size(); ++i) {
-            if (i < off) {
-               if (stack[i] != tnPath[i]) {
-                  printf("top node path do not match with selections arg !!!!!!!!!! \n");
-                  j["stack"].clear();
-                  break;
-               }
-            } else {
-               j["stack"].push_back(stack[i]);
-               printf("push for stack >>> %d >>>  \n", stack[i]);
-            }
-         }
-      }
-   */
-
    for (auto i : stack)
       j["stack"].push_back(i);
 
