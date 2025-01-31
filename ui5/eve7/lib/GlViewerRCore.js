@@ -709,8 +709,6 @@ sap.ui.define([
 
          let state = this.rqt.pick(x, y, detect_depth);
 
-         console.log("pick state", state);
-
          if (state.object === null) {
             this.rqt.pick_end();
             return null;
@@ -1029,7 +1027,7 @@ sap.ui.define([
 
       handleOverlayMouseUp()
       {
-         console.log("handleOverlayMouseUp");
+         // console.log("handleOverlayMouseUp");
          if(this.firstMouseDown == false)
          {
             this.firstMouseDown = true;
@@ -1048,7 +1046,7 @@ sap.ui.define([
 
       handleOverlayMouseDown(event)
       {
-         console.log("handleOverlayMouseDown");
+         // console.log("handleOverlayMouseDown");
          let x = event.offsetX * this.canvas.pixelRatio;
          let y = event.offsetY * this.canvas.pixelRatio;
          let overlay_pstate = this.render_for_Overlay_picking(x, y, false);
