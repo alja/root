@@ -23,8 +23,6 @@ sap.ui.define(['rootui5/eve7/controller/Main.controller','sap/ui/core/Component'
 
          this.mgr.RegisterController(this);
 
-         console.log(this, this.getView(), this.getView().byId("DaMain"));
-
          this.primarySplitter = this.getView().byId("DaMain");
       },
 
