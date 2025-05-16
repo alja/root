@@ -798,6 +798,8 @@ void REveManager::WindowConnect(unsigned connid)
 
 void REveManager::WindowDisconnect(unsigned connid)
 {
+   fWebWindow->CloseConnection(connid);
+
    std::unique_lock<std::mutex> lock(fServerState.fMutex);
    auto conn = fConnList.end();
    for (auto i = fConnList.begin(); i != fConnList.end(); ++i) {

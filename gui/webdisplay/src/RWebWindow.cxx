@@ -909,7 +909,7 @@ bool RWebWindow::ProcessWS(THttpCallArg &arg)
             conn->fConnId = ++fConnCnt; // change connection id to avoid confusion
             conn->ResetData();
             conn->ResetStamps(); // reset stamps, after timeout connection wll be removed
-            fPendingConn.emplace_back(conn);
+            // fPendingConn.emplace_back(conn);
          } else {
             std::lock_guard<std::mutex> grd(fConnMutex);
             do_clear_on_close = (fPendingConn.size() == 0) && (fConn.size() == 0);
@@ -1613,6 +1613,8 @@ void RWebWindow::SubmitData(unsigned connid, bool txt, std::string &&data, int c
    timestamp_t stamp = std::chrono::system_clock::now();
 
    for (auto &conn : arr) {
+
+      printf("RWebWindow::SubmitData conn id =  [id %d] queue size %lu \n", conn->fConnId, conn->fQueue.size() );
 
       if ((fProtocolCnt >= 0) && (chid > 0))
          if (!fProtocolConnId || (conn->fConnId == fProtocolConnId)) {
