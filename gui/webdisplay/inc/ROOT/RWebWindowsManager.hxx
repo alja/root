@@ -106,7 +106,7 @@ public:
    static bool IsMainThrd();
    static void AssignMainThrd();
 
-   static void SetLoopbackMode(bool on = true);
+   static void SetLoopbackMode(bool on = true, bool print_warning = true);
    static bool IsLoopbackMode();
 
    static void SetUseSessionKey(bool on = true);

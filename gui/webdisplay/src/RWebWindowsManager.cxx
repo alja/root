@@ -126,16 +126,20 @@ void RWebWindowsManager::AssignMainThrd()
 /// By default is on. Only local communication via localhost address is possible
 /// Disable it only if really necessary - it may open unauthorized access to your application from external nodes!!
 
-void RWebWindowsManager::SetLoopbackMode(bool on)
+void RWebWindowsManager::SetLoopbackMode(bool on, bool print_warning)
 {
    gWebWinLoopbackMode = on;
    if (!on) {
-      printf("\nWARNING!\n");
-      printf("Disabling loopback mode may leads to security problem.\n");
-      printf("See https://root.cern/about/security/ for more information.\n\n");
+      if (print_warning) {
+         printf("\nWARNING!\n");
+         printf("Disabling loopback mode may leads to security problem.\n");
+         printf("See https://root.cern/about/security/ for more information.\n\n");
+      }
       if (!gWebWinUseSessionKey) {
-         printf("Enforce session key to safely work on public network.\n");
-         printf("One may call RWebWindowsManager::SetUseSessionKey(false); to disable it.\n");
+         if (print_warning) {
+            printf("Enforce session key to safely work on public network.\n");
+            printf("One may call RWebWindowsManager::SetUseSessionKey(false); to disable it.\n");
+         }
          gWebWinUseSessionKey = true;
       }
    }

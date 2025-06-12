@@ -623,9 +623,9 @@ REveViewer *REveManager::GetDefaultViewer() const
 /// Authentification key has to be disabled in the case of multiple connections.
 /// The default arguments prevent remote connections for the security reasons.
 //
-void REveManager::AllowMultipleRemoteConnections(bool loopBack, bool requireAuthKey)
+void REveManager::AllowMultipleRemoteConnections(bool loopBack, bool requireAuthKey, bool print_warnings)
 {
-   ROOT::RWebWindowsManager::SetLoopbackMode(loopBack);
+   ROOT::RWebWindowsManager::SetLoopbackMode(loopBack, print_warnings);
    fWebWindow->SetRequireAuthKey(requireAuthKey);
 }
 

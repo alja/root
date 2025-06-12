@@ -193,7 +193,7 @@ public:
    REveViewer *SpawnNewViewer(const char *name, const char *title = "");
    REveScene  *SpawnNewScene (const char *name, const char *title = "");
 
-   void AllowMultipleRemoteConnections(bool loopBack = true, bool useAuthKey = true);
+   void AllowMultipleRemoteConnections(bool loopBack = true, bool useAuthKey = true, bool print_warning = true);
 
    void BeginChange();
    void EndChange();
