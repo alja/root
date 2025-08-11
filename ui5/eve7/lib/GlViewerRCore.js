@@ -493,7 +493,8 @@ sap.ui.define([
 
          if (this.camera.isPerspectiveCamera)
          {
-            this.controls.setCamBaseMtx(new RC.Vector3(-1, 0, 0), new RC.Vector3(0, 1, 0)); //XOZ floor
+            // this.controls.setCamBaseMtx(new RC.Vector3(-1, 0, 0), new RC.Vector3(0, 1, 0)); //XOZ floor
+            this.controls.setCamBaseMtx(new RC.Vector3(-1, 0, 0), new RC.Vector3(0, 0, 1)); //XOY floor
             this.controls.screenSpacePanning = true;
 
             let lc = this.lights.children;
