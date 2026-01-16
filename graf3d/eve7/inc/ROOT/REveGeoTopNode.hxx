@@ -35,23 +35,49 @@ public:
 
    void SetChannel(unsigned connid, int chid);
 };
+
+
 //-------------------------------------------------------------------
 class REveGeoTopNodeViz : public REveElement
 {
- private:
+private:
+   struct BShape {
+      TGeoShape *shape;
+      std::vector<int> indices;
+      std::vector<float> vertices;
+   };
+
+   struct BNode {
+      TGeoNode *node;
+      int shapeId;
+      int nodeId;
+      int color;
+      float trans[16];
+   };
    REveGeoTopNodeViz(const REveGeoTopNodeViz &) = delete;
    REveGeoTopNodeViz &operator=(const REveGeoTopNodeViz &) = delete;
 
-   REveGeoTopNodeData* fGeoData{nullptr};
+   REveGeoTopNodeData *fGeoData{nullptr};
+   std::vector<BNode> fNodes;
+   std::vector<BShape> fShapes;
 
- public:
+   void CollectNodes(TGeoVolume *volume, std::vector<BNode> &bnl, std::vector<BShape> &browsables, int vislevel);
+
+   void CollectShapes(TGeoNode *node, std::set<TGeoShape *> &shapes, std::vector<BShape> &browsables);
+
+public:
    REveGeoTopNodeViz(const Text_t *n = "REveGeoTopNodeViz", const Text_t *t = "");
-   void SetGeoData(REveGeoTopNodeData* d) {fGeoData = d;}
+   void SetGeoData(REveGeoTopNodeData *d, bool rebuild = true);
    Int_t WriteCoreJson(nlohmann::json &j, Int_t rnr_offset) override;
    void BuildRenderData() override;
 
-   bool    RequiresExtraSelectionData() const override { return true; };
-   void FillExtraSelectionData(nlohmann::json& j, const std::set<int>& secondary_idcs) const override;
+   bool RequiresExtraSelectionData() const override { return true; };
+   void FillExtraSelectionData(nlohmann::json &j, const std::set<int> &secondary_idcs) const override;
+
+   void SetVisLevel(int);
+   // int GetVisLevel() const { return fVisLevel; }
+
+   void BuildDesc();
 
    using REveElement::GetHighlightTooltip;
    std::string GetHighlightTooltip(const std::set<int>& secondary_idcs) const override;
