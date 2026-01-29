@@ -10,7 +10,7 @@
  *************************************************************************/
 
 #include <ROOT/REveViewer.hxx>
-
+#include <ROOT/REveCamera.hxx>
 #include <ROOT/REveUtil.hxx>
 #include <ROOT/REveScene.hxx>
 #include <ROOT/REveSceneInfo.hxx>
@@ -129,11 +129,12 @@ void REveViewer::SetBlackBackground(bool x)
 /// Virtual from REveElement.
 int REveViewer::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
 {
-   fCamera.WriteCoreJson(j, rnr_offset);
+   // fCamera.WriteCoreJson(j, rnr_offset);
 
    j["Mandatory"] = fMandatory;
    j["AxesType"] = fAxesType;
    j["BlackBg"] = fBlackBackground;
+   j["fCameraId"] = fCameraId;  // yuxiao
 
    j["UT_PostStream"] = "UT_EveViewerUpdate";
 
@@ -171,6 +172,7 @@ void REveViewer::SetMandatory(bool x)
 ///
 //  Set base vectors of camera base matrix
 //
+/*
 void REveViewer::SetCameraType(ECameraType cameraType)
 {
    switch(cameraType) {
@@ -212,33 +214,14 @@ void REveViewer::SetCameraType(ECameraType cameraType)
          return;
    }
 }
-
+*/
 ////////////////////////////////////////////////////////////////////////////////
-//
-//  Set camera base matrix
-//
-void REveViewer::REveCamera::Setup( ECameraType type, const std::string& name, REveVector v1, REveVector v2)
+/// Set camera reference by ID, yuxiao
+
+void REveViewer::SetCamera(::ROOT::Experimental::REveCamera *cam)
 {
-   fType = type;
-   fName = name;
-   fV1 = v1;
-   fV2 = v2;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-///
-//  Stream camera info
-//
-int REveViewer::REveCamera::WriteCoreJson(nlohmann::json &j, Int_t /*rnr_offset*/)
-{
-   nlohmann::json out;
-   out["type"] = fName;
-   out["V1"] = {fV1.fX, fV1.fY, fV1.fZ};
-   out["V2"] = {fV2.fX, fV2.fY, fV2.fZ};
-
-   j["camera"] = out;
-
-   return 0;
+   fCameraId = cam ? cam->GetElementId() : 0;
+   StampObjProps();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
