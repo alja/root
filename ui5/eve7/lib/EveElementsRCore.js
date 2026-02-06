@@ -470,83 +470,6 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
    } // class Calo2Control
 
    //==============================================================================
-
-
-   class GeoTopNodeControl extends EveElemControl {
-     
-      addMeshRec(o3, res){
-         for (let c of o3.children)
-         {
-            if (c.material) {
-               console.log("add mesh ", c);
-               res.geom.push(c);
-            }
-            this.addMeshRec(c, res);
-         }
-      }
-      DrawForSelection(sec_idcs, res, extra) {
-
-         if (extra.stack.length > 0) {
-            let topNode = this.top_obj;
-            let stack = extra.stack;
-            let clones = topNode.clones;
-
-            // NOTE: this needs to be done diffeewnrly, this code is related to objects3d
-            // TODO: make same logic fro RC objects 
-            let x = topNode.clones.createRCObject3D(stack, topNode, 'force');
-
-            // console.log("geo topnode control res = ",x);
-            this.addMeshRec(x, res);
-         }
-      }
-      getTooltipText() {
-         return this.top_obj.eve_el.fName;
-      }
-      extractIndex(instance) {
-         this.pick = instance;
-      }
-
-      sendSocketMassage(pstate_obj, t1, t2)
-      {
-         let topNode = this.top_obj;
-         let aa = pstate_obj.stack || [];
-
-         let mgr =  topNode.scene.mgr;
-         let hbr = mgr.GetElement(topNode.eve_el.dataId);
-
-         if (!hbr.hasOwnProperty("websocket"))
-         {
-            let websocket = mgr.handle.createChannel();
-            mgr.handle.send("SETCHANNEL:" + hbr.fElementId + "," + websocket.getChannelId());
-            hbr.websocket =  websocket;
-         }
-
-         let name = topNode.clones.getStackName(aa);
-         const myArray = name.split("/");
-         let msg = '[';
-         let lastIdx = myArray.length - 1;
-         for (let p = 0; p < myArray.length; ++p) {
-            let np = "\"" + myArray[p] + "\"";
-            msg += np;
-            if (p == lastIdx)
-               msg += ']';
-            else
-               msg += ",";
-
-         }
-
-         hbr.websocket.sendLast(t1, 200, t2 + msg);
-      }
-
-      elementSelected(idx, event, pstate_obj) {
-         this.sendSocketMassage(pstate_obj, 'click', 'CLICK:');
-      }
-
-      elementHighlighted(idx, event, pstate_obj) {
-         this.sendSocketMassage( pstate_obj, 'hover', 'HOVER:');
-      }
-   }
-
    //==============================================================================
    // EveElements
    //==============================================================================
@@ -1586,41 +1509,35 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
          return mesh;
       }
 
-      makeGeoTopNode(tn, rnr_data) {
-         let hack = tn; // EVE.JSR.parse(atob(tn.fTitle));
-         console.log("dumping hack ");
-         console.log(hack);
-
-         console.log(rnr_data.vtxBuff);
+      makeGeoTopNode(topNode, rnr_data) {
 
          const buf = new ArrayBuffer(4);
          const f32 = new Float32Array(buf);
          const u8 = new Uint8Array(buf);
 
-         f32[0] = rnr_data.vtxBuff[0];   // write float bits
-         console.log(u8[0], u8[1], u8[2], u8[3]);
+         // f32[0] = rnr_data.vtxBuff[0];   // write float bits little indian test
+         // console.log(u8[0], u8[1], u8[2], u8[3]);
 
          let g = new RC.Geometry();
-         // let vatt = new RC.BufferAttribute(hack.shapeVertices, 3);
-         // g.vertices = new RC.BufferAttribute(hack.shapeVertices, 3);
-         g.vertices = RC.Float32Attribute(hack.shapeVertices, 3);
-         // g.indices = new RC.BufferAttribute(hack.shapeIndices,1);
-         g.indices = RC.Uint32Attribute(hack.shapeIndices, 1);
+         // let vatt = new RC.BufferAttribute(topNode.shapeVertices, 3);
+         // g.vertices = new RC.BufferAttribute(topNode.shapeVertices, 3);
+         g.vertices = RC.Float32Attribute(topNode.shapeVertices, 3);
+         // g.indices = new RC.BufferAttribute(topNode.shapeIndices,1);
+         g.indices = RC.Uint32Attribute(topNode.shapeIndices, 1);
 
-         let mm = new RC.ZMultiMesh(g, this.RcFancyMaterial(new RC.Color(1, 0, 1)));
-         mm.pickable = false;
-
+         let mm = new RC.ZMultiMesh(g);
          // nodes info
-         mm.nodeShapeIds = hack.nodeShapeIds;
-         mm.nodeTrans = hack.nodeTrans;
+         mm.nodeShapeIds = topNode.nodeShapeIds;
+         mm.nodeTrans = topNode.nodeTrans;
+         mm.nodeVisibility = topNode.nodeVisibility;
 
          // shapes poly info
-         mm.shapeIndices = hack.shapeIndices; // already in RC.Geomtery
-         mm.shapeIndicesOff = hack.shapeIndicesOff;
-         mm.shapeIndicesSize = hack.shapeIndicesSize;
+         mm.shapeIndices = topNode.shapeIndices; // already in RC.Geomtery
+         mm.shapeIndicesOff = topNode.shapeIndicesOff;
+         mm.shapeIndicesSize = topNode.shapeIndicesSize;
 
          // shape vertex info
-         mm.shapeVertices = hack.shapeVertices; // aready in RC.Geometry
+         mm.shapeVertices = topNode.shapeVertices; // aready in RC.Geometry
 
          // color
          const floatBuffer = new Float32Array(rnr_data.vtxBuff);
@@ -1628,8 +1545,12 @@ sap.ui.define(['rootui5/eve7/lib/EveManager'], function (EveManager)
          // console.log("color ", bytes);
          mm.nodeColors = bytes; // aready in RC.Geometry
 
-         // picking
-         mm.nodeIds = hack.nodeIds;
+         // picking Ids: is this needed ???
+         mm.nodeIds = topNode.nodeIds;
+
+         mm.pickable = true;
+         let pick_children = false;
+         this.RcPickable(topNode, mm, pick_children);
 
         return mm;
       }

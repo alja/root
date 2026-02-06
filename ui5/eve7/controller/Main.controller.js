@@ -17,7 +17,7 @@ sap.ui.define(['sap/ui/core/Component',
    return Controller.extend("rootui5.eve7.controller.Main", {
       onInit: function () {
          this.mgr = new EveManager();
-         this.initClientLog();
+        // this.initClientLog();
 
          let conn_handle = Component.getOwnerComponentFor(this.getView()).getComponentData().conn_handle;
          this.mgr.UseConnection(conn_handle);
@@ -31,6 +31,33 @@ sap.ui.define(['sap/ui/core/Component',
 
          this.primarySplitter = this.getView().byId("MainAreaSplitter");
          this.primarySplitter.secondary = null;
+         /*
+
+         console.log("AMT main cotrlller init ");
+
+         let mainCtrl = this;
+         sap.ui.getCore().attachThemeChanged(function (oEvent) {
+            // This function will be called whenever the theme changes.
+            // oEvent contains information about the theme change, if any.
+            console.log("Theme has changed!", mainCtrl.mgr.controllers);
+            console.log("AMT Theme has changed!", mainCtrl.mgr.FindViewers());
+            // Perform any necessary actions here, e.g., update custom styles
+            // or re-render parts of the UI that depend on theme-specific styling.
+
+
+
+            mainCtrl.mgr.FindViewers().forEach(function (element) {
+               console.log(element);
+               console.log(element.ca);
+
+               if (element.ca._controllerName == "rootui5.eve7.controller.EveTable" )
+               {
+                  console.log("Access table ");
+                  element.ca.getController().onThemeChanged();
+               }
+            });
+         });
+         */
       },
 
       onDisconnect : function() {
@@ -399,7 +426,8 @@ sap.ui.define(['sap/ui/core/Component',
       },
 
       showUserURL : function(oEvent) {
-         MobileLibrary.URLHelper.redirect("https://github.com/alja/jsroot/blob/dev/eve7.md", true);
+        // MobileLibrary.URLHelper.redirect("https://github.com/alja/jsroot/blob/dev/eve7.md", true);
+         sap.ui.getCore().applyTheme('sap_fiori_3_dark');
       },
 
       executeCommand : function(cmd) {
