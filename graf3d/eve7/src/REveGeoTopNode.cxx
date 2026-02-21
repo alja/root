@@ -1,5 +1,9 @@
 
 #include <ROOT/REveGeoTopNode.hxx>
+
+#include <ROOT/RBrowserRequest.hxx>
+#include <ROOT/RBrowserReply.hxx>
+
 #include <ROOT/REveRenderData.hxx>
 #include <ROOT/RGeomData.hxx>
 #include <ROOT/RWebWindow.hxx>
@@ -38,6 +42,52 @@ thread_local ElementId_t gSelId;
 #define REVEGEO_DEBUG_PRINT(fmt, ...)
 #endif
 
+bool REveGeomDescription::ChangeEveVisibility(const std::vector<std::string> &path, ERnrFlags flags, bool on)
+{
+  // std::vector<int> stack = MakeStackByPath(*path); 
+   std::vector<int> stack = MakeStackByPath(path); 
+   
+
+   std::vector<RGeomNodeVisibility> &visVec = (flags == kRnrSelf) ? fVisibility : fVisibilityRec;
+
+   for (auto iter = visVec.begin(); iter != visVec.end(); iter++) {
+      if (iter->stack == stack) {
+         // AMT TODO remove  path fom the vsibilirt vector if it is true
+         iter->visible = on;
+         return true;
+      }
+   }
+
+   visVec.emplace_back(stack, on);
+   return true;
+}
+
+
+ROOT::RGeoItem REveGeomDescription::MakeBrowserItem(const RGeomNode &node, std::vector<int> &stack)
+{
+   auto isVisible = [&stack](std::vector<RGeomNodeVisibility> &visVec) -> bool {
+      for (auto &item : visVec) {
+         if (stack.size() != item.stack.size())
+            continue;
+         bool match = true;
+         for (unsigned n = 0; n < item.stack.size(); ++n)
+            if (stack[n] != item.stack[n]) {
+               match = false;
+               break;
+            }
+
+         if (match)
+            return item.visible ? 1 : 0;
+      }
+      return true;
+   };
+
+   int vis = isVisible(fVisibility);
+   int visRec = isVisible(fVisibilityRec);
+
+   return RGeoItem(node.name, node.chlds.size(), node.id, node.color, node.material,
+                   visRec, vis);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Table signal handling
@@ -48,40 +98,40 @@ void REveGeomHierarchy::WebWindowCallback(unsigned connid, const std::string &ar
 
    if (arg.compare(0, 6, "CDTOP:") == 0) {
          fDesc.IssueSignal(this, "CdTop");
-         auto connids = fWebWindow->GetConnections(connid);
-
-         for (auto id : connids)
-            fWebWindow->Send(id, "UPDATE"s);
+         fWebWindow->Send(connid, "RELOAD"s);
    }
-   else if (arg.compare(0, 6, "CDUP:") == 0) {
-         fDesc.IssueSignal(this, "CdUp");
-         auto connids = fWebWindow->GetConnections(connid);
-
-         for (auto id : connids)
-            fWebWindow->Send(id, "UPDATE"s);
-   }
-   else if ((arg.compare(0, 7, "SETVI0:") == 0) || (arg.compare(0, 7, "SETVI1:") == 0)) {
-      // change visibility for specified nodeid
-
-      bool on = (arg[5] == '1');
-
+   else if (arg.compare(0, 5, "CDUP:") == 0) {
+      fDesc.IssueSignal(this, "CdUp");
+      fWebWindow->Send(connid, "RELOAD"s);
+   } 
+   else if (arg.compare(0, 7, "SETTOP:") == 0) {
       auto path = TBufferJSON::FromJSON<std::vector<std::string>>(arg.substr(7));
-      if (fDesc.ChangeNodeVisibility(*path, on)) {
-         std::cout << "set visibility NODE " << on << "\n";
-         
-         fReceiver->VisibilityChanged(on, false, *path);
+      if (path && fDesc.SelectTop(*path)) {
+         fDesc.IssueSignal(this, "SelectTop");
+         fWebWindow->Send(connid, "RELOAD"s);
       }
-      // fDesc.IssueSignal(this, "NodeVisibility");
-   }
-   else if ((arg.compare(0, 5, "SHOW:") == 0) || (arg.compare(0, 5, "HIDE:") == 0)) {
+   } else if ((arg.compare(0, 7, "SETVI0:") == 0) || (arg.compare(0, 7, "SETVI1:") == 0)) {
+      {
+         REveManager::ChangeGuard ch;
+         bool on = (arg[5] == '1');
+         auto path = TBufferJSON::FromJSON<std::vector<std::string>>(arg.substr(7));
+         REveGeomDescription &eveDesc = dynamic_cast<REveGeomDescription &>(fDesc);
+         if (eveDesc.ChangeEveVisibility(*path, REveGeomDescription::kRnrChildren , on)) {
+            std::cout << "set visibility children RECURSE " << on << "\n";
 
-         fDesc.IssueSignal(this, "NodeVisibility");
-      REveManager::ChangeGuard ch;
-      auto path = TBufferJSON::FromJSON<std::vector<std::string>>(arg.substr(5));
-      bool on = (arg.compare(0, 5, "SHOW:") == 0);
-      if (path && fDesc.SetPhysNodeVisibility(*path, on)) {
-         std::cout << "Set visibilty rnr PHY \n";
-         fReceiver->VisibilityChanged(on, true, *path);
+            fReceiver->VisibilityChanged(on, REveGeomDescription::kRnrChildren, *path);
+         }
+      }
+   } else if ((arg.compare(0, 5, "SHOW:") == 0) || (arg.compare(0, 5, "HIDE:") == 0)) {
+      {
+         REveManager::ChangeGuard ch;
+         auto path = TBufferJSON::FromJSON<std::vector<std::string>>(arg.substr(5));
+         bool on = (arg.compare(0, 5, "SHOW:") == 0);
+         REveGeomDescription &eveDesc = dynamic_cast<REveGeomDescription &>(fDesc);
+         if (path && eveDesc.ChangeEveVisibility(*path,REveGeomDescription::kRnrSelf, on)) {
+            std::cout << "Set visibilty rnr PHY \n";
+            fReceiver->VisibilityChanged(on, REveGeomDescription::kRnrSelf, *path);
+         }
       }
    }
 
@@ -139,12 +189,12 @@ void REveGeoTopNodeData::SetTopNodeWithPath(const std::vector<std::string>& path
 }
 
 
-void REveGeoTopNodeData::VisibilityChanged(bool on, bool phy, const std::vector<std::string>& path)
+void REveGeoTopNodeData::VisibilityChanged(bool on, REveGeomDescription::ERnrFlags flag, const std::vector<std::string>& path)
 {
 
    for (auto &el : fNieces) {
       REveGeoTopNodeViz *etn = dynamic_cast<REveGeoTopNodeViz *>(el);
-      etn->VisibilityChanged(on, phy, path);
+      etn->VisibilityChanged(on, flag, path);
    }
 }
 
@@ -173,7 +223,7 @@ std::size_t getHash(std::vector<int> &vec)
 void REveGeoTopNodeData::ProcessSignal(const std::string &kind)
 {
    REveManager::ChangeGuard ch;
-   if ((kind == "SelectTop") || (kind == "NodeVisibility")) {
+   if ((kind == "SelectTop")) {
       printf("Select top callback !!!\n");
       const std::vector<int> &sstack = fDesc.GetSelectedStack();
       std::vector<std::string> path = fDesc.MakePathByStack(sstack);
@@ -264,6 +314,7 @@ std::string REveGeoTopNodeViz::GetHighlightTooltip(const std::set<int> & set) co
       auto it = set.begin();
       int pos = *it;
       //const BNode &bn = fNodes[pos];
+      std::cout << "highlight node with ID " <<  pos << "\n";
 
       std::string res = "GeoNode name";
 
@@ -610,23 +661,42 @@ void REveGeoTopNodeViz::GetIndicesFromBrowserStack(const std::vector<int> &stack
    printf("GetIndicesFromBrowserStack size %zu\n", outStack.size());
 }
 
-void REveGeoTopNodeViz::VisibilityChanged(bool on, bool phy, const std::vector<std::string> &path)
-{
-   std::cout << "TGeo Node VIX viz changes !!!! PHY === " << phy << "\n";
+void REveGeoTopNodeViz::VisibilityChanged(bool on, REveGeomDescription::ERnrFlags flag, const std::vector<std::string> &path)
+{;
+
+   if (flag != REveGeomDescription::kRnrSelf)
+     return;
 
    std::vector<std::string> result = fGeoData->fGeoNodePath;
    if (path.size() > 1)
       result.insert(result.end(), path.begin() + 1, path.end());
+   {
+      TGeoNode *top = fGeoData->fGeoNode;
+      TGeoIterator git(top->GetVolume());
 
-   TGeoNode *node = fGeoData->locateNodeWithPath(result);
+      TGeoNode *node;
+      int cnt = 0;
+      size_t level = 1;
+      int vislevel = 2;
+      while ((node = git.Next())) {
+         // std::cout << "level " << git.GetLevel() << "\n";
+         // std::cout << "node name " << node->GetName() << "\n";
+         std::string name = node->GetName();
+         // if (cnt > 10) break;
+         if (name == path[level]) {
+            fNodes[cnt].visible = on;
+            std::cout << "found match for level " << level << " name " << name << "cnt " << cnt << "\n";
+            level++;
 
-   for (size_t i = 0; i < fNodes.size(); i++) {
-      if (fNodes[i].node == node) {
-         printf("change node visibility for %zu to val %d \n", i, on);
-         fNodes[i].visible = on;
-         break;
+            if (level == path.size())
+               break;
+         }
+
+         if (git.GetLevel() > vislevel) {
+            continue;
+         }
+         cnt++;
       }
    }
-
    StampObjProps();
 }

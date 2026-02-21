@@ -14,21 +14,60 @@ namespace Experimental {
 
 class REveGeoTopNodeData;
 
-class REveGeomHierarchy : public RGeomHierarchy {
-   REveGeoTopNodeData* fReceiver{nullptr};
 
+/////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+//    REveGeomDescription
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+
+
+class REveGeomDescription : public RGeomDescription
+{
+protected:
+   std::vector<RGeomNodeVisibility> fVisibilityRec;
+   virtual RGeoItem MakeBrowserItem(const RGeomNode &node, std::vector<int> &stack);
+public:
+   REveGeomDescription(): RGeomDescription(){};
+   virtual ~REveGeomDescription(){};
+
+   enum ERnrFlags {
+    kRnrNone      = 0,
+    kRnrSelf      = 1,
+    kRnrChildren  = 2
+   };
+
+  // bool ChangeVisibilityChildren(const std::vector<std::string> &path, bool on);
+   bool ChangeEveVisibility(const std::vector<std::string> &path, ERnrFlags rnrFlag, bool on);
+  // virtual std::string ProcessBrowserRequest(const std::string &req = "");
+};
+
+/////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+// REveGeomHierarchy
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+
+
+class REveGeomHierarchy : public RGeomHierarchy
+{
+   REveGeoTopNodeData* fReceiver{nullptr};
 protected:
    virtual void WebWindowCallback(unsigned connid, const std::string &kind);
 
 public:
-   REveGeomHierarchy(RGeomDescription &desc, bool th) :
-      RGeomHierarchy(desc, th){};
+   REveGeomHierarchy(REveGeomDescription &desc, bool th) :
+   RGeomHierarchy(desc, th){};
    
    void SetReceiver(REveGeoTopNodeData* data) { fReceiver = data; }
    virtual ~REveGeomHierarchy(){};
 };
 
-
+/////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+// REveGeoTopNodeData
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
 
 class REveGeoTopNodeData : public REveElement,
                            public REveAuntAsList
@@ -42,7 +81,7 @@ protected:
 
    TGeoNode* fGeoNode{nullptr};
    std::vector<std::string> fGeoNodePath;
-   RGeomDescription fDesc;                        ///<! geometry description, send to the client as first message
+   REveGeomDescription fDesc;                        ///<! geometry description, send to the client as first message
    std::shared_ptr<REveGeomHierarchy> fWebHierarchy; ///<! web handle for hierarchy part
 
    TGeoNode* locateNodeWithPath(const std::vector<std::string>& path);
@@ -59,11 +98,14 @@ public:
    void SetChannel(unsigned connid, int chid);
 
    std::string GetNodePathAsFlatString() const;
-   void VisibilityChanged(bool on, bool recurse, const std::vector<std::string>& path);
+   void VisibilityChanged(bool on, REveGeomDescription::ERnrFlags flag, const std::vector<std::string>& path);
 };
 
-
-//-------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+// REveGeoTopNodeViz
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
 class REveGeoTopNodeViz : public REveElement,
                           public REveSecondarySelectable
 {
@@ -106,7 +148,7 @@ public:
    void SetVisLevel(int);
    // int GetVisLevel() const { return fVisLevel; }
 
-   void VisibilityChanged(bool on, bool phy, const std::vector<std::string>& path);
+   void VisibilityChanged(bool on,  REveGeomDescription::ERnrFlags flag, const std::vector<std::string>& path);
    void BuildDesc();
 
    using REveElement::GetHighlightTooltip;
