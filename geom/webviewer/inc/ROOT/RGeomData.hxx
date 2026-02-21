@@ -32,7 +32,6 @@ namespace ROOT {
 
 class RGeomBrowserIter;
 class RLogChannel;
-// class RGeomDescription;
 
 /// Log channel for Geomviewer diagnostics.
 RLogChannel &RGeomLog();
