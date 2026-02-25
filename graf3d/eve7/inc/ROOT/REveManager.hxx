@@ -15,7 +15,6 @@
 #include <ROOT/REveElement.hxx>
 #include <ROOT/REveSystem.hxx>
 #include <ROOT/RLogger.hxx>
-#include <ROOT/REveCamera.hxx>
 #include <ROOT/RWebDisplayArgs.hxx>
 
 #include "TSysEvtHandler.h"
