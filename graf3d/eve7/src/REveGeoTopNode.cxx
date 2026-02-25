@@ -13,9 +13,6 @@
 #include <ROOT/REveSelection.hxx>
 
 #include <ROOT/REveUtil.hxx>
-
-
-
 #include "TBufferJSON.h"
 #include "TMath.h"
 
@@ -42,12 +39,23 @@ thread_local ElementId_t gSelId;
 #define REVEGEO_DEBUG_PRINT(fmt, ...)
 #endif
 
-bool REveGeomDescription::ChangeEveVisibility(const std::vector<std::string> &path, ERnrFlags flags, bool on)
-{
-  // std::vector<int> stack = MakeStackByPath(*path); 
-   std::vector<int> stack = MakeStackByPath(path); 
-   
 
+
+namespace {
+void PrintStackPath(const std::vector<int>& stack)
+{
+   printf("Path: ");
+
+   for (auto idx : stack)
+      printf("/%d", idx);
+
+   printf("\n");
+}
+}
+
+
+bool REveGeomDescription::ChangeEveVisibility(const std::vector<int> &stack, ERnrFlags flags, bool on)
+{
    std::vector<RGeomNodeVisibility> &visVec = (flags == kRnrSelf) ? fVisibility : fVisibilityRec;
 
    for (auto iter = visVec.begin(); iter != visVec.end(); iter++) {
@@ -62,22 +70,15 @@ bool REveGeomDescription::ChangeEveVisibility(const std::vector<std::string> &pa
    return true;
 }
 
-
-ROOT::RGeoItem REveGeomDescription::MakeBrowserItem(const RGeomNode &node, std::vector<int> &stack)
+ROOT::RGeoItem REveGeomDescription::MakeBrowserItem(const RGeomNode &node, std::vector<int> &iStack)
 {
-   auto isVisible = [&stack](std::vector<RGeomNodeVisibility> &visVec) -> bool {
-      for (auto &item : visVec) {
-         if (stack.size() != item.stack.size())
-            continue;
-         bool match = true;
-         for (unsigned n = 0; n < item.stack.size(); ++n)
-            if (stack[n] != item.stack[n]) {
-               match = false;
-               break;
-            }
+   std::vector<int> stack = fApex.GetIndexStack();
+   stack.insert(stack.end(), iStack.begin(), iStack.end());
 
-         if (match)
-            return item.visible ? 1 : 0;
+   auto isVisible = [&stack](std::vector<RGeomNodeVisibility> &visVec) -> bool {
+      for (auto &visVecEl : visVec) {
+         if (stack == visVecEl.stack)
+            return visVecEl.visible ? 1 : 0;
       }
       return true;
    };
@@ -89,46 +90,83 @@ ROOT::RGeoItem REveGeomDescription::MakeBrowserItem(const RGeomNode &node, std::
                    visRec, vis);
 }
 
+void REveGeomDescription::SetTopNodeWithPath(const std::vector<std::string>& path)
+{
+   fApex.SetFromPath(path);
+   Build(fApex.GetNode()->GetVolume()); // rebuild geo-webviewer 
+}
+
+bool REveGeomDescription::GetVisiblityForStack(const std::vector<int>& stack)
+{
+   for (auto &visVecEl : fVisibility) {
+      if (stack == visVecEl.stack)
+         return visVecEl.visible ? 1 : 0;
+   }
+   return true;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Table signal handling
 
 void REveGeomHierarchy::WebWindowCallback(unsigned connid, const std::string &arg)
 {
-    using namespace std::string_literals;
+   using namespace std::string_literals;
+   REveGeomDescription &eveDesc = dynamic_cast<REveGeomDescription &>(fDesc);
 
-   if (arg.compare(0, 6, "CDTOP:") == 0) {
-         fDesc.IssueSignal(this, "CdTop");
-         fWebWindow->Send(connid, "RELOAD"s);
+   if (arg.compare(0, 6, "CDTOP:") == 0) 
+   {
+      std::vector<std::string> ep;
+      eveDesc.SetTopNodeWithPath(ep);
+      fDesc.IssueSignal(this, "CdTop");
+      fWebWindow->Send(connid, "RELOAD"s);
    }
-   else if (arg.compare(0, 5, "CDUP:") == 0) {
+   else if (arg.compare(0, 5, "CDUP:") == 0) 
+   {
+       std::vector<std::string> result = eveDesc.GetApexPath();
+       result.pop_back();
+       eveDesc.SetTopNodeWithPath(result);
       fDesc.IssueSignal(this, "CdUp");
       fWebWindow->Send(connid, "RELOAD"s);
-   } 
-   else if (arg.compare(0, 7, "SETTOP:") == 0) {
-      auto path = TBufferJSON::FromJSON<std::vector<std::string>>(arg.substr(7));
-      if (path && fDesc.SelectTop(*path)) {
+   }
+   else if (arg.compare(0, 8, "SETAPEX:") == 0) {
+      auto path = TBufferJSON::FromJSON<std::vector<std::string>>(arg.substr(8));
+
+      //const std::vector<int> &sstack = fDesc.GetSelectedStack();
+    //  std::vector<std::string> sspath = fDesc.MakePathByStack(sstack);
+      std::vector<std::string> result = eveDesc.GetApexPath();
+      if (path->size() > 1) {
+         result.insert(result.end(), path->begin() + 1, path->end());
+         eveDesc.SetTopNodeWithPath(result);
          fDesc.IssueSignal(this, "SelectTop");
          fWebWindow->Send(connid, "RELOAD"s);
       }
-   } else if ((arg.compare(0, 7, "SETVI0:") == 0) || (arg.compare(0, 7, "SETVI1:") == 0)) {
+   }
+   else if ((arg.compare(0, 7, "SETVI0:") == 0) || (arg.compare(0, 7, "SETVI1:") == 0)) {
       {
+         std::cout << "set visibility children RECURSE NOT implemented\n";
+         /*
          REveManager::ChangeGuard ch;
          bool on = (arg[5] == '1');
          auto path = TBufferJSON::FromJSON<std::vector<std::string>>(arg.substr(7));
          REveGeomDescription &eveDesc = dynamic_cast<REveGeomDescription &>(fDesc);
          if (eveDesc.ChangeEveVisibility(*path, REveGeomDescription::kRnrChildren , on)) {
-            std::cout << "set visibility children RECURSE " << on << "\n";
 
             fReceiver->VisibilityChanged(on, REveGeomDescription::kRnrChildren, *path);
-         }
+         }*/
       }
-   } else if ((arg.compare(0, 5, "SHOW:") == 0) || (arg.compare(0, 5, "HIDE:") == 0)) {
+   }
+   else if ((arg.compare(0, 5, "SHOW:") == 0) || (arg.compare(0, 5, "HIDE:") == 0)) {
       {
          REveManager::ChangeGuard ch;
          auto path = TBufferJSON::FromJSON<std::vector<std::string>>(arg.substr(5));
          bool on = (arg.compare(0, 5, "SHOW:") == 0);
-         REveGeomDescription &eveDesc = dynamic_cast<REveGeomDescription &>(fDesc);
-         if (path && eveDesc.ChangeEveVisibility(*path,REveGeomDescription::kRnrSelf, on)) {
+         // Get integer stack from string stack
+         std::vector<int> base = eveDesc.GetIndexStack();
+         std::vector<int> stack = fDesc.MakeStackByPath(*path);
+
+         stack.insert(stack.begin(), base.begin(), base.end());
+
+         if (path && eveDesc.ChangeEveVisibility(stack,REveGeomDescription::kRnrSelf, on)) {
             std::cout << "Set visibilty rnr PHY \n";
             fReceiver->VisibilityChanged(on, REveGeomDescription::kRnrSelf, *path);
          }
@@ -142,6 +180,91 @@ void REveGeomHierarchy::WebWindowCallback(unsigned connid, const std::string &ar
 
 
 ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+void REveGeomDescription::Apex::SetFromPath(std::vector<std::string> absPath) 
+{
+   fPath = absPath;
+   fNode = LocateNodeWithPath(absPath);
+}
+
+TGeoNode *REveGeomDescription::Apex::LocateNodeWithPath(const std::vector<std::string> &path) const
+{
+   TGeoNode *top = gGeoManager->GetTopNode();
+   // printf("Top node name from geoData name (%s)\n", top->GetName());
+   for (size_t t = 0; t < path.size(); t++) {
+      std::string s = path[t];
+       std::cout << s << std::endl;
+      top = top->GetVolume()->FindNode(s.c_str());
+   }
+   return top;
+}
+
+std::string REveGeomDescription::Apex::GetFlatPath() const
+{
+   if (fPath.empty())
+      return "";
+
+   std::ostringstream oss;
+
+   oss << fPath[0];
+
+   for (size_t i = 1; i < fPath.size(); ++i)
+      oss << "/" << fPath[i];
+
+   return oss.str();
+}
+
+std::vector<int> REveGeomDescription::Apex::GetIndexStack() const
+{
+    std::vector<int> indexStack;
+
+    TGeoNode* current = gGeoManager->GetTopNode();
+
+    // optional: skip first if it is top itself
+    size_t start = 0;
+    std::vector<std::string> nameStack = fPath;
+   if (!nameStack.empty() && nameStack[0] == current->GetName())
+        start = 1;
+
+    for (size_t i = start; i < nameStack.size(); ++i)
+    {
+        const std::string& targetName = nameStack[i];
+
+        TGeoVolume* vol = current->GetVolume();
+
+        int nd = vol->GetNdaughters();
+
+        int foundIndex = -1;
+
+        for (int j = 0; j < nd; ++j)
+        {
+            TGeoNode* daughter = vol->GetNode(j);
+
+            if (targetName == daughter->GetName())
+            {
+                foundIndex = j;
+                current = daughter;
+                break;
+            }
+        }
+
+        if (foundIndex == -1)
+        {
+            std::cerr << "Node not found: " << targetName << std::endl;
+            return {};
+        }
+
+        indexStack.push_back(foundIndex);
+    }
+
+    PrintStackPath(indexStack);
+    return indexStack;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+///
 /// Constructor.
 
 REveGeoTopNodeData::REveGeoTopNodeData(const Text_t *n, const Text_t *t) : REveElement(n, t)
@@ -153,41 +276,14 @@ REveGeoTopNodeData::REveGeoTopNodeData(const Text_t *n, const Text_t *t) : REveE
    fDesc.AddSignalHandler(this, [this](const std::string &kind) { ProcessSignal(kind); });
 }
 
-TGeoNode *REveGeoTopNodeData::locateNodeWithPath(const std::vector<std::string> &path)
-{
-   TGeoNode *top = gGeoManager->GetTopNode();
-   printf("Top node name from geoData name (%s)\n", top->GetName());
-   for (size_t t = 0; t < path.size(); t++) {
-      std::string s = path[t];
-       std::cout << s << std::endl;
-      // if (t > 0)
-
-
-      top = top->GetVolume()->FindNode(s.c_str());
-   }
-   return top;
-}
-
-void REveGeoTopNodeData::SetTNode(TGeoNode *n)
-{
-   fGeoNode = n;
-   printf("set top node %s \n", n->GetName());
-   fDesc.Build(fGeoNode->GetVolume());
-   //sc.AddSignalHandler(this, [this](const std::string &kind) { ProcessSignal(kind); });
-
-   for (auto &el : fNieces) {
-      REveGeoTopNodeViz *etn = dynamic_cast<REveGeoTopNodeViz *>(el);
-      etn->BuildDesc();
-   }
-}
-
 void REveGeoTopNodeData::SetTopNodeWithPath(const std::vector<std::string>& path)
 {
-   fGeoNodePath = path;
-   TGeoNode* n = locateNodeWithPath(path);
-   SetTNode(n);
+   fDesc.SetTopNodeWithPath(path);
+    for (auto &el : fNieces) {
+         REveGeoTopNodeViz *etn = dynamic_cast<REveGeoTopNodeViz *>(el);
+         etn->BuildDesc();
+      }
 }
-
 
 void REveGeoTopNodeData::VisibilityChanged(bool on, REveGeomDescription::ERnrFlags flag, const std::vector<std::string>& path)
 {
@@ -198,7 +294,6 @@ void REveGeoTopNodeData::VisibilityChanged(bool on, REveGeomDescription::ERnrFla
    }
 }
 
-
 ////////////////////////////////////////////////////////////////////////////////
 
 void REveGeoTopNodeData::SetChannel(unsigned connid, int chid)
@@ -207,53 +302,16 @@ void REveGeoTopNodeData::SetChannel(unsigned connid, int chid)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-/*
-namespace {
-std::size_t getHash(std::vector<int> &vec)
-{
-   std::size_t seed = vec.size();
-   for (auto &x : vec) {
-      uint32_t i = (uint32_t)x;
-      seed ^= i + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-   }
-   return seed;
-}
-} // namespace
-*/
 void REveGeoTopNodeData::ProcessSignal(const std::string &kind)
 {
    REveManager::ChangeGuard ch;
-   if ((kind == "SelectTop")) {
-      printf("Select top callback !!!\n");
-      const std::vector<int> &sstack = fDesc.GetSelectedStack();
-      std::vector<std::string> path = fDesc.MakePathByStack(sstack);
-      std::vector<std::string> result = fGeoNodePath;
-      if (path.size() > 1) {
-         result.insert(result.end(), path.begin() + 1, path.end());
-
-         // TGeoNode* n = locateNodeWithPath(path);
-         SetTopNodeWithPath(result);
-      }
-      /*
-      for (auto &n : fNieces) {
-         REveGeoTopNodeViz* viz = dynamic_cast<REveGeoTopNodeViz*>(n);
-         viz->BuildDesc();
-      }*/
-   } 
-   else if (kind == "CdTop")
+   if ((kind == "SelectTop") || (kind == "CdTop") || (kind == "CdUp"))
    {
-     //  TGeoNode* n = gGeoManager->GetTopNode();
-     // SetTNode(n);
-     std::vector<std::string > ep;
-     SetTopNodeWithPath(ep);
-   }
-
-   else if (kind == "CdUp") {
-       std::vector<std::string> result = fGeoNodePath;
-       result.pop_back();
-       SetTopNodeWithPath(result);
-   }
-
+      for (auto &el : fNieces) {
+         REveGeoTopNodeViz *etn = dynamic_cast<REveGeoTopNodeViz *>(el);
+         etn->BuildDesc();
+      }
+   } 
    else if (kind == "HighlightItem") {
       /*
       printf("REveGeoTopNodeData element highlighted --------------------------------"\n);
@@ -281,28 +339,16 @@ Int_t REveGeoTopNodeData::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
 {
    Int_t ret = REveElement::WriteCoreJson(j, rnr_offset);
 
-   if (!fGeoNode){ return ret;}
    return ret;
 }
 
-std::string REveGeoTopNodeData::GetNodePathAsFlatString() const
+////////////////////////////////////////////////////////////////////////////////
+// REveGeoTopNodeViz
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+REveGeoTopNodeViz::REveGeoTopNodeViz(const Text_t *n, const Text_t *t) : REveElement(n, t) 
 {
-   if (fGeoNodePath.empty())
-      return "";
-
-   std::ostringstream oss;
-
-   oss << fGeoNodePath[0];
-
-   for (size_t i = 1; i < fGeoNodePath.size(); ++i)
-      oss << "/" << fGeoNodePath[i];
-
-   return oss.str();
-}
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-REveGeoTopNodeViz::REveGeoTopNodeViz(const Text_t *n, const Text_t *t) : REveElement(n, t) {
    SetAlwaysSecSelect(true);
 }
 
@@ -318,7 +364,7 @@ std::string REveGeoTopNodeViz::GetHighlightTooltip(const std::set<int> & set) co
 
       std::string res = "GeoNode name";
 
-      TGeoNode *top = fGeoData->fGeoNode;
+      TGeoNode *top = fGeoData->fDesc.GetApexNode();
       TGeoIterator git(top->GetVolume());
       TGeoNode *node;
       int i = 0;
@@ -344,16 +390,7 @@ std::string REveGeoTopNodeViz::GetHighlightTooltip(const std::set<int> & set) co
 void REveGeoTopNodeViz::BuildDesc()
 {
    // locate top node
-   const std::vector<int> &stack = fGeoData->fDesc.GetSelectedStack();
-   std::vector<std::string> path = fGeoData->fDesc.MakePathByStack(stack);
-   TGeoNode *top = fGeoData->fGeoNode;
-   printf("Top node name from geoData name (%s)\n", top->GetName());
-   for (size_t t = 0; t < path.size(); t++) {
-      std::string s = path[t];
-      std::cout << s << std::endl;
-      if (t > 0)
-         top = top->GetVolume()->FindNode(s.c_str());
-   }
+   TGeoNode* top  = fGeoData->fDesc.GetApexNode();
 
    fNodes.clear();
    fShapes.clear();
@@ -376,12 +413,16 @@ void REveGeoTopNodeViz::CollectNodes(TGeoVolume *volume, std::vector<BNode> &bnl
    TGeoIterator it(volume);
    TGeoNode *node;
    int nodeId = 0;
+
+
+   std::vector<int> apexStack = fGeoData->RefDescription().GetIndexStack();
+
    while ((node = it.Next())) {
-
-      // block at vislevel
-
       if (it.GetLevel() > vislevel)
-         continue;
+      {
+       it.Skip();
+       continue;
+      }
 
       const TGeoMatrix *mat = it.GetCurrentMatrix();
       const Double_t *t = mat->GetTranslation();    // size 3
@@ -429,8 +470,11 @@ void REveGeoTopNodeViz::CollectNodes(TGeoVolume *volume, std::vector<BNode> &bnl
       b.node = node;
       b.nodeId = nodeId;
       b.color = node->GetVolume()->GetLineColor();
+      
       // TString path; it.GetPath(path);
       // printf("[%d] %d %s \n", b.color, it.GetLevel(), path.Data());
+      
+      
       // set BNode transformation matrix
       for (int i = 0; i < 16; ++i)
          b.trans[i] = m[i];
@@ -445,6 +489,15 @@ void REveGeoTopNodeViz::CollectNodes(TGeoVolume *volume, std::vector<BNode> &bnl
          }
       }
       assert(b.shapeId >= 0);
+
+
+      // set visibility flag
+      std::vector<int> visStack = apexStack;
+      for (int i = 1; i <= it.GetLevel(); ++i)
+         visStack.push_back(it.GetIndex(i));
+      // PrintStackPath(visStack);
+      b.visible = fGeoData->RefDescription().GetVisiblityForStack(visStack);
+
       // printf("Node %d shape id %d \n", (int)bnl.size(), b.shapeId);
       bnl.push_back(b);
       nodeId++;
@@ -627,11 +680,11 @@ void REveGeoTopNodeViz::GetIndicesFromBrowserStack(const std::vector<int> &stack
    std::vector<std::string> path = fGeoData->fDesc.MakePathByStack(stack);
    // TGeoNode* node = fGeoData->locateNodeWithPath(path);
 
-   std::vector<std::string> result = fGeoData->fGeoNodePath;
+   std::vector<std::string> result = fGeoData->fDesc.GetApexPath();
    if (path.size() > 1)
       result.insert(result.end(), path.begin() + 1, path.end());
 
-   TGeoNode *node = fGeoData->locateNodeWithPath(result);
+   TGeoNode *node = fGeoData->fDesc.LocateNodeWithPath(result);
    if (!node) {
       printf("no node with given stack \n");
    }
@@ -662,16 +715,15 @@ void REveGeoTopNodeViz::GetIndicesFromBrowserStack(const std::vector<int> &stack
 }
 
 void REveGeoTopNodeViz::VisibilityChanged(bool on, REveGeomDescription::ERnrFlags flag, const std::vector<std::string> &path)
-{;
-
-   if (flag != REveGeomDescription::kRnrSelf)
+{
+   if (flag != REveGeomDescription::kRnrSelf) //currently the only visibility supported is self
      return;
 
-   std::vector<std::string> result = fGeoData->fGeoNodePath;
-   if (path.size() > 1)
-      result.insert(result.end(), path.begin() + 1, path.end());
-   {
-      TGeoNode *top = fGeoData->fGeoNode;
+  // std::vector<std::string> result = fGeoData->fDesc.GetApexPath();
+  // if (path.size() > 1)
+  //    result.insert(result.end(), path.begin() + 1, path.end());
+   if (path.size() > 1) {
+      TGeoNode *top = fGeoData->fDesc.GetApexNode();
       TGeoIterator git(top->GetVolume());
 
       TGeoNode *node;
@@ -697,6 +749,9 @@ void REveGeoTopNodeViz::VisibilityChanged(bool on, REveGeomDescription::ERnrFlag
          }
          cnt++;
       }
+   }
+   else {
+      fNodes[0].visible = on;
    }
    StampObjProps();
 }

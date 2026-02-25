@@ -21,25 +21,45 @@ class REveGeoTopNodeData;
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
 
-
-class REveGeomDescription : public RGeomDescription
-{
+class REveGeomDescription : public RGeomDescription {
 protected:
    std::vector<RGeomNodeVisibility> fVisibilityRec;
    virtual RGeoItem MakeBrowserItem(const RGeomNode &node, std::vector<int> &stack);
-public:
-   REveGeomDescription(): RGeomDescription(){};
-   virtual ~REveGeomDescription(){};
 
-   enum ERnrFlags {
-    kRnrNone      = 0,
-    kRnrSelf      = 1,
-    kRnrChildren  = 2
+   class Apex {
+      std::vector<std::string> fPath;
+      TGeoNode *fNode{nullptr};
+
+   public:
+      void SetFromPath(std::vector<std::string> absPath);
+      TGeoNode *LocateNodeWithPath(const std::vector<std::string> &path) const;
+
+      TGeoNode *GetNode() { return fNode; }
+      std::string GetFlatPath() const;
+      const std::vector<std::string>& GetPath() const { return fPath; }
+      std::vector<int> GetIndexStack() const;
    };
 
-  // bool ChangeVisibilityChildren(const std::vector<std::string> &path, bool on);
-   bool ChangeEveVisibility(const std::vector<std::string> &path, ERnrFlags rnrFlag, bool on);
-  // virtual std::string ProcessBrowserRequest(const std::string &req = "");
+   Apex fApex;
+
+public:
+   REveGeomDescription() : RGeomDescription() {};
+   virtual ~REveGeomDescription() {};
+
+   enum ERnrFlags {
+      kRnrNone = 0,
+      kRnrSelf = 1,
+      kRnrChildren = 2
+   };
+
+   bool ChangeEveVisibility(const std::vector<int> &stack, ERnrFlags rnrFlag, bool on);
+   std::vector<int> GetIndexStack() { return fApex.GetIndexStack(); }
+   const std::vector<std::string>& GetApexPath() const { return fApex.GetPath();}
+   void SetTopNodeWithPath(const std::vector<std::string>& path);
+   TGeoNode* GetApexNode() { return fApex.GetNode(); }
+   TGeoNode* LocateNodeWithPath(const std::vector<std::string> &path) { return fApex.LocateNodeWithPath(path); }
+
+   bool GetVisiblityForStack(const std::vector<int>& stack);
 };
 
 /////////////////////////////////////////////////////////////////////////
@@ -47,7 +67,6 @@ public:
 // REveGeomHierarchy
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
-
 
 class REveGeomHierarchy : public RGeomHierarchy
 {
@@ -58,7 +77,7 @@ protected:
 public:
    REveGeomHierarchy(REveGeomDescription &desc, bool th) :
    RGeomHierarchy(desc, th){};
-   
+
    void SetReceiver(REveGeoTopNodeData* data) { fReceiver = data; }
    virtual ~REveGeomHierarchy(){};
 };
@@ -69,22 +88,16 @@ public:
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
 
-class REveGeoTopNodeData : public REveElement,
-                           public REveAuntAsList
-{
-  friend class REveGeoTopNodeViz;
+class REveGeoTopNodeData : public REveElement, public REveAuntAsList {
+   friend class REveGeoTopNodeViz;
 private:
-   void SetTNode(TGeoNode* n);
+   std::shared_ptr<REveGeomHierarchy> fWebHierarchy; ///<! web handle for hierarchy part
+
 protected:
    REveGeoTopNodeData(const REveGeoTopNodeData &) = delete;
    REveGeoTopNodeData &operator=(const REveGeoTopNodeData &) = delete;
 
-   TGeoNode* fGeoNode{nullptr};
-   std::vector<std::string> fGeoNodePath;
-   REveGeomDescription fDesc;                        ///<! geometry description, send to the client as first message
-   std::shared_ptr<REveGeomHierarchy> fWebHierarchy; ///<! web handle for hierarchy part
-
-   TGeoNode* locateNodeWithPath(const std::vector<std::string>& path);
+   REveGeomDescription fDesc;
 
 public:
    REveGeoTopNodeData(const Text_t *n = "REveGeoTopNodeData", const Text_t *t = "");
@@ -92,13 +105,11 @@ public:
 
    Int_t WriteCoreJson(nlohmann::json &j, Int_t rnr_offset) override;
    void ProcessSignal(const std::string &);
-   RGeomDescription& RefDescription() {return fDesc;}
-   void SetTopNodeWithPath(const std::vector<std::string>& path);
+   REveGeomDescription& RefDescription() {return fDesc;}
 
    void SetChannel(unsigned connid, int chid);
-
-   std::string GetNodePathAsFlatString() const;
    void VisibilityChanged(bool on, REveGeomDescription::ERnrFlags flag, const std::vector<std::string>& path);
+   void SetTopNodeWithPath(const std::vector<std::string>& path);
 };
 
 /////////////////////////////////////////////////////////////////////////
@@ -110,7 +121,7 @@ class REveGeoTopNodeViz : public REveElement,
                           public REveSecondarySelectable
 {
 private:
-   struct BShape {
+  struct BShape {
       TGeoShape *shape;
       std::vector<int> indices;
       std::vector<float> vertices;
@@ -124,6 +135,7 @@ private:
       float trans[16];
       bool visible{true};
    };
+
    REveGeoTopNodeViz(const REveGeoTopNodeViz &) = delete;
    REveGeoTopNodeViz &operator=(const REveGeoTopNodeViz &) = delete;
 
@@ -132,7 +144,6 @@ private:
    std::vector<BShape> fShapes;
 
    void CollectNodes(TGeoVolume *volume, std::vector<BNode> &bnl, std::vector<BShape> &browsables, int vislevel);
-
    void CollectShapes(TGeoNode *node, std::set<TGeoShape *> &shapes, std::vector<BShape> &browsables);
 
 public:
@@ -142,12 +153,7 @@ public:
    void BuildRenderData() override;
    void GetIndicesFromBrowserStack(const std::vector<int> &stack, std::set<int>& outStack);
 
-   // bool RequiresExtraSelectionData() const override { return true; };
-   // void FillExtraSelectionData(nlohmann::json &j, const std::set<int> &secondary_idcs) const override;
-
    void SetVisLevel(int);
-   // int GetVisLevel() const { return fVisLevel; }
-
    void VisibilityChanged(bool on,  REveGeomDescription::ERnrFlags flag, const std::vector<std::string>& path);
    void BuildDesc();
 

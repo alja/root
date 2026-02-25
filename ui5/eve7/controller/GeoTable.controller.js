@@ -2,11 +2,15 @@ sap.ui.define([
     'rootui5/geom/controller/GeomHierarchy.controller',
     'rootui5/geom/model/GeomBrowserModel',
     'sap/ui/table/Column',
+    'sap/ui/Device',
+    'sap/ui/unified/Menu',
+    'sap/ui/unified/MenuItem',
+    'sap/ui/core/Popup',
     'sap/ui/layout/HorizontalLayout',
     'rootui5/geom/lib/ColorBox',
     'sap/m/CheckBox',
     'sap/m/Text'
-], function (GeomHierarchy,GeomBrowserModel, tableColumn, HorizontalLayout, GeomColorBox, mCheckBox, mText) {
+], function (GeomHierarchy,GeomBrowserModel, tableColumn, Device, Menu, MenuItem, Popup, HorizontalLayout, GeomColorBox, mCheckBox, mText) {
 
     "use strict";
 
@@ -154,7 +158,7 @@ sap.ui.define([
             if (match)
                return item;
          }
-      },
+        },
 
         /** @summary invoked when visibility checkbox clicked */
         changeVisibility(oEvent, physical) {
@@ -182,6 +186,43 @@ sap.ui.define([
             msg += ':' + JSON.stringify(ttt.path);
 
             this.websocket.send(msg);
+        },
+
+        onCellContextMenu(oEvent) {
+            if (Device.support.touch)
+                return; //Do not use context menus on touch devices
+
+            let ctxt = oEvent.getParameter('rowBindingContext'),
+                colid = oEvent.getParameter('columnId'),
+                prop = ctxt?.getProperty(ctxt.getPath());
+
+            oEvent.preventDefault();
+
+            if (!prop?._elem) return;
+
+            if (!this._oIdContextMenu) {
+                this._oIdContextMenu = new Menu();
+                this.getView().addDependent(this._oIdContextMenu);
+            }
+
+            this._oIdContextMenu.destroyItems();
+
+            this._oIdContextMenu.addItem(new MenuItem({
+                text: 'Set as top',
+                select: () => {
+                    this.setPhysTopNode(prop.path);
+                    this.websocket.send('SETAPEX:' + JSON.stringify(prop.path));
+
+                    let len = this.model?.getLength() ?? 0;
+                    for (let n = 0; n < len; ++n)
+                        this.model?.setProperty(`/nodes/${n}/top`, false);
+                    this.model?.setProperty(ctxt.getPath() + '/top', true);
+                }
+            }));
+
+            //Open the menu on the cell
+            let oCellDomRef = oEvent.getParameter("cellDomRef");
+            this._oIdContextMenu.open(false, oCellDomRef, Popup.Dock.BeginTop, Popup.Dock.BeginBottom, oCellDomRef, "none none");
         }
     });
 });
