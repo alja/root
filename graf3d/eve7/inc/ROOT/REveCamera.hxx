@@ -48,10 +48,6 @@ private:
    // Camera transformation matrices
    REveTrans   fCamBase;   // Base camera matrix (main positioning)
    REveTrans   fCamTrans;
-   
-   // Original direction vectors (for Setup)
-   // REveVector  fV1;  // Camera direction vector
-   // REveVector  fV2;  // Camera up vector
 
 public:
    REveCamera();
@@ -62,11 +58,6 @@ public:
 
    ECameraType GetType() const { return fType; }
    const std::string &GetCameraName() const { return fName; }
-   // const REveVector &GetDir() const { return fV1; }
-   // const REveVector &GetUp() const { return fV2; }
-
-   // void SetDir(const REveVector &v) { fV1 = v; StampObjProps(); }
-   // void SetUp(const REveVector &v) { fV2 = v; StampObjProps(); }
    
    // Camera matrix accessors
    REveTrans &RefCamBase() { return fCamBase; }
