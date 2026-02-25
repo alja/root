@@ -140,7 +140,7 @@ REveManager::REveManager()
    fWorld->AddElement(fViewers);
 
    fScenes = new REveSceneList("Scenes");
-fScenes->IncDenyDestroy();
+   fScenes->IncDenyDestroy();
    fWorld->AddElement(fScenes);
 
    // --------------------------------
