@@ -127,7 +127,7 @@ protected:
 
    REveViewerList           *fViewers{nullptr};
    REveSceneList            *fScenes{nullptr};
-   REveElement              *fCameras{nullptr}; // yuxiao
+   REveElement              *fCameras{nullptr}; 
 
    REveScene                *fGlobalScene{nullptr};
    REveScene                *fEventScene{nullptr};
