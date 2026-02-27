@@ -108,7 +108,7 @@ public:
    REveGeomDescription& RefDescription() {return fDesc;}
 
    void SetChannel(unsigned connid, int chid);
-   void VisibilityChanged(bool on, REveGeomDescription::ERnrFlags flag, const std::vector<std::string>& path);
+   void VisibilityChanged(bool on, REveGeomDescription::ERnrFlags flag, const std::vector<int>& path);
    void SetTopNodeWithPath(const std::vector<std::string>& path);
 };
 
@@ -154,7 +154,7 @@ public:
    void GetIndicesFromBrowserStack(const std::vector<int> &stack, std::set<int>& outStack);
 
    void SetVisLevel(int);
-   void VisibilityChanged(bool on,  REveGeomDescription::ERnrFlags flag, const std::vector<std::string>& path);
+   void VisibilityChanged(bool on,  REveGeomDescription::ERnrFlags flag, const std::vector<int>& path);
    void BuildDesc();
 
    using REveElement::GetHighlightTooltip;
