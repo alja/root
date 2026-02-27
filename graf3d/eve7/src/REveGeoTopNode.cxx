@@ -662,10 +662,6 @@ int REveGeoTopNodeViz::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
    for (size_t i = 0; i < fNodes.size(); ++i) {
       nodeShapeIds.push_back(fNodes[i].shapeId);
       nodeVisibility.push_back(fNodes[i].visible);
-      {
-         if (fNodes[i].visible != true)
-         std::cout << "hidden \n";
-      }
       for (int t = 0; t < 16; t++)
          nodeTrans.push_back(fNodes[i].trans[t]);
    }
@@ -738,40 +734,34 @@ void REveGeoTopNodeViz::GetIndicesFromBrowserStack(const std::vector<int> &stack
 
 void REveGeoTopNodeViz::VisibilityChanged(bool on, REveGeomDescription::ERnrFlags flag, const std::vector<int> &iStack)
 {
-
+   // function argument is full stack, we remove the apex path
    size_t apexDepth = fGeoData->RefDescription().GetApexPath().size();
    std::vector<int> stack(iStack.begin() + apexDepth, iStack.end());
 
-std::vector<int> nodeStack;
-
-   printf("Visibility ======\n");
-   PrintStackPath(stack);
+   // PrintStackPath(stack);
 
    TGeoNode *top = fGeoData->fDesc.GetApexNode();
    TGeoIterator it(top->GetVolume());
-
+   std::vector<int> nodeStack;
    int cnt = 0;
    TGeoNode *node;
    int vislevel = fGeoData->fDesc.GetVisLevel();
    while ((node = it.Next())) {
-
-      if (it.GetLevel() > vislevel) {
+      int level = it.GetLevel();
+      if (level > vislevel) {
          it.Skip();
          continue;
       }
       nodeStack.resize(level);
       if (level > 0)
-          stack[level - 1] = it.GetIndex(level);
-/*
-      std::vector<int> nodeStack;
-      for (int i = 1; i <= it.GetLevel(); ++i)
-         nodeStack.push_back(it.GetIndex(i));
-*/
-      if (flag == REveGeomDescription::kRnrSelf) {
+          nodeStack[level - 1] = it.GetIndex(level);
 
+      if (flag == REveGeomDescription::kRnrSelf) {
+         /* 
          printf("nODEcompare ======\n");
          PrintStackPath(stack);
          PrintStackPath(nodeStack);
+         */
          if (nodeStack == stack) {
             fNodes[cnt].visible = on;
 
