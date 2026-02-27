@@ -738,50 +738,52 @@ void REveGeoTopNodeViz::GetIndicesFromBrowserStack(const std::vector<int> &stack
 
 void REveGeoTopNodeViz::VisibilityChanged(bool on, REveGeomDescription::ERnrFlags flag, const std::vector<int> &iStack)
 {
- //  std::vector<int> apexStack = fGeoData->RefDescription().GetIndexStack();
- // std::vector<int> stack = apexStack;
- // stack.insert(stack.end(), iStack.begin(), iStack.end());
 
- size_t apexDepth = fGeoData->RefDescription().GetApexPath().size();
- std::vector<int> stack(iStack.begin() + apexDepth, iStack.end());
+   size_t apexDepth = fGeoData->RefDescription().GetApexPath().size();
+   std::vector<int> stack(iStack.begin() + apexDepth, iStack.end());
 
- printf("Visibility ======\n");
- PrintStackPath(stack);
+std::vector<int> nodeStack;
 
- TGeoNode *top = fGeoData->fDesc.GetApexNode();
- TGeoIterator it(top->GetVolume());
+   printf("Visibility ======\n");
+   PrintStackPath(stack);
 
- int cnt = 0;
- TGeoNode *node;
- int vislevel = fGeoData->fDesc.GetVisLevel();
- while ((node = it.Next())) {
+   TGeoNode *top = fGeoData->fDesc.GetApexNode();
+   TGeoIterator it(top->GetVolume());
 
-    if (it.GetLevel() > vislevel) {
-       it.Skip();
-       continue;
-    }
+   int cnt = 0;
+   TGeoNode *node;
+   int vislevel = fGeoData->fDesc.GetVisLevel();
+   while ((node = it.Next())) {
 
-    std::vector<int> nodeStack;
-    for (int i = 1; i <= it.GetLevel(); ++i)
-       nodeStack.push_back(it.GetIndex(i));
+      if (it.GetLevel() > vislevel) {
+         it.Skip();
+         continue;
+      }
+      nodeStack.resize(level);
+      if (level > 0)
+          stack[level - 1] = it.GetIndex(level);
+/*
+      std::vector<int> nodeStack;
+      for (int i = 1; i <= it.GetLevel(); ++i)
+         nodeStack.push_back(it.GetIndex(i));
+*/
+      if (flag == REveGeomDescription::kRnrSelf) {
 
-    if (flag == REveGeomDescription::kRnrSelf) {
+         printf("nODEcompare ======\n");
+         PrintStackPath(stack);
+         PrintStackPath(nodeStack);
+         if (nodeStack == stack) {
+            fNodes[cnt].visible = on;
 
-       printf("nODEcompare ======\n");
-       PrintStackPath(stack);
-       PrintStackPath(nodeStack);
-       if (nodeStack == stack) {
-          fNodes[cnt].visible = on;
-
-          break;
-       }
-    } else {
-       bool inside = nodeStack.size() >= stack.size() && std::equal(stack.begin(), stack.end(), nodeStack.begin());
-       if (inside) {
-          fNodes[cnt].visible = on;
-       }
-    } // rnr flags
-    cnt++;
- } // while it
- StampObjProps();
+            break;
+         }
+      } else {
+         bool inside = nodeStack.size() >= stack.size() && std::equal(stack.begin(), stack.end(), nodeStack.begin());
+         if (inside) {
+            fNodes[cnt].visible = on;
+         }
+      } // rnr flags
+      cnt++;
+   } // while it
+   StampObjProps();
 }
