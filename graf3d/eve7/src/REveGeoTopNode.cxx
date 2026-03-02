@@ -434,6 +434,16 @@ void REveGeoTopNodeViz::CollectNodes(TGeoVolume *volume, std::vector<BNode> &bnl
 
    std::vector<int> apexStack = fGeoData->RefDescription().GetIndexStack();
 
+   // get top node transformation
+   TGeoHMatrix global;
+   {
+      TGeoNode *inode = gGeoManager->GetTopNode();
+      for (int idx : apexStack) {
+         inode = inode->GetDaughter(idx);
+         global.Multiply(inode->GetMatrix());
+      }
+   }
+
    while ((node = it.Next())) {
       if (it.GetLevel() > vislevel)
       {
@@ -441,7 +451,11 @@ void REveGeoTopNodeViz::CollectNodes(TGeoVolume *volume, std::vector<BNode> &bnl
        continue;
       }
 
-      const TGeoMatrix *mat = it.GetCurrentMatrix();
+      TGeoHMatrix full = global;   // identity if global is identity
+full.Multiply(it.GetCurrentMatrix());
+      const TGeoMatrix *mat = &full;
+
+     // const TGeoMatrix *mat = it.GetCurrentMatrix();
       const Double_t *t = mat->GetTranslation();    // size 3
       const Double_t *r = mat->GetRotationMatrix(); // size 9 (3x3)
 
