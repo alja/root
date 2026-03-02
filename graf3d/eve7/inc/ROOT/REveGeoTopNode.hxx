@@ -25,6 +25,7 @@ class REveGeomDescription : public RGeomDescription {
 protected:
    std::vector<RGeomNodeVisibility> fVisibilityRec;
    virtual RGeoItem MakeBrowserItem(const RGeomNode &node, std::vector<int> &stack);
+   virtual bool IsFullModelStreamedAtOnce() { return false; }
 
    class Apex {
       std::vector<std::string> fPath;

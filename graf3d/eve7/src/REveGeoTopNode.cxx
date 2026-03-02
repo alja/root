@@ -432,7 +432,6 @@ void REveGeoTopNodeViz::CollectNodes(TGeoVolume *volume, std::vector<BNode> &bnl
    TGeoNode *node;
    int nodeId = 0;
 
-
    std::vector<int> apexStack = fGeoData->RefDescription().GetIndexStack();
 
    while ((node = it.Next())) {
@@ -693,43 +692,34 @@ void REveGeoTopNodeViz::SetVisLevel(int vl)
    }
 }
 
-void REveGeoTopNodeViz::GetIndicesFromBrowserStack(const std::vector<int> &stack, std::set<int> &outStack)
+void REveGeoTopNodeViz::GetIndicesFromBrowserStack(const std::vector<int> &stack, std::set<int> &res)
 {
-   std::vector<std::string> path = fGeoData->fDesc.MakePathByStack(stack);
-   // TGeoNode* node = fGeoData->locateNodeWithPath(path);
+   TGeoNode *top = fGeoData->fDesc.GetApexNode();
+   TGeoIterator it(top->GetVolume());
+   std::vector<int> nodeStack;
+   int cnt = 0;
+   TGeoNode *node;
+   int vislevel = fGeoData->fDesc.GetVisLevel();
 
-   std::vector<std::string> result = fGeoData->fDesc.GetApexPath();
-   if (path.size() > 1)
-      result.insert(result.end(), path.begin() + 1, path.end());
 
-   TGeoNode *node = fGeoData->fDesc.LocateNodeWithPath(result);
-   if (!node) {
-      printf("no node with given stack \n");
-   }
-
-   std::set<TGeoNode *> cset;
-
-   // add children
-   TGeoIterator it(node->GetVolume());
-   TGeoNode *cnd;
-   int level = fGeoData->fDesc.GetVisLevel() + 1 - path.size();
-   while ((cnd = it())) {
-      if (it.GetLevel() <= level) {
-         cset.insert(cnd);
+   while ((node = it.Next())) {
+      int level = it.GetLevel();
+      if (level > vislevel) {
+         it.Skip();
+         continue;
       }
-   }
+      nodeStack.resize(level);
+      if (level > 0)
+          nodeStack[level - 1] = it.GetIndex(level);
 
-   // add self
-   cset.insert(node);
+         bool inside = nodeStack.size() >= stack.size() && std::equal(stack.begin(), stack.end(), nodeStack.begin());
+         if (inside) {
+            res.insert(cnt);
+      } // rnr flags
+      cnt++;
+   } // while it
 
-   for (size_t i = 0; i < fNodes.size(); i++) {
-      if (cset.find(fNodes[i].node) != cset.end()) {
-         outStack.insert(i);
-         // printf("Fill extra selection data matched node with sequence ID = %zu \n", i);
-      }
-   }
-
-   printf("GetIndicesFromBrowserStack size %zu\n", outStack.size());
+   printf("GetIndicesFromBrowserStack size %zu\n", res.size());
 }
 
 void REveGeoTopNodeViz::VisibilityChanged(bool on, REveGeomDescription::ERnrFlags flag, const std::vector<int> &iStack)
