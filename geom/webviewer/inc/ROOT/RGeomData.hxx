@@ -298,6 +298,7 @@ protected:
    int IsPhysNodeVisible(const std::vector<int> &stack);
 
    virtual RGeoItem MakeBrowserItem(const RGeomNode& node, std::vector<int>& stack);
+   virtual bool IsFullModelStreamedAtOnce();
 
    /** clear drawing data without locking mutex */
    void _ClearDrawData()

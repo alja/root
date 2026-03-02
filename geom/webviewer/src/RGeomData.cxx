@@ -781,7 +781,7 @@ std::string RGeomDescription::ProcessBrowserRequest(const std::string &msg)
    if (!request)
       return res;
 
-   if (request->path.empty() && (request->first == 0) && (GetNumNodes() < (IsPreferredOffline() ? 1000000 : 1000))) {
+   if (request->path.empty() && (request->first == 0) && IsFullModelStreamedAtOnce()) {
 
       std::vector<RGeomNodeBase *> vect(fDesc.size(), nullptr);
 
@@ -2070,6 +2070,15 @@ RGeoItem RGeomDescription::MakeBrowserItem(const RGeomNode &node, std::vector<in
    bool test_vis = pvis < 0 ? true : pvis;
    return RGeoItem(node.name, node.chlds.size(), node.id, node.color, node.material,
                    node.vis, test_vis);
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+/// Decide if the whole model is streamed at once
+/// Function is called from ProcessBrowserRequest
+
+bool RGeomDescription::IsFullModelStreamedAtOnce()
+{
+   return GetNumNodes() < (IsPreferredOffline() ? 1000000 : 1000);
 }
 
 /////////////////////////////////////////////////////////////////////////////////
