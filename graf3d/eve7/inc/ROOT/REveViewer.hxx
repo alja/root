@@ -57,7 +57,6 @@ private:
    REveViewer& operator=(const REveViewer&) = delete;
 
    REveCamera* fCamera{0};
-   ElementId_t fCameraId{0}; // Reference to standalone REveCamera element. yuxiao
 
    EAxesType fAxesType{kAxesNone};
    bool      fBlackBackground{false};
@@ -77,7 +76,7 @@ public:
    // void SetCameraType(ECameraType t);
    // ECameraType GetCameraType() const { return fCamera->GetType(); }
    void SetCamera(::ROOT::Experimental::REveCamera *cam);
-   ElementId_t GetCameraId() const { return fCameraId; } // yuxiao
+   REveCamera* GetCamera() const { return fCamera;}
 
    void SetAxesType(int);
    void SetBlackBackground(bool);

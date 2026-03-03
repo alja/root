@@ -134,7 +134,7 @@ int REveViewer::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
    j["Mandatory"] = fMandatory;
    j["AxesType"] = fAxesType;
    j["BlackBg"] = fBlackBackground;
-   j["fCameraId"] = fCameraId;  // yuxiao
+   j["fCameraId"] = fCamera ? fCamera->GetElementId() : 0;
 
    j["UT_PostStream"] = "UT_EveViewerUpdate";
 
@@ -220,7 +220,7 @@ void REveViewer::SetCameraType(ECameraType cameraType)
 
 void REveViewer::SetCamera(::ROOT::Experimental::REveCamera *cam)
 {
-   fCameraId = cam ? cam->GetElementId() : 0;
+   fCamera = cam;
    StampObjProps();
 }
 
