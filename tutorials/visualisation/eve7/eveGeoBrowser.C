@@ -5,183 +5,198 @@
 ///
 
 #include <ROOT/REveGeoTopNode.hxx>
+#include <ROOT/REveGeoPolyShape.hxx>
 #include <ROOT/REveManager.hxx>
 
-namespace REX = ROOT::Experimental;
+#include <set>
+#include <vector>
+#include <iostream>
 
-TGeoNode *getNodeFromPath(TGeoNode *top, std::string path)
+using namespace ROOT::Experimental;
+
+
+struct BShape
 {
-   TGeoNode *node = top;
-   std::istringstream f(path);
-   std::string s;
-   while (getline(f, s, '/'))
-      node = node->GetVolume()->FindNode(s.c_str());
+   TGeoShape* shape;
+   std::vector<int> indices;
+   std::vector<float> vertices;
+};
 
-   return node;
+struct BNode
+{
+   TGeoNode* node;
+   int shapeId;
+   int nodeId;
+   int color;
+   float trans[16];
+};
+
+void CollectNodes(TGeoVolume *volume, std::vector<BNode> &bnl, std::vector<BShape> &browsables, int vislevel)
+{
+   TGeoIterator it(volume);
+   TGeoNode *node;
+   int nodeId = 0;
+   while ((node = it.Next())) {
+
+      // block at vislevel
+
+      if (it.GetLevel() > vislevel)
+          continue;   
+
+
+      const TGeoMatrix *mat = it.GetCurrentMatrix();
+      const Double_t *t = mat->GetTranslation();    // size 3
+      const Double_t *r = mat->GetRotationMatrix(); // size 9 (3x3)
+
+      Double_t        m[16];
+      if (mat->IsScale())
+      {
+         const Double_t *s = mat->GetScale();
+         m[0]  = r[0]*s[0]; m[1]  = r[3]*s[0]; m[2]  = r[6]*s[0]; m[3]  = 0;
+         m[4]  = r[1]*s[1]; m[5]  = r[4]*s[1]; m[6]  = r[7]*s[1]; m[7]  = 0;
+         m[8]  = r[2]*s[2]; m[9]  = r[5]*s[2]; m[10] = r[8]*s[2]; m[11] = 0;
+         m[12] = t[0];      m[13] = t[1];      m[14] = t[2];      m[15] = 1;
+      }
+      else
+      {
+         m[0]  = r[0];      m[1]  = r[3];      m[2]  = r[6];      m[3]  = 0;
+         m[4]  = r[1];      m[5]  = r[4];      m[6]  = r[7];      m[7]  = 0;
+         m[8]  = r[2];      m[9]  = r[5];      m[10] = r[8];      m[11] = 0;
+         m[12] = t[0];      m[13] = t[1];      m[14] = t[2];      m[15] = 1;
+      }
+
+      BNode b;
+      b.node = node;
+      b.nodeId = nodeId;
+      b.color = node->GetVolume()->GetLineColor();
+      TString path; it.GetPath(path);
+      printf("[%d] %d %s \n", b.color, it.GetLevel(), path.Data());
+      // set BNode transformation matrix
+      for (int i = 0; i < 16; ++i)
+         b.trans[i] = m[i];
+
+      // find shape
+      TGeoShape *shape = node->GetVolume()->GetShape();
+      b.shapeId = -1; // mark invalid at start
+      for (int i = 0; i < browsables.size(); i++) {
+         if (shape == browsables[i].shape) {
+            b.shapeId = i;
+            break;
+         }
+      }
+      assert(b.shapeId >= 0);
+      // printf("Node %d shape id %d \n", (int)bnl.size(), b.shapeId);
+      bnl.push_back(b);
+      nodeId++;
+
+      break;
+    
+   }
 }
 
-TGeoNode *testCmsGeo()
+void CollectShapes(TGeoNode *node, std::set<TGeoShape *> &shapes, std::vector<BShape> &browsables)
 {
-   TFile::SetCacheFileDir(".");
+   if (!node)
+      return;
 
-   TGeoManager::Import("https://root.cern/files/cms.root");
+   // Get the volume
+   TGeoVolume *vol = node->GetVolume();
+   if (vol) {
+      TGeoShape *shape = vol->GetShape();
+      if (shape) {
+         auto it = shapes.find(shape);
+         if (it == shapes.end()) {
+            shapes.insert(shape); // use set to avoid duplicates
+            REveGeoPolyShape polyShape;
+            TGeoCompositeShape *compositeShape = dynamic_cast<TGeoCompositeShape *>(shape);
+            int n_seg = 60; // default value in the geo manager and poly shape
+            if (compositeShape)
+               polyShape.BuildFromComposite(compositeShape, n_seg);
+            else
+               polyShape.BuildFromShape(shape, n_seg);
 
-   gGeoManager->DefaultColors();
-   gGeoManager->GetVolume("TRAK")->InvisibleAll();
-   gGeoManager->GetVolume("HVP2")->SetTransparency(20);
-   gGeoManager->GetVolume("HVEQ")->SetTransparency(20);
-   gGeoManager->GetVolume("YE4")->SetTransparency(10);
-   gGeoManager->GetVolume("YE3")->SetTransparency(20);
-   gGeoManager->GetVolume("RB2")->SetTransparency(99);
-   gGeoManager->GetVolume("RB3")->SetTransparency(99);
-   gGeoManager->GetVolume("COCF")->SetTransparency(99);
-   gGeoManager->GetVolume("HEC1")->SetLineColor(7);
-   gGeoManager->GetVolume("EAP1")->SetLineColor(7);
-   gGeoManager->GetVolume("EAP2")->SetLineColor(7);
-   gGeoManager->GetVolume("EAP3")->SetLineColor(7);
-   gGeoManager->GetVolume("EAP4")->SetLineColor(7);
-   gGeoManager->GetVolume("HTC1")->SetLineColor(2);
+            printf("[%d] Shape name %s %s \n",(int)browsables.size(), shape->GetName(), shape->ClassName());
+         
+            printf("vertices %lu: \n", polyShape.fVertices.size());
+            /*
+            for (size_t i = 0; i < polyShape.fVertices.size(); i += 3) {
+               printf("V[%zu] = (%g, %g, %g)\n", i / 3, polyShape.fVertices[i], polyShape.fVertices[i + 1],
+                      polyShape.fVertices[i + 2]);
+            }*/
 
-   TGeoNode *top = gGeoManager->GetTopVolume()->FindNode("CMSE_1");
-   TGeoNode *n = getNodeFromPath(top, "MUON_1");
-   return top;
-}
+            printf("num polygons %d\n", polyShape.fNbPols);
+            /* for (size_t i = 0; i < polyShape.fPolyDesc.size(); i += 4) {
+               printf("POLY [%zu] = (%d, %d, %d, %d)\n", i / 4, polyShape.fPolyDesc[i], polyShape.fPolyDesc[i + 1],
+                      polyShape.fPolyDesc[i + 2], polyShape.fPolyDesc[i + 3]);
+            }*/
 
-TGeoNode *rootgeom()
-{
-   TGeoManager *geom = new TGeoManager("simple1", "Simple geometry");
+            // create browser shape
+            BShape browserShape;
+            browserShape.shape = shape;
+            browsables.push_back(browserShape);
 
-   TGeoMaterial *matVacuum = new TGeoMaterial("Vacuum", 0, 0, 0);
-   TGeoMaterial *matAl = new TGeoMaterial("Al", 26.98, 13, 2.7);
-   //   //--- define some media
-   TGeoMedium *Vacuum = new TGeoMedium("Vacuum", 1, matVacuum);
-   TGeoMedium *Al = new TGeoMedium("Root Material", 2, matAl);
+            // copy vertices transform vec double to float
+            browsables.back().vertices.reserve(polyShape.fVertices.size());
+            for (size_t i = 0; i < polyShape.fVertices.size(); i++)
+               browsables.back().vertices.push_back(polyShape.fVertices[i]);
 
-   //--- define the transformations
-   TGeoTranslation *tr1 = new TGeoTranslation(20., 0, 0.);
-   TGeoTranslation *tr2 = new TGeoTranslation(10., 0., 0.);
-   TGeoTranslation *tr3 = new TGeoTranslation(10., 20., 0.);
-   TGeoTranslation *tr4 = new TGeoTranslation(5., 10., 0.);
-   TGeoTranslation *tr5 = new TGeoTranslation(20., 0., 0.);
-   TGeoTranslation *tr6 = new TGeoTranslation(-5., 0., 0.);
-   TGeoTranslation *tr7 = new TGeoTranslation(7.5, 7.5, 0.);
-   TGeoRotation *rot1 = new TGeoRotation("rot1", 90., 0., 90., 270., 0., 0.);
-   TGeoCombiTrans *combi1 = new TGeoCombiTrans(7.5, -7.5, 0., rot1);
-   TGeoTranslation *tr8 = new TGeoTranslation(7.5, -5., 0.);
-   TGeoTranslation *tr9 = new TGeoTranslation(7.5, 20., 0.);
-   TGeoTranslation *tr10 = new TGeoTranslation(85., 0., 0.);
-   TGeoTranslation *tr11 = new TGeoTranslation(35., 0., 0.);
-   TGeoTranslation *tr12 = new TGeoTranslation(-15., 0., 0.);
-   TGeoTranslation *tr13 = new TGeoTranslation(-65., 0., 0.);
-
-   TGeoTranslation *tr14 = new TGeoTranslation(0, 0, -100);
-   TGeoCombiTrans *combi2 = new TGeoCombiTrans(0, 0, 100, new TGeoRotation("rot2", 90, 180, 90, 90, 180, 0));
-   TGeoCombiTrans *combi3 = new TGeoCombiTrans(100, 0, 0, new TGeoRotation("rot3", 90, 270, 0, 0, 90, 180));
-   TGeoCombiTrans *combi4 = new TGeoCombiTrans(-100, 0, 0, new TGeoRotation("rot4", 90, 90, 0, 0, 90, 0));
-   TGeoCombiTrans *combi5 = new TGeoCombiTrans(0, 100, 0, new TGeoRotation("rot5", 0, 0, 90, 180, 90, 270));
-   TGeoCombiTrans *combi6 = new TGeoCombiTrans(0, -100, 0, new TGeoRotation("rot6", 180, 0, 90, 180, 90, 90));
-
-   //--- make the top container volume
-   Double_t worldx = 110.;
-   Double_t worldy = 50.;
-   Double_t worldz = 5.;
-   TGeoVolume *top = geom->MakeBox("TOP", Vacuum, 270., 270., 120.);
-   geom->SetTopVolume(top);
-   TGeoVolume *replica = geom->MakeBox("REPLICA", Vacuum, 120, 120, 120);
-   replica->SetVisibility(kFALSE);
-   TGeoVolume *rootbox = geom->MakeBox("ROOT", Vacuum, 110., 50., 5.);
-   rootbox->SetVisibility(kFALSE);
-
-   //--- make letter 'R'
-   TGeoVolume *R = geom->MakeBox("R", Vacuum, 25., 25., 5.);
-   R->SetVisibility(kFALSE);
-   TGeoVolume *bar1 = geom->MakeBox("bar1", Al, 5., 25, 5.);
-   bar1->SetLineColor(kRed);
-   R->AddNode(bar1, 1, tr1);
-   TGeoVolume *bar2 = geom->MakeBox("bar2", Al, 5., 5., 5.);
-   bar2->SetLineColor(kRed);
-   R->AddNode(bar2, 1, tr2);
-   R->AddNode(bar2, 2, tr3);
-   TGeoVolume *tub1 = geom->MakeTubs("tub1", Al, 5., 15., 5., 90., 270.);
-   tub1->SetLineColor(kRed);
-   R->AddNode(tub1, 1, tr4);
-   TGeoVolume *bar3 = geom->MakeArb8("bar3", Al, 5.);
-   bar3->SetLineColor(kRed);
-   TGeoArb8 *arb = (TGeoArb8 *)bar3->GetShape();
-   arb->SetVertex(0, 15., -5.);
-   arb->SetVertex(1, 0., -25.);
-   arb->SetVertex(2, -10., -25.);
-   arb->SetVertex(3, 5., -5.);
-   arb->SetVertex(4, 15., -5.);
-   arb->SetVertex(5, 0., -25.);
-   arb->SetVertex(6, -10., -25.);
-   arb->SetVertex(7, 5., -5.);
-   R->AddNode(bar3, 1, gGeoIdentity);
-
-   //--- make letter 'O'
-   TGeoVolume *O = geom->MakeBox("O", Vacuum, 25., 25., 5.);
-   O->SetVisibility(kFALSE);
-   TGeoVolume *bar4 = geom->MakeBox("bar4", Al, 5., 7.5, 5.);
-   bar4->SetLineColor(kYellow);
-   O->AddNode(bar4, 1, tr5);
-   O->AddNode(bar4, 2, tr6);
-   TGeoVolume *tub2 = geom->MakeTubs("tub1", Al, 7.5, 17.5, 5., 0., 180.);
-   tub2->SetLineColor(kYellow);
-   O->AddNode(tub2, 1, tr7);
-   O->AddNode(tub2, 2, combi1);
-
-   //--- make letter 'T'
-   TGeoVolume *T = geom->MakeBox("T", Vacuum, 25., 25., 5.);
-   T->SetVisibility(kFALSE);
-   TGeoVolume *bar5 = geom->MakeBox("bar5", Al, 5., 20., 5.);
-   bar5->SetLineColor(kBlue);
-   T->AddNode(bar5, 1, tr8);
-   TGeoVolume *bar6 = geom->MakeBox("bar6", Al, 17.5, 5., 5.);
-
-   bar6->SetLineColor(kBlue);
-   T->AddNode(bar6, 1, tr9);
-
-   rootbox->AddNode(R, 1, tr10);
-   rootbox->AddNode(O, 1, tr11);
-   rootbox->AddNode(O, 2, tr12);
-   rootbox->AddNode(T, 1, tr13);
-
-   replica->AddNode(rootbox, 1, tr14);
-   replica->AddNode(rootbox, 2, combi2);
-   replica->AddNode(rootbox, 3, combi3);
-   replica->AddNode(rootbox, 4, combi4);
-   replica->AddNode(rootbox, 5, combi5);
-   replica->AddNode(rootbox, 6, combi6);
-
-   top->AddNode(replica, 1, new TGeoTranslation(-150, -150, 0));
-   top->AddNode(replica, 2, new TGeoTranslation(150, -150, 0));
-   top->AddNode(replica, 3, new TGeoTranslation(150, 150, 0));
-   top->AddNode(replica, 4, new TGeoTranslation(-150, 150, 0));
-
-   //--- close the geometry
-   geom->CloseGeometry();
-   return gGeoManager->GetTopNode();
-}
-
-void eveGeoBrowser(bool showDet = true)
-{
-   auto eveMng = REX::REveManager::Create();
-   // eveMng->AllowMultipleRemoteConnections(false, false);
-
-   TGeoNode *gn;
-   int vislevel = 4;
-   if (showDet) {
-      gn = testCmsGeo();
-      vislevel = 2;
-   } else {
-      gn = rootgeom();
-      vislevel = 8;
+            // copy indices kip the first integer in the sequence of 4
+            for (size_t i = 0; i < polyShape.fPolyDesc.size(); i += 4) {
+               browsables.back().indices.push_back(polyShape.fPolyDesc[i + 1]);
+               browsables.back().indices.push_back(polyShape.fPolyDesc[i + 2]);
+               browsables.back().indices.push_back(polyShape.fPolyDesc[i + 3]);
+            }
+            printf("last browsable size indices size %lu \n",  browsables.back().indices.size());
+         }
+      }
    }
 
+   // Recurse to children
+   int nd = node->GetNdaughters();
+   for (int i = 0; i < nd; ++i) {
+      CollectShapes(node->GetDaughter(i), shapes, browsables);
+   }
+}
+
+const Double_t kR_min = 240;
+const Double_t kR_max = 250;
+const Double_t kZ_d = 300;
+
+void makeJets(int N_Jets, REveElement *jetHolder)
+{
+   TRandom &r = *gRandom;
+
+   for (int i = 0; i < N_Jets; i++) {
+      auto jet = new REveJetCone(Form("Jet_%d", i));
+      jet->SetCylinder(2 * kR_max, 2 * kZ_d);
+      jet->AddEllipticCone(r.Uniform(-0.5, 0.5), r.Uniform(0, TMath::TwoPi()), 0.1, 0.2);
+      jet->SetFillColor(kPink - 8);
+      jet->SetLineColor(kViolet - 7);
+
+      jetHolder->AddElement(jet);
+   }
+}
+
+
+void eveGeoBrowser()
+{
+//   gEnv->SetValue("WebEve.GLViewer", "Three");
+   auto eveMng = REveManager::Create();
+   eveMng->AllowMultipleRemoteConnections(false, false);
+
+   TFile::SetCacheFileDir(".");
+   TGeoManager::Import("http://xrd-cache-1.t2.ucsd.edu/alja/mail/geo/cmsSimGeo2026.root");
+   TGeoNode *top = gGeoManager->GetTopVolume()->FindNode("tracker:Tracker_1");
+ //  top = top->GetVolume()->FindNode("pixbar:Phase2PixelBarrel_1");
+//   top = top->GetVolume()->FindNode("pixel:Layer1_1");
+
    // initialize RGeomDesc from TGeoNode
-   auto data = new REX::REveGeoTopNodeData();
-   data->SetTNode(gn);
-   data->RefDescription().SetVisLevel(vislevel);
+   auto data = new REveGeoTopNodeData();
+  // data->SetTNode(top);
+  std::vector< std::string > path;
+ path.push_back("tracker:Tracker_1");
+   data->SetTopNodeWithPath(path);
+   data->RefDescription().SetVisLevel(4);
 
    // make geoTable
    auto scene = eveMng->SpawnNewScene("GeoSceneTable");
@@ -189,12 +204,21 @@ void eveGeoBrowser(bool showDet = true)
    view->AddScene(scene);
    scene->AddElement(data);
 
-   // 3D representation
-   auto geoViz = new REX::REveGeoTopNodeViz();
+   // 3D EveViz representation
+   auto geoViz = new REveGeoTopNodeViz();
+   geoViz->SetVizMode(REveGeoTopNodeViz::kModeMixed);
    geoViz->SetGeoData(data);
    geoViz->SetPickable(true);
+
+
+// add jets for BBox issues
    data->AddNiece(geoViz);
    eveMng->GetEventScene()->AddElement(geoViz);
+   REveElement *jetHolder = new REveElement("Jets");
+   eveMng->GetEventScene()->AddElement(jetHolder);
+   makeJets(7, jetHolder);
+
+
 
    eveMng->Show();
 }
