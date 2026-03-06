@@ -8,13 +8,13 @@
 #include "ROOT/REveSecondarySelectable.hxx"
 
 class TGeoNode;
+class TGeoIterator;
+
 
 namespace ROOT {
 namespace Experimental {
 
 class REveGeoTopNodeData;
-
-
 /////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
 //    REveGeomDescription
@@ -121,6 +121,14 @@ public:
 class REveGeoTopNodeViz : public REveElement,
                           public REveSecondarySelectable
 {
+public:
+   enum EMode {
+      kModeNone,
+      kModeVisLevel,
+      kModeLeafOnly,
+      kModeMixed
+   };
+
 private:
   struct BShape {
       TGeoShape *shape;
@@ -143,9 +151,11 @@ private:
    REveGeoTopNodeData *fGeoData{nullptr};
    std::vector<BNode> fNodes;
    std::vector<BShape> fShapes;
+   EMode fMode{kModeVisLevel};
 
-   void CollectNodes(TGeoVolume *volume, std::vector<BNode> &bnl, std::vector<BShape> &browsables, int vislevel);
+   void CollectNodes(TGeoVolume *volume, std::vector<BNode> &bnl, std::vector<BShape> &browsables);
    void CollectShapes(TGeoNode *node, std::set<TGeoShape *> &shapes, std::vector<BShape> &browsables);
+   bool AcceptNode(TGeoIterator& it, bool skip = true) const;
 
 public:
    REveGeoTopNodeViz(const Text_t *n = "REveGeoTopNodeViz", const Text_t *t = "");
@@ -157,6 +167,9 @@ public:
    void SetVisLevel(int);
    void VisibilityChanged(bool on,  REveGeomDescription::ERnrFlags flag, const std::vector<int>& path);
    void BuildDesc();
+
+   EMode GetVizMode() const { return fMode; }
+   void SetVizMode(EMode mode);
 
    using REveElement::GetHighlightTooltip;
    std::string GetHighlightTooltip(const std::set<int>& secondary_idcs) const override;

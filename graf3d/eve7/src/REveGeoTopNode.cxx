@@ -13,6 +13,8 @@
 #include <ROOT/REveSelection.hxx>
 
 #include <ROOT/REveUtil.hxx>
+#include <ROOT/RLogger.hxx>
+#include <ROOT/REveUtil.hxx>
 #include "TBufferJSON.h"
 #include "TMath.h"
 
@@ -21,6 +23,8 @@
 #include "TClass.h"
 #include "TGeoNode.h"
 #include "TBase64.h"
+#include "TStopwatch.h"
+
 
 #include <cassert>
 #include <iostream>
@@ -98,7 +102,7 @@ ROOT::RGeoItem REveGeomDescription::MakeBrowserItem(const RGeomNode &node, std::
 void REveGeomDescription::SetTopNodeWithPath(const std::vector<std::string>& path)
 {
    fApex.SetFromPath(path);
-   Build(fApex.GetNode()->GetVolume()); // rebuild geo-webviewer 
+   Build(fApex.GetNode()->GetVolume()); // rebuild geo-webviewer
 }
 
 bool REveGeomDescription::GetVisiblityForStack(const std::vector<int> &nodeStack)
@@ -115,7 +119,7 @@ bool REveGeomDescription::GetVisiblityForStack(const std::vector<int> &nodeStack
       bool inside =
          nodeStack.size() >= visVecEl.stack.size() && std::equal(visVecEl.stack.begin(), visVecEl.stack.end(), nodeStack.begin());
       if (inside)
-          return false;   
+          return false;
    }
 
    return true;
@@ -129,14 +133,14 @@ void REveGeomHierarchy::WebWindowCallback(unsigned connid, const std::string &ar
    using namespace std::string_literals;
    REveGeomDescription &eveDesc = dynamic_cast<REveGeomDescription &>(fDesc);
 
-   if (arg.compare(0, 6, "CDTOP:") == 0) 
+   if (arg.compare(0, 6, "CDTOP:") == 0)
    {
       std::vector<std::string> ep;
       eveDesc.SetTopNodeWithPath(ep);
       fDesc.IssueSignal(this, "CdTop");
       fWebWindow->Send(connid, "RELOAD"s);
    }
-   else if (arg.compare(0, 5, "CDUP:") == 0) 
+   else if (arg.compare(0, 5, "CDUP:") == 0)
    {
        std::vector<std::string> result = eveDesc.GetApexPath();
        result.pop_back();
@@ -201,7 +205,7 @@ void REveGeomHierarchy::WebWindowCallback(unsigned connid, const std::string &ar
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-void REveGeomDescription::Apex::SetFromPath(std::vector<std::string> absPath) 
+void REveGeomDescription::Apex::SetFromPath(std::vector<std::string> absPath)
 {
    fPath = absPath;
    fNode = LocateNodeWithPath(absPath);
@@ -213,8 +217,11 @@ TGeoNode *REveGeomDescription::Apex::LocateNodeWithPath(const std::vector<std::s
    // printf("Top node name from geoData name (%s)\n", top->GetName());
    for (size_t t = 0; t < path.size(); t++) {
       std::string s = path[t];
-       std::cout << s << std::endl;
-      top = top->GetVolume()->FindNode(s.c_str());
+      std::cout << s << std::endl;
+      TGeoNode *ntop = top->GetVolume()->FindNode(s.c_str());
+      if (!ntop)
+         throw std::runtime_error("Apex::LocateNodeWithPath(), can't locate node with path " + s);
+      top = ntop;
    }
    return top;
 }
@@ -329,7 +336,7 @@ void REveGeoTopNodeData::ProcessSignal(const std::string &kind)
          REveGeoTopNodeViz *etn = dynamic_cast<REveGeoTopNodeViz *>(el);
          etn->BuildDesc();
       }
-   } 
+   }
    else if (kind == "HighlightItem") {
       /*
       printf("REveGeoTopNodeData element highlighted --------------------------------"\n);
@@ -365,9 +372,43 @@ Int_t REveGeoTopNodeData::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-REveGeoTopNodeViz::REveGeoTopNodeViz(const Text_t *n, const Text_t *t) : REveElement(n, t) 
+REveGeoTopNodeViz::REveGeoTopNodeViz(const Text_t *n, const Text_t *t) : REveElement(n, t)
 {
    SetAlwaysSecSelect(true);
+}
+
+void REveGeoTopNodeViz::SetVizMode(EMode mode)
+ {
+   fMode = mode;
+}
+
+bool REveGeoTopNodeViz::AcceptNode(TGeoIterator &it, bool skip) const
+{
+   if (fMode == EMode::kModeVisLevel)
+   {
+      if (it.GetLevel() > fGeoData->fDesc.GetVisLevel()) {
+         it.Skip();
+         return false;
+      }
+   }
+   else if (fMode == EMode::kModeLeafOnly)
+   {
+      // printf("accep mkod eleaf node ptr %p \n", (void*)it.GetNode(it.GetLevel()));
+      if (it.GetNode(it.GetLevel())->GetNdaughters())
+         return false;
+   }
+   else if (fMode == EMode::kModeMixed)
+   {
+      if (it.GetLevel() > fGeoData->fDesc.GetVisLevel()) {
+         if (skip) it.Skip();
+         return false;
+      }
+      // printf("accep mkod eleaf node ptr %p \n", (void*)it.GetNode(it.GetLevel()));
+      if (it.GetNode(it.GetLevel())->GetNdaughters())
+         return false;
+   }
+
+   return true;
 }
 
 std::string REveGeoTopNodeViz::GetHighlightTooltip(const std::set<int> & set) const
@@ -386,14 +427,11 @@ std::string REveGeoTopNodeViz::GetHighlightTooltip(const std::set<int> & set) co
       TGeoIterator git(top->GetVolume());
       TGeoNode *node;
       int i = 0;
-      int vislevel = fGeoData->fDesc.GetVisLevel();
-            TString path;
-      while ((node = git.Next())) {
-
-         if (git.GetLevel() > vislevel)
-         {
+      TString path;
+      while ((node = git.Next()))
+      {
+         if (!AcceptNode(git))
             continue;
-         }
          if (i == pos) {
             git.GetPath(path);
             res = path;
@@ -414,18 +452,30 @@ void REveGeoTopNodeViz::BuildDesc()
    fShapes.clear();
    // shape array
    std::set<TGeoShape *> shapes;
+   TStopwatch timer;
+   timer.Start();
    CollectShapes(top, shapes, fShapes);
    std::cout << "Shape size " << shapes.size() << "\n";
 
+   timer.Stop();
+
+   printf("Real time: %.3f s\n", timer.RealTime());
+   printf("CPU  time: %.3f s\n", timer.CpuTime());
+
    // node array
-   CollectNodes(top->GetVolume(), fNodes, fShapes, fGeoData->fDesc.GetVisLevel());
+   timer.Start();
+   CollectNodes(top->GetVolume(), fNodes, fShapes);
    std::cout << "Node size " << fNodes.size() << "\n";
+
+   timer.Stop();
+
+   printf("NODES Real time: %.3f s\n", timer.RealTime());
+   printf("NODES CPU  time: %.3f s\n", timer.CpuTime());
 
    StampObjProps();
 }
 
-void REveGeoTopNodeViz::CollectNodes(TGeoVolume *volume, std::vector<BNode> &bnl, std::vector<BShape> &browsables,
-                                     int vislevel)
+void REveGeoTopNodeViz::CollectNodes(TGeoVolume *volume, std::vector<BNode> &bnl, std::vector<BShape> &browsables)
 {
    printf("collect nodes \n");
    TGeoIterator it(volume);
@@ -444,18 +494,16 @@ void REveGeoTopNodeViz::CollectNodes(TGeoVolume *volume, std::vector<BNode> &bnl
       }
    }
 
-   while ((node = it.Next())) {
-      if (it.GetLevel() > vislevel)
-      {
-       it.Skip();
-       continue;
-      }
+   while ((node = it.Next()))
+   {
+      if (!AcceptNode(it))
+      continue;
 
-      TGeoHMatrix full = global;   // identity if global is identity
-full.Multiply(it.GetCurrentMatrix());
+      TGeoHMatrix full = global; // identity if global is identity
+      full.Multiply(it.GetCurrentMatrix());
       const TGeoMatrix *mat = &full;
 
-     // const TGeoMatrix *mat = it.GetCurrentMatrix();
+      // const TGeoMatrix *mat = it.GetCurrentMatrix();
       const Double_t *t = mat->GetTranslation();    // size 3
       const Double_t *r = mat->GetRotationMatrix(); // size 9 (3x3)
 
@@ -501,11 +549,11 @@ full.Multiply(it.GetCurrentMatrix());
       b.node = node;
       b.nodeId = nodeId;
       b.color = node->GetVolume()->GetLineColor();
-      
-      // TString path; it.GetPath(path);
-      // printf("[%d] %d %s \n", b.color, it.GetLevel(), path.Data());
-      
-      
+
+     // TString path; it.GetPath(path);
+     //  printf("[%d] %d %s \n", node->GetNdaughters(), it.GetLevel(), path.Data());
+
+
       // set BNode transformation matrix
       for (int i = 0; i < 16; ++i)
          b.trans[i] = m[i];
@@ -533,7 +581,11 @@ full.Multiply(it.GetCurrentMatrix());
       bnl.push_back(b);
       nodeId++;
 
-      //  break;
+      if (nodeId > 300000) {
+         R__LOG_ERROR(REveLog()) << "Max number of nodes reached ... breaking the loop \n";
+         printf("num nodes locked !!! \n");
+         break;
+      }
    }
 }
 
@@ -542,12 +594,9 @@ void REveGeoTopNodeViz::CollectShapes(TGeoNode *tnode, std::set<TGeoShape *> &sh
    printf("collect shapes \n");
    TGeoIterator geoit(tnode->GetVolume());
    TGeoNode *node = nullptr;
-   int vislevel = fGeoData->fDesc.GetVisLevel();
-   while ((node = geoit.Next())) {
-
-      // block at vislevel
-
-      if (geoit.GetLevel() > vislevel)
+   while ((node = geoit.Next()))
+   {
+      if (!AcceptNode(geoit))
          continue;
 
       TGeoVolume *vol = node->GetVolume();
@@ -713,15 +762,12 @@ void REveGeoTopNodeViz::GetIndicesFromBrowserStack(const std::vector<int> &stack
    std::vector<int> nodeStack;
    int cnt = 0;
    TGeoNode *node;
-   int vislevel = fGeoData->fDesc.GetVisLevel();
-
 
    while ((node = it.Next())) {
       int level = it.GetLevel();
-      if (level > vislevel) {
-         it.Skip();
-         continue;
-      }
+
+      bool accept = AcceptNode(it, false);
+
       nodeStack.resize(level);
       if (level > 0)
           nodeStack[level - 1] = it.GetIndex(level);
@@ -730,10 +776,10 @@ void REveGeoTopNodeViz::GetIndicesFromBrowserStack(const std::vector<int> &stack
          if (inside) {
             res.insert(cnt);
       } // rnr flags
-      cnt++;
+      if (accept) cnt++;
    } // while it
 
-   printf("GetIndicesFromBrowserStack size %zu\n", res.size());
+   printf("GetIndicesFromBrowserStack stack size %zu res size %zu\n", stack.size(), res.size());
 }
 
 void REveGeoTopNodeViz::VisibilityChanged(bool on, REveGeomDescription::ERnrFlags flag, const std::vector<int> &iStack)
@@ -749,19 +795,18 @@ void REveGeoTopNodeViz::VisibilityChanged(bool on, REveGeomDescription::ERnrFlag
    std::vector<int> nodeStack;
    int cnt = 0;
    TGeoNode *node;
-   int vislevel = fGeoData->fDesc.GetVisLevel();
    while ((node = it.Next())) {
+
       int level = it.GetLevel();
-      if (level > vislevel) {
-         it.Skip();
+      if (!AcceptNode(it))
          continue;
-      }
+
       nodeStack.resize(level);
       if (level > 0)
           nodeStack[level - 1] = it.GetIndex(level);
 
       if (flag == REveGeomDescription::kRnrSelf) {
-         /* 
+         /*
          printf("nODEcompare ======\n");
          PrintStackPath(stack);
          PrintStackPath(nodeStack);
