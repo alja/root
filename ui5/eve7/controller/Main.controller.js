@@ -399,8 +399,7 @@ sap.ui.define(['sap/ui/core/Component',
       },
 
       showUserURL : function(oEvent) {
-        // MobileLibrary.URLHelper.redirect("https://github.com/alja/jsroot/blob/dev/eve7.md", true);
-         sap.ui.getCore().applyTheme('sap_fiori_3_dark');
+         MobileLibrary.URLHelper.redirect("https://github.com/alja/jsroot/blob/dev/eve7.md", true);
       },
 
       executeCommand : function(cmd) {
