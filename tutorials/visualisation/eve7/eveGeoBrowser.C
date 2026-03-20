@@ -38,16 +38,10 @@ void eveGeoBrowser()
    eveMng->AllowMultipleRemoteConnections(false, false);
 
    TFile::SetCacheFileDir(".");
-   TGeoManager::Import("http://xrd-cache-1.t2.ucsd.edu/alja/mail/geo/cmsSimGeo2026.root");
-   TGeoNode *top = gGeoManager->GetTopVolume()->FindNode("tracker:Tracker_1");
-   //  top = top->GetVolume()->FindNode("pixbar:Phase2PixelBarrel_1");
-   //  top = top->GetVolume()->FindNode("pixel:Layer1_1");
 
    // initialize RGeomDesc from TGeoNode
-   auto data = new REveGeoTopNodeData();
-   std::vector<std::string> path;
-   path.push_back("tracker:Tracker_1");
-   data->SetTopNodeWithPath(path);
+   auto data = new REveGeoTopNodeData("http://xrd-cache-1.t2.ucsd.edu/alja/mail/geo/cmsSimGeo2026.root");
+   data->SetTopNodeWithPath("/tracker:Tracker_1");
    data->RefDescription().SetVisLevel(2);
 
    // make geoTable
@@ -58,12 +52,11 @@ void eveGeoBrowser()
 
    // 3D EveViz representation
    auto geoViz = new REveGeoTopNodeViz();
-   // geoViz->SetVizMode(REveGeoTopNodeViz::kModeMixed); 
    geoViz->SetGeoData(data);
+   eveMng->GetEventScene()
    geoViz->SetPickable(true);
 
    // add jets for BBox issues
-   data->AddNiece(geoViz);
    eveMng->GetEventScene()->AddElement(geoViz);
    REveElement *jetHolder = new REveElement("Jets");
    eveMng->GetEventScene()->AddElement(jetHolder);
