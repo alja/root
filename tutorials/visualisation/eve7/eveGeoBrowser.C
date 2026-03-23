@@ -63,8 +63,11 @@ void eveGeoBrowser()
    geoViz->SetPickable(true);
 
    // add jets for BBox issues
+<<<<<<< Updated upstream
    data->AddNiece(geoViz);
    eveMng->GetEventScene()->AddElement(geoViz);
+=======
+>>>>>>> Stashed changes
    REveElement *jetHolder = new REveElement("Jets");
    eveMng->GetEventScene()->AddElement(jetHolder);
    makeJets(7, jetHolder);
