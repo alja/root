@@ -53,18 +53,11 @@ void eveGeoBrowser()
    // 3D EveViz representation
    auto geoViz = new REveGeoTopNodeViz();
    geoViz->SetGeoData(data);
-   eveMng->GetEventScene()
+   data->AddNiece(geoViz);
    geoViz->SetPickable(true);
 
    // add jets for BBox issues
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-   data->AddNiece(geoViz);
-=======
->>>>>>> fdeb8c0e0c3 (baq -- support single view, simplify path interface, don't use global geo manager - -use REveGeoHolder)
    eveMng->GetEventScene()->AddElement(geoViz);
-=======
->>>>>>> Stashed changes
    REveElement *jetHolder = new REveElement("Jets");
    eveMng->GetEventScene()->AddElement(jetHolder);
    makeJets(7, jetHolder);
