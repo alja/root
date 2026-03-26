@@ -41,7 +41,8 @@ void eveGeoBrowser()
 
    // initialize RGeomDesc from TGeoNode
    auto data = new REveGeoTopNodeData("http://xrd-cache-1.t2.ucsd.edu/alja/mail/geo/cmsSimGeo2026.root");
-   data->SetTopNodeWithPath("/tracker:Tracker_1");
+   // data->InitPath("/tracker:Tracker_1");
+   data->InitPath("/");
    data->RefDescription().SetVisLevel(2);
 
    // make geoTable
