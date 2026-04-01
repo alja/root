@@ -70,10 +70,13 @@ public:
    
    // receive mtx from client
    void SetCamBaseMtx(const std::vector<Double_t> &arr);
+   void SetCamBaseMtx(const std::string &json_str);
 
    void BuildRenderData() override{};
 
    Int_t WriteCoreJson(nlohmann::json &j, Int_t rnr_offset) override;
+
+   ClassDef(REveCamera, 0);
 };
 
 } // namespace Experimental

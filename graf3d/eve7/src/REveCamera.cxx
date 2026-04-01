@@ -90,6 +90,13 @@ void REveCamera::SetCamBaseMtx(const std::vector<Double_t> &arr)
    }
 }
 
+void REveCamera::SetCamBaseMtx(const std::string &json_str)
+{
+   auto j = nlohmann::json::parse(json_str);
+   std::vector<Double_t> arr = j.get<std::vector<Double_t>>();
+   SetCamBaseMtx(arr);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Write core JSON for camera
 
@@ -112,3 +119,5 @@ Int_t REveCamera::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
 
    return ret;
 }
+
+ClassImp(REveCamera);
