@@ -78,6 +78,8 @@ public:
    void SetCamera(::ROOT::Experimental::REveCamera *cam);
    REveCamera* GetCamera() const { return fCamera;}
 
+   void SetCameraByElementId(ElementId_t cameraId); // set camera via ElementID
+
    void SetAxesType(int);
    void SetBlackBackground(bool);
 

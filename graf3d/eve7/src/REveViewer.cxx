@@ -34,9 +34,34 @@ Eve representation of a GL view. In a gist, it's a camera + a list of scenes.
 /// Constructor.
 
 REveViewer::REveViewer(const std::string& n, const std::string& t) :
-   REveElement(n, t)
+   REveElement(n, t),
+   fCamera(nullptr)
 {
-   // SetChildClass(TClass::GetClass<REveSceneInfo>());
+   // Set default camera to kCameraPerspXOZ
+   if (gEve)
+   {
+      auto cameras = gEve->GetCameras();
+      if (cameras && cameras->HasChildren())
+      {
+         // Search for kCameraPerspXOZ camera
+         for (auto child : cameras->RefChildren())
+         {
+            auto cam = dynamic_cast<REveCamera*>(child);
+            if (cam && cam->GetType() == REveCamera::kCameraPerspXOZ)
+            {
+               fCamera = cam;
+               break;
+            }
+         }
+         
+         // Fallback: use first camera if kCameraPerspXOZ not found.
+         // But usually, kCameraPerspXOZ is always the first camera..
+         if (!fCamera)
+         {
+            fCamera = dynamic_cast<REveCamera*>(cameras->FirstChild());
+         }
+      }
+   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -417,4 +442,20 @@ void REveViewerList::SwitchColorSet()
       //    c->UseDarkColorSet();
    // }
    // EndChanges on EveWorld;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Set camera by element ID (called from MIR)
+
+void REveViewer::SetCameraByElementId(ElementId_t cameraId)
+{
+   if (gEve) {
+      auto element = gEve->FindElementById(cameraId);
+      auto cam = dynamic_cast<REveCamera*>(element);
+      
+      if (cam) {
+         fCamera = cam;
+         StampObjProps();
+      }
+   }
 }
