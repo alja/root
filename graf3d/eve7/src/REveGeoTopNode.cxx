@@ -60,7 +60,7 @@ void PrintStackPath(const std::vector<int>& stack)
 
 bool REveGeomDescription::ChangeEveVisibility(const std::vector<int> &stack, ERnrFlags flags, bool on)
 {
-   std::vector<RGeomNodeVisibility> &visVec = (flags == kRnrSelf) ? fVisibility : fVisibilityRec;
+   std::vector<RGeomNodeVisibility> &visVec = (flags == kRnrSelf) ? fVisibilitySelf : fVisibilityRec;
 
    for (auto iter = visVec.begin(); iter != visVec.end(); iter++) {
       if (iter->stack == stack) {
@@ -74,7 +74,7 @@ bool REveGeomDescription::ChangeEveVisibility(const std::vector<int> &stack, ERn
    return true;
 }
 
-ROOT::RGeoItem REveGeomDescription::MakeBrowserItem(const RGeomNode &node, std::vector<int> &iStack)
+void REveGeomDescription::RefineGeoItem(ROOT::RGeoItem &item, const std::vector<int> &iStack)
 {
    std::vector<int> stack = fApex.GetIndexStack();
    stack.insert(stack.end(), iStack.begin(), iStack.end());
@@ -92,11 +92,14 @@ ROOT::RGeoItem REveGeomDescription::MakeBrowserItem(const RGeomNode &node, std::
       return true;
    };
 
-   int vis = isVisible(fVisibility);
+   int visSelf = isVisible(fVisibilitySelf);
    int visRec = isVisible(fVisibilityRec);
 
-   return RGeoItem(node.name, node.chlds.size(), node.id, node.color, node.material,
-                   visRec, vis);
+    item.SetLogicalVisibility(visRec);
+    item.SetPhysicalVisibility(visSelf);
+
+   //return RGeoItem(node.name, node.chlds.size(), node.id, node.color, node.material,
+   //                visRec, vis);
 }
 
 void REveGeomDescription::SetTopNodeWithPath(const std::vector<std::string>& path)
@@ -108,7 +111,7 @@ void REveGeomDescription::SetTopNodeWithPath(const std::vector<std::string>& pat
 bool REveGeomDescription::GetVisiblityForStack(const std::vector<int> &nodeStack)
 {
    // visibility self
-   for (auto &visVecEl : fVisibility) {
+   for (auto &visVecEl : fVisibilitySelf) {
       if (nodeStack == visVecEl.stack) {
          return false;
       }

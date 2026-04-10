@@ -23,9 +23,11 @@ class REveGeoTopNodeData;
 
 class REveGeomDescription : public RGeomDescription {
 protected:
+   std::vector<RGeomNodeVisibility> fVisibilitySelf;
    std::vector<RGeomNodeVisibility> fVisibilityRec;
-   virtual RGeoItem MakeBrowserItem(const RGeomNode &node, std::vector<int> &stack);
-   virtual bool IsFullModelStreamedAtOnce() { return false; }
+
+   virtual void RefineGeoItem(ROOT::RGeoItem &item, const std::vector<int> &stack) override;
+   virtual bool IsFullModelStreamedAtOnce() const override { return false; }
 
    class Apex {
       std::vector<std::string> fPath;
