@@ -329,7 +329,7 @@ sap.ui.define([
          // camera type selector
          this.makeCameraTypeSelector(el);
          // save camera button
-         this.makeSaveCameraButton(el);
+         // this.makeSaveCameraButton(el);
       },
 
       buildREveDataCollectionSetter : function(el)
@@ -828,16 +828,8 @@ sap.ui.define([
       },
       
       onCameraTypeChange: function(viewer, newCameraType) {
-         let cameras = this.getCameraList();
-         
-         for (let cam of cameras) {
-            if (cam.fType === newCameraType) {
-               let mir = "SetCameraByElementId(" + cam.fElementId + ")";
-               this.mgr.SendMIR(mir, viewer.fElementId, viewer._typename);
-               console.log("Camera switched to:", cam.fName, "(Type:", newCameraType, ")");
-               break;
-            }
-         }
+      let mir = "SetCameraType(" + newCameraType + ")";
+      this.mgr.SendMIR(mir, viewer.fElementId, viewer._typename);
       },
       
       getCameraList: function() {
@@ -859,6 +851,7 @@ sap.ui.define([
          return cameras;
       },
       
+      /*
       makeSaveCameraButton: function(viewer) {
          let gedFrame = this.getView().byId("GED");
          let gcm = this;
@@ -916,7 +909,7 @@ sap.ui.define([
          sap.m.MessageToast.show("Camera matrix saved!");
          console.log("Saved camera matrix:", camTransMtx);
 
-      }
+      }*/
    });
       
    GedController.canEditClass = function(typename) {
