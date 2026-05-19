@@ -13,6 +13,7 @@
 #include <ROOT/REveManager.hxx>
 
 #include <nlohmann/json.hpp>
+#include <iostream>
 
 using namespace ROOT::Experimental;
 
@@ -26,7 +27,7 @@ REveCamera::REveCamera() : REveElement("REveCamera")
    fCamTrans.UnitTrans();
 }
 
-////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////laun
 /// Constructor with name
 
 REveCamera::REveCamera(const std::string &name) : REveElement(name)
@@ -39,7 +40,7 @@ REveCamera::REveCamera(const std::string &name) : REveElement(name)
 ////////////////////////////////////////////////////////////////////////////////
 /// Setup camera with type, name, direction and up vectors
 
-void REveCamera::Setup(ECameraType type, const std::string &name, const REveVector &v1, const REveVector &v2)
+void REveCamera::Setup(ECameraType type, const std::string &name, const REveVector &hAxis, const REveVector &vAxis)
 {
    fType = type;
    fName = name;
@@ -49,7 +50,7 @@ void REveCamera::Setup(ECameraType type, const std::string &name, const REveVect
    // Set up base camera matrix from direction and up vectors
    fCamBase.UnitTrans();
    fCamTrans.UnitTrans();
-   
+    /*
    // Create a coordinate system from v1 (direction) and v2 (up)
    REveVector dir = v1;
    dir.Normalize();
@@ -71,11 +72,38 @@ void REveCamera::Setup(ECameraType type, const std::string &name, const REveVect
    newUp.fZ = right.fX * dir.fY - right.fY * dir.fX;
    
    // Set rotation part of matrix (as row vectors)
+  
    Double_t *M = fCamBase.Array();
    M[0] = right.fX; M[4] = right.fY; M[8]  = right.fZ;
    M[1] = newUp.fX; M[5] = newUp.fY; M[9]  = newUp.fZ;
    M[2] = dir.fX;   M[6] = dir.fY;   M[10] = dir.fZ;
+*/
+
+
+   fCamBase.SetBaseVec(1, hAxis.fX, hAxis.fY, hAxis.fZ);
+	fCamBase.SetBaseVec(3, vAxis.fX, vAxis.fY, vAxis.fZ);
+
+   REveVector y = vAxis.Cross(hAxis);
+
+   fCamBase.SetBaseVec(2, y.fX, y.fY, y.fZ);
+
+/*
+   printf("CAMERA %s \n", name.c_str());
+   //fCamBase.Print();
    
+   printf("haxis\n");
+   hAxis.Dump();
+   printf("vaxis\n");
+   vAxis.Dump();
+
+   printf("cross\n");
+   y.Dump();
+
+   for(int i = 0; i < 16; ++i)
+     printf( "%1.1f ,", fCamBase.Array()[i]);
+   printf("\n\n");*/
+
+
    StampObjProps();
 }
 
@@ -102,15 +130,28 @@ void REveCamera::SetCamTransMtx(const std::vector<Double_t> &arr)
    if (arr.size() == 16) {
       fCamTrans.SetFromArray(arr.data());
       fInitialized = kTRUE; // Mark as initialized when user saves
-      StampObjProps();
+      // StampObjProps();
    }
 }
 
-void REveCamera::SetCamTransMtx(const char* json_str)
+void REveCamera::SetCamTransMtxStr(const char *json_str)
 {
    auto j = nlohmann::json::parse(json_str);
+   std::cout << "SetCamTransMtx " << json_str << "\n";
    std::vector<Double_t> arr = j.get<std::vector<Double_t>>();
+   fInitialized = true;
+   fCamTrans.SetFromArray(arr.data());
+
+   fCamTrans.Print();
+   StampObjProps();
    SetCamTransMtx(arr);
+}
+
+void REveCamera::SetOrthoZoom(float zoom)
+{
+   fOrthoZoom = zoom;
+   std::cout << "Sert ortho zoom " << zoom << "\n";
+   fInitialized = kTRUE;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -131,6 +172,9 @@ Int_t REveCamera::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
 
    const Double_t *camTransArr = fCamTrans.Array();
    j["camTrans"] = std::vector<Double_t>(camTransArr, camTransArr + 16);
+   j["fZoom"] = fOrthoZoom;
+
+   std::cout << "stream zoom " << fOrthoZoom << "\n";
 
    return ret;
 }
