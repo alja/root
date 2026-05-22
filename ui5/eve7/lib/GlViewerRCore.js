@@ -470,36 +470,35 @@ sap.ui.define([
             let equal = true;
             let a = glc.controls.getCamTrans().elements;
             let eveView = glc.controller.mgr.GetElement(this.controller.eveViewerId);
-            //let cameraId = glc.controller.mgr.GetElement(cameraId);
             let eveCamera = glc.controller.mgr.GetElement(eveView.fCameraId);
             let b = eveCamera.camTrans;
+
+            // compare trans matrices
             for (let i = 0; i < 16; i++) {
-               // Check if the absolute difference is greater than machine epsilon
-               // console.log("compare ctrl ", a[i], "eveView camera ", b[i]);
                if (Math.abs(a[i] - b[i]) > 0.0000005) {
                   equal = false;
                }
             }
-            console.log("equal ", equal);
+
+            // compare zoom if camera is orthographic
             if (glc.camera.isOrthographicCamera) {
-               console.log("RC camera zoom", glc.camera.zoom);
-               console.log("EVE camera zoom", eveCamera.fZoom);
                if (Math.abs(glc.camera.zoom - eveCamera.fZoom) > 0.0000005) {
                   eveCamera.fZoom = glc.camera.zoom;
-                  let fcall = "SetOrthoZoom(" + glc.camera.zoom + ")";
-                  glc.controller.mgr.SendMIR(fcall, eveView.fCameraId,
-                     "ROOT::Experimental::REveCamera");
-                  return;
+                  equal = false;
                }
             }
 
             if (equal !== true) {
-
+               // save trans matrix from orbit control to eve camera object
                for (let i = 0; i < 16; i++) {
                   b[i] = a[i];
                }
+
+               // set trans matrix and zoom as array of 17 floats
                if (eveView && eveView.fCameraId) {
-                  let fcall = "SetCamTransMtxStr(\"" + JSON.stringify(a) + "\")";
+                  let sz = glc.camera.isOrthographicCamera === true ? glc.camera.zoom : 1;
+                  let fcall = "SetCamTransMtxStr(\"";
+                  fcall += b.join(",") + ","+ sz + "\")";
                   glc.controller.mgr.SendMIR(fcall, eveView.fCameraId,
                      "ROOT::Experimental::REveCamera");
                }
@@ -630,10 +629,11 @@ sap.ui.define([
          // Apply saved camTrans (if initialized)
          if (camera.fInitialized) {
             this.controls.setCamTrans(camera.camTrans);
-            if (this.isOrthographicCamera) {
+            if (this.camera.isOrthographicCamera) {
                this.camera.zoom = camera.fZoom;
                this.camera.updateProjectionMatrix();
                this.controls.zoomChanged = true;
+               this.controls.update();
             }
          }
 
@@ -1157,6 +1157,7 @@ sap.ui.define([
          menu.show(event);
       }
 
+      // callback from popup "Re" menu
       resetCamera()
       {
          let eveView = this.controller.mgr.GetElement(this.controller.eveViewerId);
