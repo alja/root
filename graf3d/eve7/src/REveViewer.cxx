@@ -194,53 +194,6 @@ void REveViewer::SetMandatory(bool x)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-///
-//  Set base vectors of camera base matrix
-//
-/*
-void REveViewer::SetCameraType(ECameraType cameraType)
-{
-   switch(cameraType) {
-      case kCameraPerspXOZ:
-         fCamera.Setup(kCameraPerspXOZ, "PerspXOZ", REveVector(-1.0, 0.0, 0.0), REveVector(0.0, 1.0, 0.0)); // XOZ floor
-         break;
-      case kCameraPerspYOZ:
-         fCamera.Setup(kCameraPerspYOZ, "PerspYOZ", REveVector(0.0, -1.0, 0.0), REveVector(1.0, 0.0, 0.0));// YOZ floor
-         break;
-      case kCameraPerspXOY:
-         fCamera.Setup(kCameraPerspXOY, "PerspXOY", REveVector(-1.0, 0.0, 0.0), REveVector(0.0, 0.0, 1.0));// XOY floor
-         break;
-      case kCameraOrthoXOY:
-         fCamera.Setup(kCameraOrthoXOY, "OrthoXOY", REveVector(0.0, 0.0, 1.0), REveVector(0.0, 1.0, 0.0));// Looking down  Z axis,  X horz, Y vert
-         break;
-      case kCameraOrthoXOZ:
-         fCamera.Setup(kCameraOrthoXOZ, "OrthoXOZ", REveVector(0.0, -1.0, 0.0), REveVector(0.0, 0.0, 1.0));// Looking along Y axis,  X horz, Z vert
-         break;
-      case kCameraOrthoZOY:
-         fCamera.Setup(kCameraOrthoZOY, "OrthoZOY", REveVector(-1.0, 0.0, 0.0), REveVector(0.0, 1.0, 0.0));// Looking along X axis,  Z horz, Y vert
-         break;
-      case kCameraOrthoZOX:
-         fCamera.Setup(kCameraOrthoZOX, "OrthoZOX", REveVector(0.0,-1.0, 0.0), REveVector(1.0, 0.0, 0.0)); // Looking along Y axis,  Z horz, X vert
-         break;
-      case kCameraOrthoXnOY:
-         fCamera.Setup(kCameraOrthoXnOY,  "OrthoXnOY", REveVector(0.0, 0.0, -1.0), REveVector(0.0, 1.0, 0.0));// Looking along Z axis, -X horz, Y vert
-         break;
-      case kCameraOrthoXnOZ:
-         fCamera.Setup(kCameraOrthoXnOZ, "OrthoXnOZ", REveVector(0.0, 1.0, 0.0), REveVector(0.0, 0.0, 1.0));// Looking down  Y axis, -X horz, Z vert
-         break;
-      case kCameraOrthoZnOY:
-         fCamera.Setup(kCameraOrthoZnOY, "OrthoZnOY", REveVector(1.0, 0.0, 0.0), REveVector(0.0, 1.0, 0.0)); // Looking down  X axis, -Z horz, Y vert
-         break;
-      case kCameraOrthoZnOX:
-         fCamera.Setup(kCameraOrthoZnOX, "OrthoZnOX", REveVector(0.0, 1.0, 0.0), REveVector(1.0, 0.0, 0.0)); // Looking down  Y axis, -Z horz, X vert
-         break;
-      default:
-         Error("REveViewer::SetCurrentCamera", "invalid camera type");
-         return;
-   }
-}
-*/
-////////////////////////////////////////////////////////////////////////////////
 /// Set camera reference by ID, yuxiao
 
 void REveViewer::SetCamera(::ROOT::Experimental::REveCamera *cam)
