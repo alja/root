@@ -577,7 +577,7 @@ sap.ui.define([
 
          // Apply camTrans if available
          if (camera.camTrans && camera.camTrans.length === 16) {
-            this.controls.setCamTrans(camera.camTrans);
+            this.controls.setCamTrans(camera.camTrans.slice());
             if (this._logLevel >= 2) {
                console.log("GlViewerRCore.resetRenderer: Applied camTrans from REveCamera");
             }
