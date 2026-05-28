@@ -63,6 +63,10 @@ private:
    bool fMandatory{true};
    std::string fPostStreamFlag;
 
+   std::vector<REveCamera*> fCameraList;
+
+   ROOT::Experimental::REveCamera* CreateCamera(ECameraType type);
+
 public:
    REveViewer(const std::string &n="REveViewer", const std::string &t="");
    ~REveViewer() override;
@@ -74,7 +78,7 @@ public:
 
    // void SetCameraType(ECameraType t);
    // ECameraType GetCameraType() const { return fCamera->GetType(); }
-   void SetCamera(::ROOT::Experimental::REveCamera *cam);
+   void SetCamera(ROOT::Experimental::REveCamera *cam);
    REveCamera* GetCamera() const { return fCamera;}
 
    void SetCameraByElementId(ElementId_t cameraId); // set camera via ElementID

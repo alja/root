@@ -37,31 +37,7 @@ REveViewer::REveViewer(const std::string& n, const std::string& t) :
    REveElement(n, t),
    fCamera(nullptr)
 {
-   // Set default camera to kCameraPerspXOZ
-   if (gEve)
-   {
-      auto cameras = gEve->GetCameras();
-      if (cameras && cameras->HasChildren())
-      {
-         // Search for kCameraPerspXOZ camera
-         for (auto child : cameras->RefChildren())
-         {
-            auto cam = dynamic_cast<REveCamera*>(child);
-            if (cam && cam->GetType() == REveCamera::kCameraPerspXOZ)
-            {
-               fCamera = cam;
-               break;
-            }
-         }
-         
-         // Fallback: use first camera if kCameraPerspXOZ not found.
-         // But usually, kCameraPerspXOZ is always the first camera..
-         if (!fCamera)
-         {
-            fCamera = dynamic_cast<REveCamera*>(cameras->FirstChild());
-         }
-      }
-   }
+   SetCameraType(REveCamera::kCameraPerspXOZ);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -402,14 +378,12 @@ void REveViewerList::SwitchColorSet()
 
 void REveViewer::SetCameraByElementId(ElementId_t cameraId)
 {
-   if (gEve) {
-      auto element = gEve->FindElementById(cameraId);
-      auto cam = dynamic_cast<REveCamera*>(element);
-      
-      if (cam) {
-         fCamera = cam;
-         StampObjProps();
-      }
+   auto element = gEve->FindElementById(cameraId);
+   auto cam = dynamic_cast<REveCamera *>(element);
+
+   if (cam) {
+      fCamera = cam;
+      StampObjProps();
    }
 }
 
@@ -418,23 +392,53 @@ void REveViewer::SetCameraByElementId(ElementId_t cameraId)
 
 void REveViewer::SetCameraType(REveCamera::ECameraType type)
 {
-   if (gEve) {
-      auto cameras = gEve->GetCameras();
-      if (cameras) {
-         for (auto child : cameras->RefChildren()) {
-            auto cam = dynamic_cast<REveCamera*>(child);
-            if (cam && cam->GetType() == type) {
-               fCamera = cam;
-               StampObjProps();
-               
-               if (gDebug > 0) {
-                  ::Info("REveViewer::SetCameraType", "Camera set to type %d (%s)", 
-                         type, cam->GetCameraName().c_str());
-               }
-               return;
-            }
-         }
-         ::Warning("REveViewer::SetCameraType", "Camera with type %d not found", type);
+   for (auto &cam : fCameraList) {
+      if (cam->GetType() == type) {
+         fCamera = cam;
       }
    }
+
+   fCamera = CreateCamera(type);
+   fCameraList.push_back(fCamera);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Create Camera Based on Type Enum (Lines 161-190)
+REveCamera *REveViewer::CreateCamera(ECameraType type)
+{
+   REveCamera *cam = nullptr;
+
+   struct CameraDef {
+      REveCamera::ECameraType type;
+      const char *name;
+      REveVector v1;
+      REveVector v2;
+   };
+
+   static const CameraDef predefinedCameras[] = {
+      // Perspective cameras
+      {REveCamera::kCameraPerspXOZ, "PerspXOZ", REveVector(-1.0, 0.0, 0.0), REveVector(0.0, 1.0, 0.0)},
+      {REveCamera::kCameraPerspYOZ, "PerspYOZ", REveVector(0.0, -1.0, 0.0), REveVector(1.0, 0.0, 0.0)},
+      {REveCamera::kCameraPerspXOY, "PerspXOY", REveVector(-1.0, 0.0, 0.0), REveVector(0.0, 0.0, 1.0)},
+      // Orthographic cameras
+      {REveCamera::kCameraOrthoXOY, "OrthoXOY", REveVector(0.0, 0.0, 1.0), REveVector(0.0, 1.0, 0.0)},
+      {REveCamera::kCameraOrthoXOZ, "OrthoXOZ", REveVector(0.0, -1.0, 0.0), REveVector(0.0, 0.0, 1.0)},
+      {REveCamera::kCameraOrthoZOY, "OrthoZOY", REveVector(-1.0, 0.0, 0.0), REveVector(0.0, 1.0, 0.0)},
+      {REveCamera::kCameraOrthoZOX, "OrthoZOX", REveVector(0.0, -1.0, 0.0), REveVector(1.0, 0.0, 0.0)},
+      // Orthographic negative camera
+      {REveCamera::kCameraOrthoXnOY, "OrthoXnOY", REveVector(0.0, 0.0, -1.0), REveVector(0.0, 1.0, 0.0)},
+      {REveCamera::kCameraOrthoXnOZ, "OrthoXnOZ", REveVector(0.0, 1.0, 0.0), REveVector(0.0, 0.0, 1.0)},
+      {REveCamera::kCameraOrthoZnOY, "OrthoZnOY", REveVector(1.0, 0.0, 0.0), REveVector(0.0, 1.0, 0.0)},
+      {REveCamera::kCameraOrthoZnOX, "OrthoZnOX", REveVector(0.0, 1.0, 0.0), REveVector(1.0, 0.0, 0.0)}};
+
+   // Create and add all predefined cameras
+   for (const auto &camDef : predefinedCameras) {
+      if (type == camDef.type) {
+         cam = new REveCamera(camDef.name);
+         gEve->GetCameras()->AddElement(cam);
+         cam->Setup(camDef.type, camDef.name, camDef.v1, camDef.v2);
+      }
+   }
+
+   return cam;
 }
