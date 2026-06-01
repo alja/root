@@ -584,7 +584,6 @@ sap.ui.define([
          if (this._logLevel >= 2) {
             console.log("GlViewerRCore.resetRenderer: Using standalone REveCamera");
          }
-         
 
          if (this.camera.isPerspectiveCamera)
          {
@@ -621,28 +620,22 @@ sap.ui.define([
             let lc = this.lights.children;
             lc[1].position.set( 0, 0,  extR);
          }
-        
+
          this.controls.setFromBBox(sbbox);
+
+         // Apply saved camTrans (if initialized)
+         if (camera.fInitialized) {
+            this.controls.setCamTrans(camera.camTrans);
+            if (this.camera.isOrthographicCamera) {
+               this.camera.zoom = camera.fZoom;
+               this.camera.updateProjectionMatrix();
+               this.controls.zoomChanged = true;
+               this.controls.update();
+            }
+         }
+         this.controls.update();
 
          this.centerMarker.visible = false;
-
-         this.controls.setFromBBox(sbbox);
-
-         this.controls.update();
-      }
-
-      setupCamera()
-      {
-         // To be used with JS debugger to edit the values as needed.
-
-         let pos = new RC.Vector3;
-         let lookat = new RC.Vector3;
-         let fov = 30; // in degrees
-
-         console.log("A good place to set the breakpoint and edit the values");
-
-         // Call the controller stuff, hope it's not all local, otherwise we need to edit it there.
-         // Sigh, should really have it (and RedeQuTor) in ROOT.
       }
 
       updateViewerAttributes()
