@@ -564,8 +564,6 @@ sap.ui.define([
             console.log("GlViewerRCore.resetRenderer: Using standalone camera ID", cameraId);
             if (camera) {
                console.log("  Camera name:", camera.fName);
-               // console.log("  Camera fV1:", camera.fV1);
-               // console.log("  Camera fV2:", camera.fV2);
                console.log("  Camera camBase:", camera.camBase);
             }
          }
@@ -573,10 +571,8 @@ sap.ui.define([
          let v1 = [camera.camBase[0], camera.camBase[1], camera.camBase[2]];   // forward/direction
          let v2 = [camera.camBase[8], camera.camBase[9], camera.camBase[10]];    // up
 
-         // Apply camTrans if available
-         if (camera.camTrans && camera.camTrans.length === 16) {
-            this.controls.setCamTrans(camera.camTrans.slice());
-         }
+         // Apply camTrans
+         this.controls.setCamTrans(camera.camTrans.slice());
 
          if (this._logLevel >= 2) {
             console.log("GlViewerRCore.resetRenderer: Using standalone REveCamera");
@@ -748,6 +744,8 @@ sap.ui.define([
 
       render()
       {
+         // console.log("RENDER", this.scene, this.camera, this.canvas, this.renderer);
+
          this.render_requested = false;
          if (this.render_requested_recalc_sbbox) {
             this.recalcSceneBBox();
