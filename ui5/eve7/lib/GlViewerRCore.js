@@ -238,7 +238,7 @@ sap.ui.define([
             this.lights.add(light_3d_ctor(0xaaaa66, l_int, 0, 1, l_args)); // Y
             this.lights.add(light_3d_ctor(0x666666, l_int, 0, 1, l_args)); // gray, bottom
 
-            // Lights are positioned in resetRenderer.
+            // Lights are positioned in positionCameraAndLights.
 
             // Markers on light positions (screws up bounding box / camera reset calculations)
             // for (let i = 1; i <= 4; ++i)
@@ -256,7 +256,7 @@ sap.ui.define([
             this.lights.add(light_2d_ctor(0xffffff, l_int)); // white front
             // this.lights.add(light_2d_ctor(0xffffff, l_int)); // white back
 
-            // Lights are positioned in resetRenderer.
+            // Lights are positioned in positionCameraAndLights.
          }
 
          // AMT, disable auto update in camera in order prevent reading quaternions in update of
@@ -373,7 +373,7 @@ sap.ui.define([
 
          dome.addEventListener('dblclick', function() {
             //if (glc.controller.dblclick_action == "Reset")
-            glc.resetRenderer();
+            glc.positionCameraAndLights();
          });
 
          dome.addEventListener("mouseup", function() {
@@ -525,7 +525,7 @@ sap.ui.define([
          this.centerMarker = s;
 
          // This will also call render().
-         this.resetRenderer();
+         this.positionCameraAndLights();
       }
 
       recalcSceneBBox()
@@ -533,14 +533,14 @@ sap.ui.define([
          this.scene_bbox.setFromObject( this.scene );
          if (this.scene_bbox.isEmpty())
          {
-            console.error("GlViewerRenderCore.resetRenderer scene bbox empty", this.scene_bbox);
+            console.error("GlViewerRenderCore.positionCameraAndLights scene bbox empty", this.scene_bbox);
             const ext = 100;
             this.scene_bbox.expandByPoint(new RC.Vector3(-ext,-ext,-ext));
             this.scene_bbox.expandByPoint(new RC.Vector3( ext, ext, ext));
          }
       }
 
-      resetRenderer()
+      positionCameraAndLights()
       {
          this.recalcSceneBBox();
 
@@ -552,7 +552,7 @@ sap.ui.define([
          let extR = extV.length();
 
          if (this._logLevel >= 2)
-            console.log("GlViewerRenderCore.resetRenderer", sbbox, posV, negV, extV, extR);
+            console.log("GlViewerRenderCore.positionCameraAndLights", sbbox, posV, negV, extV, extR);
 
          let eveView = this.controller.mgr.GetElement(this.controller.eveViewerId);
 
@@ -561,7 +561,7 @@ sap.ui.define([
 
          let camera = this.controller.mgr.GetElement(cameraId);
          if (this._logLevel >= 2) {
-            console.log("GlViewerRCore.resetRenderer: Using standalone camera ID", cameraId);
+            console.log("GlViewerRCore.positionCameraAndLights: Using standalone camera ID", cameraId);
             if (camera) {
                console.log("  Camera name:", camera.fName);
                console.log("  Camera camBase:", camera.camBase);
@@ -575,7 +575,7 @@ sap.ui.define([
          this.controls.setCamTrans(camera.camTrans.slice());
 
          if (this._logLevel >= 2) {
-            console.log("GlViewerRCore.resetRenderer: Using standalone REveCamera");
+            console.log("GlViewerRCore.positionCameraAndLights: Using standalone REveCamera");
          }
 
          if (this.camera.isPerspectiveCamera)
@@ -648,7 +648,7 @@ sap.ui.define([
          if (eveView.AxesType > 0)
             this.makeAxis();
 
-         this.resetRenderer();
+         this.positionCameraAndLights();
          this.request_render();
       }
 
@@ -1143,7 +1143,7 @@ sap.ui.define([
          let eveView = this.controller.mgr.GetElement(this.controller.eveViewerId);
          let  eve_camera = this.controller.mgr.GetElement(eveView.fCameraId);
          eve_camera.fInitialized = false;
-         this.resetRenderer();
+         this.positionCameraAndLights();
       }
 
       setCameraCenter(data)
