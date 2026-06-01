@@ -76,13 +76,10 @@ public:
    virtual void AddScene(REveScene* scene);
    // XXX Missing RemoveScene() ????
 
-   // void SetCameraType(ECameraType t);
-   // ECameraType GetCameraType() const { return fCamera->GetType(); }
+   // Camera setters
    void SetCamera(ROOT::Experimental::REveCamera *cam);
    REveCamera* GetCamera() const { return fCamera;}
-
    void SetCameraByElementId(ElementId_t cameraId); // set camera via ElementID
-
    void SetCameraType(REveCamera::ECameraType type);
 
    void SetAxesType(int);

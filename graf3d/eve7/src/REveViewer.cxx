@@ -373,9 +373,6 @@ void REveViewerList::SwitchColorSet()
    // EndChanges on EveWorld;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-/// Set camera by element ID (called from MIR)
-
 void REveViewer::SetCameraByElementId(ElementId_t cameraId)
 {
    auto element = gEve->FindElementById(cameraId);
@@ -400,6 +397,7 @@ void REveViewer::SetCameraType(REveCamera::ECameraType type)
 
    fCamera = CreateCamera(type);
    fCameraList.push_back(fCamera);
+   StampObjProps();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
