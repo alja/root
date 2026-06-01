@@ -212,6 +212,37 @@ sap.ui.define([
          this.lights.name = "Light container";
          this.scene.add(this.lights);
 
+         this.createLightsAndCamera();
+
+         this.rqt = new RC.RendeQuTor(this.renderer, this.scene, this.camera, this.overlay_scene);
+         if (this.RQ_Mode == "Direct")
+         {
+            this.rqt.initDirectToScreen();
+         }
+         else if (this.RQ_Mode == "Simple")
+         {
+            this.rqt.initSimple(this.RQ_SSAA);
+         }
+         else
+         {
+            this.rqt.initFull(this.RQ_SSAA);
+         }
+         this.rqt.updateViewport(w, h);
+
+
+         // AMT secondary selection bug workaround for RenderCore PR #21
+         this.rqt.pick_instance = function(state)
+         {
+            return this.pick_instance_low_level(this.pqueue, state);
+         }
+         this.rqt.pick_instance_overlay = function(state)
+         {
+            return this.pick_instance_low_level(this.ovlpqueue, state);
+         }
+      }
+
+      createLightsAndCamera()
+      {
          let a_light = new RC.AmbientLight(new RC.Color(0xffffff), 0.05);
          this.lights.add(a_light);
 
@@ -224,6 +255,9 @@ sap.ui.define([
          this.axis.name = "Axis";
          // this.overlay_scene.add(this.axis); // looks worse for now put to scene
          this.scene.add(this.axis);
+
+         let w = this.canvas.width;
+         let h = this.canvas.height;
 
          if (this.controller.isEveCameraPerspective())
          {
@@ -281,32 +315,6 @@ sap.ui.define([
          }
 
          this.rot_center = new RC.Vector3(0,0,0);
-
-         this.rqt = new RC.RendeQuTor(this.renderer, this.scene, this.camera, this.overlay_scene);
-         if (this.RQ_Mode == "Direct")
-         {
-            this.rqt.initDirectToScreen();
-         }
-         else if (this.RQ_Mode == "Simple")
-         {
-            this.rqt.initSimple(this.RQ_SSAA);
-         }
-         else
-         {
-            this.rqt.initFull(this.RQ_SSAA);
-         }
-         this.rqt.updateViewport(w, h);
-
-
-         // AMT secondary selection bug workaround for RenderCore PR #21
-         this.rqt.pick_instance = function(state)
-         {
-            return this.pick_instance_low_level(this.pqueue, state);
-         }
-         this.rqt.pick_instance_overlay = function(state)
-         {
-            return this.pick_instance_low_level(this.ovlpqueue, state);
-         }
       }
 
       setupEventHandlers()
