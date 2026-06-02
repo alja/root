@@ -909,8 +909,8 @@ sap.ui.define([
          sap.m.MessageToast.show("Camera matrix saved!");
          console.log("Saved camera matrix:", camTransMtx);
 
-      }
-   });*/
+      }*/
+   });
       
    GedController.canEditClass = function(typename) {
       return true;
