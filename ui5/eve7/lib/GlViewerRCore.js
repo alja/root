@@ -212,7 +212,7 @@ sap.ui.define([
          this.lights.name = "Light container";
          this.scene.add(this.lights);
 
-         this.createLightsAndCamera();
+         this.createCameraAndLights();
 
          this.rqt = new RC.RendeQuTor(this.renderer, this.scene, this.camera, this.overlay_scene);
          if (this.RQ_Mode == "Direct")
@@ -241,7 +241,7 @@ sap.ui.define([
          }
       }
 
-      createLightsAndCamera()
+      createCameraAndLights()
       {
          let a_light = new RC.AmbientLight(new RC.Color(0xffffff), 0.05);
          this.lights.add(a_light);
@@ -579,9 +579,6 @@ sap.ui.define([
          let v1 = [camera.camBase[0], camera.camBase[1], camera.camBase[2]];   // forward/direction
          let v2 = [camera.camBase[8], camera.camBase[9], camera.camBase[10]];    // up
 
-         // Apply camTrans
-         this.controls.setCamTrans(camera.camTrans.slice());
-
          if (this._logLevel >= 2) {
             console.log("GlViewerRCore.positionCameraAndLights: Using standalone REveCamera");
          }
@@ -590,6 +587,7 @@ sap.ui.define([
          {
             this.controls.setCamBaseMtx(new RC.Vector3(v1[0], v1[1], v1[2]), new RC.Vector3(v2[0], v2[1], v2[2]));
             this.controls.screenSpacePanning = true;
+            this.controls.enableRotate = true;
 
             let lc = this.lights.children;
             // lights are const now -- no need to set decay and distance
@@ -598,7 +596,6 @@ sap.ui.define([
             lc[3].position.set( extR, extR,  extR);
             lc[4].position.set(-extR, extR, -extR);
             lc[5].position.set(0, -extR, 0);
-
          }
          else
          {
@@ -625,7 +622,9 @@ sap.ui.define([
 
          // Apply saved camTrans (if initialized)
          if (camera.fInitialized) {
-            this.controls.setCamTrans(camera.camTrans);
+            // Apply camTrans after bbox setup
+            this.controls.setCamTrans(camera.camTrans.slice());
+
             if (this.camera.isOrthographicCamera) {
                this.camera.zoom = camera.fZoom;
                this.camera.updateProjectionMatrix();
@@ -638,16 +637,13 @@ sap.ui.define([
          this.centerMarker.visible = false;
       }
 
-      updateViewerAttributes()
-      {
+      updateViewerAttributes() {
          let eveView = this.controller.mgr.GetElement(this.controller.eveViewerId);
-         if (eveView.BlackBg)
-         {
+         if (eveView.BlackBg) {
             this.fgCol = this.creator.ColorWhite;
             this.bgCol = this.creator.ColorBlack;
          }
-         else
-         {
+         else {
             this.bgCol = this.creator.ColorWhite;
             this.fgCol = this.creator.ColorBlack;
          }
@@ -656,7 +652,39 @@ sap.ui.define([
          if (eveView.AxesType > 0)
             this.makeAxis();
 
-         this.positionCameraAndLights();
+
+         // compare cam base matrices
+         let a = this.controls.getCamBase().elements;
+         let eveCamera = this.controller.mgr.GetElement(eveView.fCameraId);
+
+         // compare the base matrices
+         let b = eveCamera.camBase;
+         let equal = true;
+         for (let i = 0; i < 16; i++) {
+            if (Math.abs(a[i] - b[i]) > 0.0000005) {
+               equal = false;
+            }
+         }
+
+         // compare exisiting controller type and viewer's REveCamera type
+         if (eveCamera.fType < 3) {
+            if (this.controller?.isOrthographicCamera) {
+               equal = false;
+            }
+
+         }
+         else {
+            if (this.controller?.isPerspectiveCamera) {
+               equal = false;
+            }
+         }
+
+         if (equal !== true) {
+            this.lights.clear();
+            delete this.camera;
+            this.createCameraAndLights();
+            this.positionCameraAndLights();
+         }
          this.request_render();
       }
 
