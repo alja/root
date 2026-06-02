@@ -668,13 +668,13 @@ sap.ui.define([
 
          // compare exisiting controller type and viewer's REveCamera type
          if (eveCamera.fType < 3) {
-            if (this.controller?.isOrthographicCamera) {
+            if (this.controls?.isOrthographicCamera) {
                equal = false;
             }
 
          }
          else {
-            if (this.controller?.isPerspectiveCamera) {
+            if (this.controls?.isPerspectiveCamera) {
                equal = false;
             }
          }
