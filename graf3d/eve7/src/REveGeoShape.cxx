@@ -144,7 +144,7 @@ Int_t REveGeoShape::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
 
 void REveGeoShape::BuildRenderData()
 {
-   if (!fShape) return;
+   if (!fShape || !fNSegments) return;
 
    fRenderData = std::make_unique<REveRenderData>("makeEveGeoShape");
    REveElement::BuildRenderData();
