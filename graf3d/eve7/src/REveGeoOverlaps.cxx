@@ -346,42 +346,49 @@ void REveGeoOverlapTable::LocalizeMarkers(Entry &ent, const std::vector<float> &
 ////////////////////////////////////////////////////////////////////////////////
 /// Text shown when the mouse is over one of the drawn pieces.
 ///
-/// The client puts this straight into innerHTML, so <br> works and one element can
-/// carry the whole story: which flaw, how big, which two volumes, and -- the part
-/// that is otherwise impossible to tell by looking -- which placement out of how
-/// many this particular piece is.
+/// The client shows it as plain text: newlines and spaces are kept, markup is
+/// not rendered. One element can carry the whole story: which flaw, how big,
+/// which two volumes, and -- the part that is otherwise impossible to tell by
+/// looking -- which placement out of how many this particular piece is.
 ///
 /// \param which 0 = first volume, 1 = second volume, 2 = the marker points
 
 std::string REveGeoOverlapTable::MakeTip(const Entry &ent, int which, int placement, int inst, int ninst) const
 {
-   TString t;
-   t += TString::Format("<b>%s</b> &middot; %s &middot; <b>%.5f cm</b><br>", ent.fName.c_str(),
-                        ent.fExtrusion ? "extrusion" : "overlap", ent.fValue);
+   std::string t;
+   // one line per call, no newline after the last one
+   auto line = [&t](const TString &s) {
+      if (!t.empty())
+         t += '\n';
+      t += s.Data();
+   };
 
-   // mark the volume this piece actually is
-   t += TString::Format("%sA %s%s<br>", which == 0 ? "<b>" : "", ent.fVol1.c_str(), which == 0 ? "</b>" : "");
-   t += TString::Format("%sB %s%s<br>", which == 1 ? "<b>" : "", ent.fVol2.c_str(), which == 1 ? "</b>" : "");
+   line(ent.fName.c_str());
+   line(TString::Format("%s %.5f cm", ent.fExtrusion ? "extrusion" : "overlap", ent.fValue));
+
+   // '>' marks the volume this piece is; the points belong to neither
+   line(TString::Format("%s A %s", which == 0 ? ">" : " ", ent.fVol1.c_str()));
+   line(TString::Format("%s B %s", which == 1 ? ">" : " ", ent.fVol2.c_str()));
 
    if (ent.fMother)
-      t += TString::Format("in %s<br>", ent.fMother->GetName());
+      line(TString::Format("in %s", ent.fMother->GetName()));
 
    if (ent.fGlobals.size() > 1)
-      t += TString::Format("placement %d of %d<br>", placement + 1, (int)ent.fGlobals.size());
+      line(TString::Format("placement %d of %d", placement + 1, (int)ent.fGlobals.size()));
 
    if (ninst > 1)
-      t += TString::Format("instance %d of %d<br>", inst + 1, ninst);
+      line(TString::Format("instance %d of %d", inst + 1, ninst));
 
    if (which == 2) {
       int kept = (int)(ent.fLocalMarkers.size() / 3);
       int dropped = ent.fNumRawMarkers - kept;
       if (dropped > 0)
-         t += TString::Format("%d points (%d dropped as out of range)", kept, dropped);
+         line(TString::Format("%d points (%d dropped as out of range)", kept, dropped));
       else
-         t += TString::Format("%d points", kept);
+         line(TString::Format("%d points", kept));
    }
 
-   return std::string(t.Data());
+   return t;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
