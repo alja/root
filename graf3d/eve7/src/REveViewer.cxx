@@ -17,6 +17,7 @@
 #include <ROOT/REveManager.hxx>
 #include <ROOT/REveSelection.hxx>
 #include <ROOT/REveText.hxx>
+#include <ROOT/REveWindowManager.hxx>
 
 #include <nlohmann/json.hpp>
 #include "TROOT.h"
@@ -44,7 +45,10 @@ REveViewer::REveViewer(const std::string& n, const std::string& t) :
 /// Destructor.
 
 REveViewer::~REveViewer()
-{}
+{
+   if (gEve && gEve->GetWindowManager())
+      gEve->GetWindowManager()->RemoveViewer(this);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Redraw viewer immediately.

@@ -77,6 +77,7 @@ ROOT_STANDARD_LIBRARY_PACKAGE(ROOTEve
     ROOT/REveUtil.hxx
     ROOT/REveVector.hxx
     ROOT/REveViewer.hxx
+    ROOT/REveWindowManager.hxx
     ROOT/REveCamera.hxx
     ROOT/REveViewContext.hxx
     ROOT/REveVSD.hxx
@@ -135,6 +136,7 @@ ROOT_STANDARD_LIBRARY_PACKAGE(ROOTEve
     src/REveUtil.cxx
     src/REveVector.cxx
     src/REveViewer.cxx
+    src/REveWindowManager.cxx
     src/REveCamera.cxx
     src/REveVSD.cxx
     src/REveVSDStructs.cxx

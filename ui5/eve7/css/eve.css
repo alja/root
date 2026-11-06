@@ -108,3 +108,18 @@
 	display: flex;
 	flex-direction: column;
 }
+
+/* viewer drag and drop in the window layout */
+.eveViewDragHandle {
+	cursor: grab;
+}
+
+.eveViewDropIndicator {
+	position: fixed;
+	display: none;
+	pointer-events: none;
+	z-index: 1000;
+	box-sizing: border-box;
+	background: rgba(0, 112, 242, 0.2);
+	border: 2px dashed #0070f2;
+}
