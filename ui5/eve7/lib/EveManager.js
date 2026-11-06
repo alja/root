@@ -550,6 +550,13 @@ sap.ui.define([], function() {
          }
       }
 
+      /** Returns REveWindowManager element of the world scene */
+      FindWindowManager() {
+         let world = this.map[1];
+         if (!world || !world.childs) return null;
+         return world.childs.find(c => c._typename == "ROOT::Experimental::REveWindowManager") || null;
+      }
+
       ImportSceneBinary(rawdata, offset) {
 
          if (!this.last_json || !rawdata || !rawdata.byteLength) return;
@@ -964,6 +971,17 @@ sap.ui.define([], function() {
                evl.updateViewerAttributes();
             }
          }
+      }
+
+      UT_WindowManagerUpdate(el) {
+         // initial import is handled when viewers are created
+         if (el.changeBit === undefined || el.changeBit === 0)
+            return;
+
+         this.controllers.forEach(ctrl => {
+            if (typeof ctrl.onWindowLayoutChanged === "function")
+               ctrl.onWindowLayoutChanged(el);
+         });
       }
 
       //==============================================================================

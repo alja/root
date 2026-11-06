@@ -138,6 +138,8 @@
 #pragma link C++ class ROOT::Experimental::REveSceneInfo+;
 #pragma link C++ class ROOT::Experimental::REveViewer+;
 #pragma link C++ class ROOT::Experimental::REveViewerList+;
+#pragma link C++ class ROOT::Experimental::REveWindowManager+;
+#pragma link C++ class ROOT::Experimental::REveWindowPack+;
 
 // Data classes
 #pragma link C++ class ROOT::Experimental::REveViewContext+;
