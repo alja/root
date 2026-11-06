@@ -107,6 +107,11 @@ sap.ui.define([
          // TODO: should be specified somehow in XML file
          this.getView().$().css("overflow", "hidden").css("width", "100%").css("height", "100%").parent().css("overflow", "hidden");
 
+         // view was re-rendered, e.g. moved to another splitter by the window layout,
+         // size may be unchanged so ResizeHandler does not trigger a redraw
+         if (this.viewer)
+            this.onResize();
+
          this.checkViewReady();
       },
 

@@ -15,6 +15,7 @@
 #include <ROOT/REveUtil.hxx>
 #include <ROOT/REveSelection.hxx>
 #include <ROOT/REveViewer.hxx>
+#include <ROOT/REveWindowManager.hxx>
 #include <ROOT/REveScene.hxx>
 #include <ROOT/REveSceneInfo.hxx>
 #include <ROOT/REveClient.hxx>
@@ -179,6 +180,12 @@ REveManager::REveManager()
    fCameras = new REveElement("Cameras", "Camera list");
    fCameras->IncDenyDestroy();
    fWorld->AddElement(fCameras);
+
+   // Window manager must stay the last child of the world, the client
+   // accesses the other world children by index.
+   fWindowManager = new REveWindowManager("WindowManager", "Layout of viewers");
+   fWindowManager->IncDenyDestroy();
+   fWorld->AddElement(fWindowManager);
 
    fGlobalScene = new REveScene("Geometry scene");
    fGlobalScene->IncDenyDestroy();

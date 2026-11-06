@@ -42,6 +42,7 @@ class REveViewer;
 class REveViewerList;
 class REveScene;
 class REveSceneList;
+class REveWindowManager;
 
 class RWebWindow;
 
@@ -130,6 +131,7 @@ protected:
    REveViewerList           *fViewers{nullptr};
    REveSceneList            *fScenes{nullptr};
    REveElement              *fCameras{nullptr}; 
+   REveWindowManager        *fWindowManager{nullptr};
 
    REveScene                *fGlobalScene{nullptr};
    REveScene                *fEventScene{nullptr};
@@ -188,6 +190,7 @@ public:
    REveSceneList  *GetScenes()  const { return fScenes;  }
    REveViewerList *GetViewers() const { return fViewers; }
    REveElement    *GetCameras() const { return fCameras; }
+   REveWindowManager *GetWindowManager() const { return fWindowManager; }
 
    REveScene *GetGlobalScene() const { return fGlobalScene; }
    REveScene *GetEventScene()  const { return fEventScene;  }

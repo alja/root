@@ -30,7 +30,8 @@ sap.ui.define(['sap/ui/core/Component',
          ctrl.SetMgr(this.mgr);
 
          this.primarySplitter = this.getView().byId("MainAreaSplitter");
-         this.primarySplitter.secondary = null;
+         this.layoutSplitters = [];  // splitters created for the window layout
+         this.localLayout = null;    // layout modified by user (swap, drag and drop), null - use server layout
       },
 
       onDisconnect : function() {
@@ -156,17 +157,13 @@ sap.ui.define(['sap/ui/core/Component',
             vMenu.addItem(vi);
 
             eveView.$view_created = true;
-            if(eveView.subscribed) this.makeEveViewController(eveView);
+            if(eveView.subscribed) this.makeEveViewController(eveView, true);
          }
 
-         if (staged.length === 1) {
-            let eveView = staged[0];
-            let t = eveView.ca.byId("tbar");
-            t.getContent()[2].setEnabled(false);
-         }
+         this.rebuildLayout();
       },
 
-      makeEveViewController: function(elem)
+      makeEveViewController: function(elem, skip_layout)
       {
          let viewid = "EveViewer" + elem.fElementId;
          let main = this;
@@ -193,25 +190,271 @@ sap.ui.define(['sap/ui/core/Component',
             });
          });
 
-         if (elem.fRnrSelf) {
-            if (this.primarySplitter.getContentAreas().length == 1) {
-               this.primarySplitter.addContentArea(view);
-            }
-            else {
-               if (!this.primarySplitter.secondary) {
-                  let vv = new Splitter("SecondaryViewSplitter", { orientation: "Vertical" });
-                  vv.setLayoutData(new SplitterLayoutData({ resizable: true, size: "25%" }));
-                  this.primarySplitter.addContentArea(vv);
-                  this.primarySplitter.secondary = vv;
-               }
-               this.primarySplitter.secondary.addContentArea(view);
-               this.setToolbarSwapIcon(view, "arrow-left");
-            }
-         }
          elem.ca = view;
+         this.setupViewDragAndDrop(view, elem);
 
          // reset flag needed by UT_PostStream callback
          delete elem.pendInstance;
+
+         if (!skip_layout)
+            this.rebuildLayout();
+      },
+
+      //==============================================================================
+      // Window layout
+      //==============================================================================
+
+      /** Viewer is shown when it is subscribed and its view was created */
+      isViewerShown: function(viewer)
+      {
+         return viewer && viewer.subscribed && viewer.ca && viewer.fRnrSelf;
+      },
+
+      /** Returns layout tree: REveWindowManager layout with all shown viewers placed.
+       *  Without server layout, the first viewer is on the left and the rest are stacked vertically on the right. */
+      getEffectiveLayout: function()
+      {
+         let wm = this.mgr.FindWindowManager();
+         let src = this.localLayout || (wm && wm.Layout);
+         let layout = src ? JSON.parse(JSON.stringify(src)) : null;
+
+         let placed = new Set();
+         let collect = pack => pack.Items.forEach(it => {
+            if (it.Pack) collect(it.Pack); else placed.add(it.ViewerId);
+         });
+         if (layout) collect(layout);
+
+         let rest = this.mgr.FindViewers().filter(v => this.isViewerShown(v) && !placed.has(v.fElementId))
+                                          .map(v => ({ Weight: 1, ViewerId: v.fElementId }));
+
+         if (!layout || !layout.Items.length) {
+            layout = { Vertical: false, Items: rest.slice(0, 1) };
+            if (rest.length > 1)
+               layout.Items.push({ Weight: 0.5, Pack: { Vertical: true, Items: rest.slice(1) } });
+         } else {
+            layout.Items.push(...rest);
+         }
+         return layout;
+      },
+
+      /** Creates control for a layout item, returns null when there is nothing to show */
+      buildLayoutItem: function(item, shown)
+      {
+         if (!item.Pack) {
+            let viewer = this.mgr.GetElement(item.ViewerId);
+            if (!this.isViewerShown(viewer)) return null;
+            shown.push(viewer);
+            return viewer.ca;
+         }
+
+         let parts = [];
+         item.Pack.Items.forEach(it => {
+            let ctrl = this.buildLayoutItem(it, shown);
+            if (ctrl) parts.push({ ctrl, weight: it.Weight > 0 ? it.Weight : 1 });
+         });
+
+         if (parts.length == 0) return null;
+         if (parts.length == 1) return parts[0].ctrl;
+
+         let splitter = new Splitter({ orientation: item.Pack.Vertical ? "Vertical" : "Horizontal",
+                                       width: "100%", height: "100%" });
+         let sum = parts.reduce((acc, p) => acc + p.weight, 0);
+         parts.forEach((p, i) => {
+            let size = (i == parts.length - 1) ? "auto" : (100 * p.weight / sum).toFixed(2) + "%";
+            p.ctrl.setLayoutData(new SplitterLayoutData({ resizable: true, size }));
+            splitter.addContentArea(p.ctrl);
+         });
+         this.layoutSplitters.push(splitter);
+         return splitter;
+      },
+
+      /** Recreate splitters in the main area, right of the summary view. Viewer views are reused. */
+      rebuildLayout: function()
+      {
+         let areas = this.primarySplitter.getContentAreas();
+         for (let i = areas.length - 1; i > 0; --i)
+            this.primarySplitter.removeContentArea(areas[i]);
+         // detach views before destroying splitters
+         this.layoutSplitters.forEach(s => s.removeAllContentAreas());
+         this.layoutSplitters.forEach(s => s.destroy());
+         this.layoutSplitters = [];
+
+         this.shownViewers = [];
+         let root = this.buildLayoutItem({ Pack: this.getEffectiveLayout() }, this.shownViewers);
+         if (root) {
+            root.setLayoutData(new SplitterLayoutData({ resizable: true, size: "auto" }));
+            this.primarySplitter.addContentArea(root);
+         }
+
+         this.shownViewers.forEach((v, i) => {
+            let sBtn = v.ca.byId("tbar").getContent()[2];
+            sBtn.setIcon("sap-icon://" + (i == 0 ? "arrow-right" : "arrow-left"));
+            sBtn.setEnabled(this.shownViewers.length > 1);
+         });
+      },
+
+      onWindowLayoutChanged: function()
+      {
+         this.localLayout = null;
+         this.rebuildLayout();
+      },
+
+      /** Start local modification of the layout, returns the local layout tree */
+      editLayout: function()
+      {
+         if (!this.localLayout)
+            this.localLayout = this.getEffectiveLayout();
+         return this.localLayout;
+      },
+
+      /** Find leaf with given viewer id, returns { pack, index } */
+      findLayoutLeaf: function(pack, id)
+      {
+         for (let i = 0; i < pack.Items.length; ++i) {
+            let it = pack.Items[i];
+            if (it.Pack) {
+               let res = this.findLayoutLeaf(it.Pack, id);
+               if (res) return res;
+            } else if (it.ViewerId == id) {
+               return { pack, index: i };
+            }
+         }
+         return null;
+      },
+
+      /** Remove viewer from the layout tree, empty packs are removed too */
+      removeLayoutLeaf: function(pack, id)
+      {
+         for (let i = 0; i < pack.Items.length; ++i) {
+            let it = pack.Items[i];
+            if (it.Pack) {
+               if (this.removeLayoutLeaf(it.Pack, id)) {
+                  if (!it.Pack.Items.length) pack.Items.splice(i, 1);
+                  return true;
+               }
+            } else if (it.ViewerId == id) {
+               pack.Items.splice(i, 1);
+               return true;
+            }
+         }
+         return false;
+      },
+
+      /** Swap positions of two viewers in the layout */
+      swapViewers: function(id1, id2)
+      {
+         let layout = this.editLayout();
+         let l1 = this.findLayoutLeaf(layout, id1), l2 = this.findLayoutLeaf(layout, id2);
+         if (!l1 || !l2) return;
+         l1.pack.Items[l1.index].ViewerId = id2;
+         l2.pack.Items[l2.index].ViewerId = id1;
+         this.rebuildLayout();
+      },
+
+      /** Move viewer next to the target viewer, side is "left", "right", "top" or "bottom" */
+      dockViewer: function(id, targetId, side)
+      {
+         let layout = this.editLayout();
+         this.removeLayoutLeaf(layout, id);
+         let tgt = this.findLayoutLeaf(layout, targetId);
+         if (!tgt) return;
+
+         let vertical = (side == "top" || side == "bottom");
+         let before = (side == "left" || side == "top");
+         let titem = tgt.pack.Items[tgt.index];
+
+         if (!!tgt.pack.Vertical == vertical) {
+            // pack has required orientation, split weight of the target
+            titem.Weight = (titem.Weight > 0 ? titem.Weight : 1) / 2;
+            tgt.pack.Items.splice(before ? tgt.index : tgt.index + 1, 0, { Weight: titem.Weight, ViewerId: id });
+         } else {
+            // replace target with a sub-pack of required orientation
+            let items = [{ Weight: 1, ViewerId: titem.ViewerId }];
+            items.splice(before ? 0 : 1, 0, { Weight: 1, ViewerId: id });
+            tgt.pack.Items[tgt.index] = { Weight: titem.Weight, Pack: { Vertical: vertical, Items: items } };
+         }
+         this.rebuildLayout();
+      },
+
+      //==============================================================================
+      // Drag and drop of viewers, the toolbar of the view is the drag handle
+      //==============================================================================
+
+      setupViewDragAndDrop: function(view, viewer)
+      {
+         let tbar = view.byId("tbar");
+         if (!tbar) return;
+         tbar.addStyleClass("eveViewDragHandle");
+         tbar.setTooltip("Drag to another view: center to swap, edge to dock");
+
+         tbar.addEventDelegate({ onAfterRendering: () => {
+            let dom = tbar.getDomRef();
+            dom.draggable = true;
+            dom.ondragstart = e => {
+               this.dragViewerId = viewer.fElementId;
+               e.dataTransfer.effectAllowed = "move";
+               e.dataTransfer.setData("text/plain", viewer.fName);
+            };
+            dom.ondragend = () => {
+               delete this.dragViewerId;
+               this.showDropIndicator(null);
+            };
+         }});
+
+         view.addEventDelegate({ onAfterRendering: () => {
+            let dom = view.getDomRef();
+            dom.ondragover = e => {
+               let zone = this.getDropZone(e, dom, viewer);
+               if (!zone) return;
+               e.preventDefault();
+               e.dataTransfer.dropEffect = "move";
+               this.showDropIndicator(dom.getBoundingClientRect(), zone);
+            };
+            dom.ondragleave = e => {
+               if (!dom.contains(e.relatedTarget)) this.showDropIndicator(null);
+            };
+            dom.ondrop = e => {
+               let zone = this.getDropZone(e, dom, viewer);
+               this.showDropIndicator(null);
+               if (!zone) return;
+               e.preventDefault();
+               let id = this.dragViewerId;
+               delete this.dragViewerId;
+               if (zone == "center")
+                  this.swapViewers(id, viewer.fElementId);
+               else
+                  this.dockViewer(id, viewer.fElementId, zone);
+            };
+         }});
+      },
+
+      /** Returns drop zone for current drag position or null if drop is not possible */
+      getDropZone: function(e, dom, viewer)
+      {
+         if (this.dragViewerId === undefined || this.dragViewerId == viewer.fElementId) return null;
+         let r = dom.getBoundingClientRect();
+         let x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+         let edges = { left: x, right: 1 - x, top: y, bottom: 1 - y };
+         let side = Object.keys(edges).reduce((a, b) => edges[a] <= edges[b] ? a : b);
+         return edges[side] < 0.25 ? side : "center";
+      },
+
+      showDropIndicator: function(rect, zone)
+      {
+         if (!this.dropIndicator) {
+            this.dropIndicator = document.createElement("div");
+            this.dropIndicator.className = "eveViewDropIndicator";
+            document.body.appendChild(this.dropIndicator);
+         }
+         let s = this.dropIndicator.style;
+         if (!rect) { s.display = "none"; return; }
+
+         let l = rect.left, t = rect.top, w = rect.width, h = rect.height;
+         if (zone == "right") l += w / 2;
+         if (zone == "bottom") t += h / 2;
+         if (zone == "left" || zone == "right") w /= 2;
+         if (zone == "top" || zone == "bottom") h /= 2;
+         Object.assign(s, { display: "block", left: l + "px", top: t + "px", width: w + "px", height: h + "px" });
       },
 
       subscribeView: function(viewer, e)
@@ -247,38 +490,13 @@ sap.ui.define(['sap/ui/core/Component',
       },
 
       removeView: function(viewer) {
-         let primary = this.getView().byId("MainAreaSplitter");
-         let secondary;
-         if (primary.getContentAreas().length == 3)
-            secondary = primary.getContentAreas()[2];
-
          if (viewer.fRnrSelf) {
-            let pa = primary.getContentAreas()[1];
-            if (viewer.fElementId == pa.oViewData.eveViewerId) {
-               //  viewer.ca = pa;
-               ca.destroy();
-               primary.removeContentArea(pa);
-               if (secondary) {
-                  let ss = secondary.getContentAreas();
-                  let ssf = ss[0];
-                  secondary.removeContentArea(ssf);
-                  primary.removeContentArea(secondary);
-                  primary.addContentArea(ssf);
-                  primary.addContentArea(secondary);
-               }
-            }
-            else {
-               secondary.getContentAreas().forEach(ca => {
-                  if (viewer.fElementId == ca.oViewData.eveViewerId) {
-                     // viewer.ca = ca;
-                     secondary.removeContentArea(ca);
-                     ca.destroy();
-                     return false;
-                  }
-               });
-            }
             viewer.subscribed = false;
-
+            this.rebuildLayout();
+            if (viewer.ca) {
+               viewer.ca.destroy();
+               delete viewer.ca;
+            }
 
             let vMenu = this.getView().byId("menuViewId");
             vMenu.getItems().forEach(c => { if (c.eveView == viewer) c.setEnabled(true); });
@@ -295,37 +513,12 @@ sap.ui.define(['sap/ui/core/Component',
          }
       },
 
+      /** Swap viewer with the first shown viewer, the first one is swapped with the second */
       switchViewSides: function (viewer) {
-         let primary = this.primarySplitter;
-         let secondary = primary.secondary;
-         let pa = this.primarySplitter.getContentAreas()[1];
-         this.setToolbarSwapIcon(pa, "arrow-left");
-
-         if (viewer.fElementId == pa.oViewData.eveViewerId)
-         {
-            let sa = secondary.getContentAreas()[0];
-            primary.removeContentArea(pa);
-            secondary.removeContentArea(sa);
-            primary.insertContentArea(sa, 1);
-            secondary.insertContentArea(pa, 0);
-            this.setToolbarSwapIcon(sa, "arrow-right");
-         }
-         else {
-            let idx = secondary.indexOfContentArea(viewer.ca);
-            primary.removeContentArea(pa);
-            secondary.removeContentArea(viewer.ca);
-            primary.insertContentArea(viewer.ca, 1);
-            secondary.insertContentArea(pa, idx);
-            this.setToolbarSwapIcon(viewer.ca, "arrow-right");
-         }
-         secondary.resetContentAreasSizes();
-      },
-
-      setToolbarSwapIcon(va, iName)
-      {
-         let t = va.byId("tbar");
-         let sBtn = t.getContent()[2];
-         sBtn.setIcon("sap-icon://" + iName);
+         let shown = this.shownViewers || [];
+         if (shown.length < 2) return;
+         let other = (shown[0] === viewer) ? shown[1] : shown[0];
+         this.swapViewers(viewer.fElementId, other.fElementId);
       },
 
       setToolbarExpandedAction(va) {
