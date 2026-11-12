@@ -504,6 +504,11 @@ sap.ui.define([], function() {
                if (obj.fRnrSelf != em.fRnrSelf) {
                   obj.fRnrSelf = em.fRnrSelf;
                   em.rnr_self_changed = true;
+                  if (obj._typename == "ROOT::Experimental::REveViewer")
+                     this.controllers.forEach(ctrl => {
+                        if (typeof ctrl.onViewerRnrSelfChanged === "function")
+                           ctrl.onViewerRnrSelfChanged(obj);
+                     });
                }
                if (obj.fRnrChildren != em.fRnrChildren) {
                   obj.fRnrChildren = em.fRnrChildren;
