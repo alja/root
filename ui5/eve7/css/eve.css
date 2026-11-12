@@ -117,9 +117,12 @@
 	width: 8px;
 	height: 16px;
 	margin-right: 4px;
-	background-image: radial-gradient(circle, currentColor 1px, transparent 1.5px);
+	/* the icon color of the theme, so that the grip shows like the toolbar's
+	   buttons in light and dark themes; the toolbar's own text color stays
+	   black in a dark theme */
+	background-image: radial-gradient(circle, var(--sapContent_IconColor, #0854a0) 1.2px, transparent 1.7px);
 	background-size: 4px 4px;
-	opacity: 0.45;
+	opacity: 0.75;
 }
 
 .sapMTB.eveViewDragHandle:hover {
@@ -127,7 +130,7 @@
 }
 
 .eveViewDragHandle:hover::before {
-	opacity: 0.9;
+	opacity: 1;
 }
 
 /* view being dragged */
