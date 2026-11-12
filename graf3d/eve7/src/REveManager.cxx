@@ -1051,6 +1051,20 @@ void REveManager::WindowData(unsigned connid, const std::string &arg)
 
       return;
    }
+   else if (arg.compare(0, 13, "NEWWINDOWURL:") == 0) {
+      // URL for an additional browser window of this client, e.g. a viewer
+      // dropped outside of the browser window; it carries a new connection key
+      nlohmann::json msg = {};
+      msg["content"] = "NewWindowUrl";
+      msg["tag"] = arg.substr(13);
+      if (fHttpPublic)
+         R__LOG_INFO(REveLog()) << "REveManager::WindowData, new windows are not allowed in restricted public mode";
+      else
+         msg["url"] = fWebWindow->GetUrl(true);
+
+      fWebWindow->Send(connid, msg.dump());
+      return;
+   }
 
    nlohmann::json cj = nlohmann::json::parse(arg);
    if (gDebug > 0)

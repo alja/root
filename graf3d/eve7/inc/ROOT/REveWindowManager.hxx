@@ -15,6 +15,7 @@
 #include <ROOT/REveElement.hxx>
 
 #include <memory>
+#include <set>
 #include <vector>
 
 namespace ROOT {
@@ -52,6 +53,7 @@ private:
    void LayoutChanged();
    bool RemoveViewerRecursively(REveViewer *v);
    void WriteJson(nlohmann::json &j) const;
+   void ReadJson(const nlohmann::json &j, std::set<REveViewer *> &placed);
 
 public:
    REveWindowPack(REveWindowManager *m, EOrientation o) : fManager(m), fOrientation(o) {}
@@ -98,6 +100,8 @@ public:
 
    void ResetLayout();
    void RemoveViewer(REveViewer *v);
+
+   void SetLayoutFromJson(const char *json);
 
    Int_t WriteCoreJson(nlohmann::json &j, Int_t rnr_offset) override;
 };

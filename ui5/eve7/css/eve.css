@@ -101,9 +101,38 @@
    display: none;
 }
 
-/* viewer drag and drop in the window layout */
+/* viewer drag and drop in the window layout: the view toolbar is the handle,
+   marked with a grip of dots and highlighted on hover */
 .eveViewDragHandle {
 	cursor: grab;
+}
+
+.eveViewDragHandle:active {
+	cursor: grabbing;
+}
+
+.eveViewDragHandle::before {
+	content: "";
+	flex: none;
+	width: 8px;
+	height: 16px;
+	margin-right: 4px;
+	background-image: radial-gradient(circle, currentColor 1px, transparent 1.5px);
+	background-size: 4px 4px;
+	opacity: 0.45;
+}
+
+.sapMTB.eveViewDragHandle:hover {
+	background-color: rgba(0, 112, 242, 0.08);
+}
+
+.eveViewDragHandle:hover::before {
+	opacity: 0.9;
+}
+
+/* view being dragged */
+.eveViewDragSource {
+	opacity: 0.4;
 }
 
 .eveViewDropIndicator {
