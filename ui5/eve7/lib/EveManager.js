@@ -196,6 +196,11 @@ sap.ui.define([], function() {
             }
             else if (resp.content == "GrabImage") {
                this.GrabImages(resp);
+            }
+            else if (resp.content == "NewWindowUrl") {
+               let callback = this.newWindowCallbacks?.[resp.tag];
+               delete this.newWindowCallbacks?.[resp.tag];
+               if (callback) callback(resp.url);
             } else {
                console.error("OnWebsocketMsg Unhandled message type: msg len=", msg.length, " txt:", msg.substr(0, 120), "...");
             }
@@ -548,6 +553,19 @@ sap.ui.define([], function() {
             let res = this.FindViewers(chlds[k].childs);
             if (res) return res;
          }
+      }
+
+      /** Ask server for URL of an additional browser window of this client, it comes with a new connection key.
+       *  callback(url) gets undefined url when the server refuses. */
+      RequestNewWindowUrl(callback) {
+         if (!this.handle) return;
+         if (!this.newWindowCallbacks) {
+            this.newWindowCallbacks = {};
+            this.newWindowTag = 0;
+         }
+         let tag = String(++this.newWindowTag);
+         this.newWindowCallbacks[tag] = callback;
+         this.handle.send("NEWWINDOWURL:" + tag);
       }
 
       /** Returns REveWindowManager element of the world scene */

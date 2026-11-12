@@ -9,8 +9,9 @@ sap.ui.define(['sap/ui/core/Component',
                'sap/m/MessageBox',
                'rootui5/eve7/lib/EveManager',
                "sap/ui/core/mvc/XMLView",
-               'sap/ui/model/json/JSONModel'
-], function(Component, UIComponent, Controller, Splitter, SplitterLayoutData, MobileLibrary, mButton, mMenuItem, MessageBox, EveManager, XMLView, JSONModel) {
+               'sap/ui/model/json/JSONModel',
+               'sap/m/MessageToast'
+], function(Component, UIComponent, Controller, Splitter, SplitterLayoutData, MobileLibrary, mButton, mMenuItem, MessageBox, EveManager, XMLView, JSONModel, MessageToast) {
 
    "use strict";
 
@@ -31,7 +32,7 @@ sap.ui.define(['sap/ui/core/Component',
 
          this.primarySplitter = this.getView().byId("MainAreaSplitter");
          this.layoutSplitters = [];  // splitters created for the window layout
-         this.localLayout = null;    // layout modified by user (swap, drag and drop), null - use server layout
+         this.localLayout = null;    // layout modified by user (drag and drop) until the server sends it back, null - use server layout
       },
 
       onDisconnect : function() {
@@ -204,10 +205,10 @@ sap.ui.define(['sap/ui/core/Component',
       // Window layout
       //==============================================================================
 
-      /** Viewer is shown when it is subscribed and its view was created */
+      /** Viewer is shown when it is subscribed, its view was created and it is not moved to a separate window */
       isViewerShown: function(viewer)
       {
-         return viewer && viewer.subscribed && viewer.ca && viewer.fRnrSelf;
+         return viewer && viewer.subscribed && viewer.ca && viewer.fRnrSelf && !viewer.undocked;
       },
 
       /** Returns layout tree: REveWindowManager layout with all shown viewers placed.
@@ -237,20 +238,21 @@ sap.ui.define(['sap/ui/core/Component',
          return layout;
       },
 
-      /** Creates control for a layout item, returns null when there is nothing to show */
-      buildLayoutItem: function(item, shown)
+      /** Creates control for a layout item, returns null when there is nothing to show.
+       *  path - indices of the item's pack from the top of the layout tree */
+      buildLayoutItem: function(item, path)
       {
          if (!item.Pack) {
             let viewer = this.mgr.GetElement(item.ViewerId);
             if (!this.isViewerShown(viewer)) return null;
-            shown.push(viewer);
             return viewer.ca;
          }
 
          let parts = [];
-         item.Pack.Items.forEach(it => {
-            let ctrl = this.buildLayoutItem(it, shown);
-            if (ctrl) parts.push({ ctrl, weight: it.Weight > 0 ? it.Weight : 1 });
+         item.Pack.Items.forEach((it, idx) => {
+            let ctrl = this.buildLayoutItem(it, path.concat(idx));
+            if (!(it.Weight > 0)) it.Weight = 1;
+            if (ctrl) parts.push({ ctrl, idx, weight: it.Weight });
          });
 
          if (parts.length == 0) return null;
@@ -264,6 +266,9 @@ sap.ui.define(['sap/ui/core/Component',
             p.ctrl.setLayoutData(new SplitterLayoutData({ resizable: true, size }));
             splitter.addContentArea(p.ctrl);
          });
+         splitter._evePath = path;
+         splitter._eveIdx = parts.map(p => p.idx);
+         splitter.attachResize(evt => this.onLayoutSplitterResize(splitter, evt.getParameter("newSizes")));
          this.layoutSplitters.push(splitter);
          return splitter;
       },
@@ -279,24 +284,64 @@ sap.ui.define(['sap/ui/core/Component',
          this.layoutSplitters.forEach(s => s.destroy());
          this.layoutSplitters = [];
 
-         this.shownViewers = [];
-         let root = this.buildLayoutItem({ Pack: this.getEffectiveLayout() }, this.shownViewers);
+         this.shownLayout = this.getEffectiveLayout();
+         let root = this.buildLayoutItem({ Pack: this.shownLayout }, []);
+         this.shownLayoutKey = this.layoutKey(this.shownLayout);
          if (root) {
             root.setLayoutData(new SplitterLayoutData({ resizable: true, size: "auto" }));
             this.primarySplitter.addContentArea(root);
          }
+      },
 
-         this.shownViewers.forEach((v, i) => {
-            let sBtn = v.ca.byId("tbar").getContent()[2];
-            sBtn.setIcon("sap-icon://" + (i == 0 ? "arrow-right" : "arrow-left"));
-            sBtn.setEnabled(this.shownViewers.length > 1);
-         });
+      /** Key to compare layout trees, weights are rounded as the server keeps them as float */
+      layoutKey: function(layout)
+      {
+         let key = p => (p.Vertical ? "V(" : "H(") + p.Items.map(it => (it.Pack ? key(it.Pack) : it.ViewerId) + ":" +
+                                                    Math.round((it.Weight > 0 ? it.Weight : 1) * 1e4)).join(",") + ")";
+         return key(layout);
       },
 
       onWindowLayoutChanged: function()
       {
          this.localLayout = null;
-         this.rebuildLayout();
+         // layout sent by sendLayout() comes back unchanged, views are already in place
+         if (this.layoutKey(this.getEffectiveLayout()) !== this.shownLayoutKey)
+            this.rebuildLayout();
+      },
+
+      /** Store local layout in REveWindowManager, so it is kept on page reload and shown by all clients */
+      sendLayout: function()
+      {
+         let wm = this.mgr.FindWindowManager();
+         if (!wm || !this.localLayout) return;
+         let json = JSON.stringify(this.localLayout).replace(/"/g, '\\"');
+         this.mgr.SendMIR('SetLayoutFromJson("' + json + '")', wm.fElementId, "ROOT::Experimental::REveWindowManager");
+      },
+
+      /** Splitter divider was moved: weights of the pack items follow the new sizes.
+       *  Resize of the whole splitter, e.g. with the browser window, keeps the proportions and is ignored. */
+      onLayoutSplitterResize: function(splitter, sizes)
+      {
+         if (!sizes || sizes.length != splitter._eveIdx.length || !sizes.every(s => s > 0)) return;
+         let pack = splitter._evePath.reduce((p, i) => p.Items[i].Pack, this.shownLayout);
+         let items = splitter._eveIdx.map(i => pack.Items[i]);
+         let wsum = items.reduce((a, it) => a + it.Weight, 0), ssum = sizes.reduce((a, s) => a + s, 0);
+         if (items.every((it, i) => Math.abs(it.Weight / wsum - sizes[i] / ssum) < 0.01)) return;
+
+         items.forEach((it, i) => it.Weight = wsum * sizes[i] / ssum);
+         this.shownLayoutKey = this.layoutKey(this.shownLayout);
+         this.localLayout = JSON.parse(JSON.stringify(this.shownLayout));
+
+         // send once the divider stops moving
+         clearTimeout(this.layoutResizeTimer);
+         this.layoutResizeTimer = setTimeout(() => {
+            // relative sizes, so that later resize of the splitter keeps the proportions
+            let areas = splitter.getContentAreas();
+            if (areas.length == items.length)
+               areas.forEach((a, i) => a.getLayoutData().setSize((i == areas.length - 1) ? "auto" :
+                                                                (100 * items[i].Weight / wsum).toFixed(2) + "%"));
+            this.sendLayout();
+         }, 300);
       },
 
       /** Start local modification of the layout, returns the local layout tree */
@@ -349,6 +394,7 @@ sap.ui.define(['sap/ui/core/Component',
          l1.pack.Items[l1.index].ViewerId = id2;
          l2.pack.Items[l2.index].ViewerId = id1;
          this.rebuildLayout();
+         this.sendLayout();
       },
 
       /** Move viewer next to the target viewer, side is "left", "right", "top" or "bottom" */
@@ -374,6 +420,7 @@ sap.ui.define(['sap/ui/core/Component',
             tgt.pack.Items[tgt.index] = { Weight: titem.Weight, Pack: { Vertical: vertical, Items: items } };
          }
          this.rebuildLayout();
+         this.sendLayout();
       },
 
       //==============================================================================
@@ -385,7 +432,7 @@ sap.ui.define(['sap/ui/core/Component',
          let tbar = view.byId("tbar");
          if (!tbar) return;
          tbar.addStyleClass("eveViewDragHandle");
-         tbar.setTooltip("Drag to another view: center to swap, edge to dock");
+         tbar.setTooltip("Drag to another view: center to swap, edge to dock\nDrag outside of the browser window: separate window");
 
          tbar.addEventDelegate({ onAfterRendering: () => {
             let dom = tbar.getDomRef();
@@ -393,11 +440,19 @@ sap.ui.define(['sap/ui/core/Component',
             dom.ondragstart = e => {
                this.dragViewerId = viewer.fElementId;
                e.dataTransfer.effectAllowed = "move";
-               e.dataTransfer.setData("text/plain", viewer.fName);
+               // own type, so that other applications do not accept the drop
+               e.dataTransfer.setData("application/x-eve-viewer", viewer.fName);
+               view.getDomRef()?.classList.add("eveViewDragSource");
+               this.trackDragOutsideWindow();
             };
-            dom.ondragend = () => {
+            dom.ondragend = e => {
+               view.getDomRef()?.classList.remove("eveViewDragSource");
                delete this.dragViewerId;
                this.showDropIndicator(null);
+               let outside = this.dragOutsideWindow || e.clientX < 0 || e.clientY < 0 ||
+                             e.clientX > window.innerWidth || e.clientY > window.innerHeight;
+               if (e.dataTransfer.dropEffect == "none" && outside)
+                  this.openViewerWindow(viewer, e.screenX, e.screenY);
             };
          }});
 
@@ -426,6 +481,64 @@ sap.ui.define(['sap/ui/core/Component',
                   this.dockViewer(id, viewer.fElementId, zone);
             };
          }});
+      },
+
+      /** Keep this.dragOutsideWindow up to date, some browsers report no position at the end of a drag */
+      trackDragOutsideWindow: function()
+      {
+         this.dragOutsideWindow = false;
+         if (this.dragWindowListeners) return;
+         this.dragWindowListeners = true;
+         // leaving the page goes through its edge; relatedTarget alone is not enough, Safari never sets it
+         document.addEventListener("dragleave", e => {
+            if (!e.relatedTarget && (e.clientX < 5 || e.clientY < 5 || e.clientX > window.innerWidth - 5 ||
+                                     e.clientY > window.innerHeight - 5))
+               this.dragOutsideWindow = true;
+         });
+         document.addEventListener("dragenter", () => { this.dragOutsideWindow = false; });
+      },
+
+      /** Move viewer to a separate browser window at given screen position, as with the Single=name URL option.
+       *  The viewer keeps its place in the layout and comes back there when the window is closed. */
+      openViewerWindow: function(viewer, screenX, screenY)
+      {
+         let r = viewer.ca?.getDomRef()?.getBoundingClientRect();
+         let w = Math.round(r?.width || 800), h = Math.round(r?.height || 600);
+         // open now, popup blockers allow it only right after a user action, the address comes from the server
+         let win = window.open("", "_blank", `popup,width=${w},height=${h},left=${screenX},top=${screenY}`);
+         if (!win) {
+            MessageToast.show("Allow pop-up windows for this page to show views in separate windows");
+            return;
+         }
+
+         viewer.undocked = true;
+         this.rebuildLayout();
+         let timer = setInterval(() => {
+            if (!win.closed) return;
+            clearInterval(timer);
+            delete viewer.undocked;
+            this.rebuildLayout();
+         }, 500);
+         this.mgr.RequestNewWindowUrl(url => {
+            if (!url) {
+               win.close();
+               MessageToast.show("Server does not allow new windows");
+               return;
+            }
+            // address of this page with the new key, the server may know itself under a different host or port
+            let srv = new URL(url, window.location.href), u = new URL(window.location.href);
+            u.search = srv.search;
+            u.hash = srv.hash;
+            u.searchParams.set("Single", viewer.fName);
+            // the new window got a copy of sessionStorage, with the reload key of this page JSROOT would
+            // connect as this page and replace its connection
+            try {
+               win.sessionStorage.removeItem("RWebWindow_Key");
+            } catch (e) {
+               console.warn("openViewerWindow: cannot access sessionStorage of the new window", e);
+            }
+            win.location.href = u.href;
+         });
       },
 
       /** Returns drop zone for current drag position or null if drop is not possible */
@@ -511,14 +624,6 @@ sap.ui.define(['sap/ui/core/Component',
             let mir = "DisconnectClient()";
             this.mgr.SendMIR(mir, viewer.fElementId, "ROOT::Experimental::REveViewer");
          }
-      },
-
-      /** Swap viewer with the first shown viewer, the first one is swapped with the second */
-      switchViewSides: function (viewer) {
-         let shown = this.shownViewers || [];
-         if (shown.length < 2) return;
-         let other = (shown[0] === viewer) ? shown[1] : shown[0];
-         this.swapViewers(viewer.fElementId, other.fElementId);
       },
 
       setToolbarExpandedAction(va) {

@@ -120,9 +120,6 @@ sap.ui.define([
             oRouter.navTo("Lego", { viewName: this.mgr.GetElement(this.eveViewerId).fName });
         },
 
-        swap: function () {
-            this.mgr.controllers[0].switchViewSides(this.mgr.GetElement(this.eveViewerId));
-        },
 
         detachViewer: function () {
             this.mgr.controllers[0].removeView(this.mgr.GetElement(this.eveViewerId));

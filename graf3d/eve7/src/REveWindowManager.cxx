@@ -10,7 +10,9 @@
  *************************************************************************/
 
 #include <ROOT/REveWindowManager.hxx>
+#include <ROOT/REveManager.hxx>
 #include <ROOT/REveViewer.hxx>
+#include <ROOT/RLogger.hxx>
 
 #include <nlohmann/json.hpp>
 
@@ -127,6 +129,32 @@ void REveWindowPack::WriteJson(nlohmann::json &j) const
    }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+/// Read pack description written by WriteJson(), replacing current items.
+/// Unknown viewers and viewers already in `placed` are skipped, as are
+/// sub-packs that end up empty.
+
+void REveWindowPack::ReadJson(const nlohmann::json &j, std::set<REveViewer *> &placed)
+{
+   fOrientation = j.value("Vertical", false) ? kVertical : kHorizontal;
+   fItems.clear();
+   for (auto &ji : j.at("Items")) {
+      Item item;
+      item.fWeight = ji.value("Weight", 1.f);
+      if (ji.contains("Pack")) {
+         item.fPack = std::make_unique<REveWindowPack>(fManager, kHorizontal);
+         item.fPack->ReadJson(ji["Pack"], placed);
+         if (item.fPack->IsEmpty())
+            continue;
+      } else {
+         item.fViewer = dynamic_cast<REveViewer *>(gEve->FindElementById(ji.at("ViewerId").get<ElementId_t>()));
+         if (!item.fViewer || !placed.insert(item.fViewer).second)
+            continue;
+      }
+      fItems.push_back(std::move(item));
+   }
+}
+
 /** \class REveWindowManager
 \ingroup REve
 Describes nesting of viewers in the main area of the web client, to the right
@@ -167,6 +195,25 @@ void REveWindowManager::RemoveViewer(REveViewer *v)
 {
    if (fMainPack->RemoveViewerRecursively(v))
       StampObjProps();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Replace the layout with one in the JSON format that is streamed to clients.
+/// Called from the client when the user rearranges viewers, so that the layout
+/// is kept on page reload and shared by all clients.
+
+void REveWindowManager::SetLayoutFromJson(const char *json)
+{
+   auto pack = std::make_unique<REveWindowPack>(this, REveWindowPack::kHorizontal);
+   try {
+      std::set<REveViewer *> placed;
+      pack->ReadJson(nlohmann::json::parse(json), placed);
+   } catch (nlohmann::json::exception &e) {
+      R__LOG_ERROR(REveLog()) << "REveWindowManager::SetLayoutFromJson " << e.what();
+      return;
+   }
+   fMainPack = std::move(pack);
+   StampObjProps();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
