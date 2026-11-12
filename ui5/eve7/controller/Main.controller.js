@@ -205,6 +205,15 @@ sap.ui.define(['sap/ui/core/Component',
       // Window layout
       //==============================================================================
 
+      /** Viewer was switched on or off, e.g. in the summary view */
+      onViewerRnrSelfChanged: function(viewer)
+      {
+         if (viewer.fRnrSelf && !viewer.$view_created)
+            this.updateViewers(); // creates the view and the menu entry, rebuilds the layout
+         else
+            this.rebuildLayout();
+      },
+
       /** Viewer is shown when it is subscribed, its view was created and it is not moved to a separate window */
       isViewerShown: function(viewer)
       {
