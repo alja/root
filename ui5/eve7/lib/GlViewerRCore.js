@@ -791,6 +791,8 @@ sap.ui.define([
             this.camera._right  =  ex;
             this.camera._top    =  ey;
             this.camera._bottom = -ey;
+            // Keep _aspect in sync, the aspect setter is a no-op when it matches.
+            this.camera._aspect = asp;
             this.camera.updateProjectionMatrix();
 
             if (typeof this.controls.resetOrthoPanZoom == 'function')
@@ -1277,7 +1279,17 @@ sap.ui.define([
          let h = this.canvas.height;
          //console.log("GlViewerRCore onResizeTimeout", w, h, "canvas=", this.canvas, this.canvas.width, this.canvas.height);
 
-         this.camera.aspect = w / h;
+         if (this.camera.isOrthographicCamera) {
+            // The aspect setter skips an unchanged value, but left/right may
+            // still be stale, so always refit them to the current top/bottom.
+            if (w > 0 && h > 0) {
+               this.camera._aspect = w / h;
+               this.camera._updateLR();
+               this.camera.updateProjectionMatrix();
+            }
+         } else {
+            this.camera.aspect = w / h;
+         }
          this.overlay.updatePixelScale();
          this.rqt.updateViewport(w, h);
          this.controls.update();
