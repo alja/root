@@ -15,6 +15,15 @@ sap.ui.define(['sap/ui/core/Component',
 
    "use strict";
 
+   /** UI5 views and router targets of the viewer types, see REveViewer::SetViewType() */
+   const viewerTypes = {
+      GL:              { view: "rootui5.eve7.view.GL",              route: "View" },
+      Table:           { view: "rootui5.eve7.view.EveTable",        route: "Table" },
+      Lego:            { view: "rootui5.eve7.view.Lego",            route: "Lego" },
+      GeoTable:        { view: "rootui5.eve7.view.GeoTable",        route: "GeoTable" },
+      GeoOverlapTable: { view: "rootui5.eve7.view.GeoOverlapTable", route: "GeoOverlapTable" }
+   };
+
    return Controller.extend("rootui5.eve7.controller.Main", {
       onInit: function () {
          this.mgr = new EveManager();
@@ -115,20 +124,20 @@ sap.ui.define(['sap/ui/core/Component',
       },
 
       viewItemPressed: function (elem, oEvent) {
-         let item = oEvent.getSource();
-         // console.log('item pressed', item.getText(), elem);
-
-         let name = item.getText();
-         if (name.indexOf(" ") > 0) name = name.substr(0, name.indexOf(" "));
          // FIXME: one need better way to deliver parameters to the selected view
          EVE.$eve7tmp = { mgr: this.mgr, eveViewerId: elem.fElementId};
-         let oRouter = UIComponent.getRouterFor(this);
-         if (name == "Table")
-            oRouter.navTo("Table", { viewName: name });
-         else if (name == "Lego")
-            oRouter.navTo("Lego", { viewName: name });
-         else
-            oRouter.navTo("View", { viewName: name });
+         UIComponent.getRouterFor(this).navTo(this.getViewerType(elem).route, { viewName: elem.fName });
+      },
+
+      /** Returns UI5 view and router target for the type of the viewer element */
+      getViewerType: function(elem)
+      {
+         let t = viewerTypes[elem.ViewType || "GL"];
+         if (!t) {
+            console.error("Unknown type", elem.ViewType, "of viewer", elem.fName, ", showing it as GL view");
+            t = viewerTypes.GL;
+         }
+         return t;
       },
 
       updateViewers: function(loading_done) {
@@ -171,16 +180,7 @@ sap.ui.define(['sap/ui/core/Component',
          // create missing view
          console.log("Creating view", viewid);
  
-         // TODO: Generalize instantiation without  the if/else statements
-         let vtype = "rootui5.eve7.view.GL";
-         if (elem.fName === "Table")
-            vtype = "rootui5.eve7.view.EveTable";
-         else if (elem.fName === "Lego")
-            vtype = "rootui5.eve7.view.Lego";
-         else if (elem.fName === "GeoTable")
-               vtype = "rootui5.eve7.view.GeoTable";
-         else if (elem.fName === "GeoOverlapTable")
-               vtype = "rootui5.eve7.view.GeoOverlapTable";
+         let vtype = this.getViewerType(elem).view;
 
          let oOwnerComponent = Component.getOwnerComponentFor(this.getView());
          let view = oOwnerComponent.runAsOwner(function() {
@@ -539,6 +539,8 @@ sap.ui.define(['sap/ui/core/Component',
             u.search = srv.search;
             u.hash = srv.hash;
             u.searchParams.set("Single", viewer.fName);
+            // names may repeat, the id selects the viewer
+            u.searchParams.set("SingleId", viewer.fElementId);
             // the new window got a copy of sessionStorage, with the reload key of this page JSROOT would
             // connect as this page and replace its connection
             try {
@@ -593,22 +595,10 @@ sap.ui.define(['sap/ui/core/Component',
          let viewer = this.mgr.GetElement(elem.fElementId);
          // console.log('item pressed', item.getText(), elem);
 
-         let name = viewer.fName;
-        // if (name.indexOf(" ") > 0) name = name.substr(0, name.indexOf(" "));
          // FIXME: one need better way to deliver parameters to the selected view
          EVE.$eve7tmp = { mgr: this.mgr, eveViewerId: elem.fElementId};
 
-         let oRouter = UIComponent.getRouterFor(this);
-         if (name == "Table") {
-            oRouter.navTo("Table", { viewName: name });
-         }
-         else if (name == "Lego")
-         {
-            oRouter.navTo("Lego", { viewName: name });
-         }
-         else {
-            oRouter.navTo("View", { viewName: name });
-         }
+         UIComponent.getRouterFor(this).navTo(this.getViewerType(viewer).route, { viewName: viewer.fName });
       },
 
       removeView: function(viewer) {

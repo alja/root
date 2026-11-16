@@ -58,20 +58,14 @@ sap.ui.define(['rootui5/eve7/controller/Main.controller','sap/ui/core/Component'
       {
          let myv = this.getView();
          let sgv_undock = Component.getOwnerComponentFor(myv).getComponentData().sgv_undock;
-         if (elem.fName != sgv_undock)
+         let sgv_id = new URLSearchParams(window.location.search).get("SingleId");
+         if (sgv_id ? String(elem.fElementId) != sgv_id : elem.fName != sgv_undock)
             return;
 
          let viewid = "EveViewer" + elem.fElementId;
          let main = this;
 
-         let vtype = "rootui5.eve7.view.GL";
-         let reservedNames = ["Table", "GeoTable", "Lego"];
-         for (const rn of reservedNames) {
-            if (rn === elem.fName) {
-            vtype = "rootui5.eve7.view." + rn;
-              break; // Stop iterating
-            }
-          }
+         let vtype = this.getViewerType(elem).view;
 
          let oOwnerComponent = Component.getOwnerComponentFor(this.getView());
          let view = oOwnerComponent.runAsOwner(function() {

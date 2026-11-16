@@ -54,6 +54,7 @@ sap.ui.define([
 
          this.mgr = mgr;
          this.eveViewerId = eveViewerId;
+         this.byId("titleLabel").setText(this.mgr.GetElement(this.eveViewerId).fName);
 
          this.table = this.getView().byId("table");
 

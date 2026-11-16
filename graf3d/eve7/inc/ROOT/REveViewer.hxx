@@ -116,6 +116,9 @@ private:
    bool fMandatory{true};
    std::string fPostStreamFlag;
 
+   /// Client view that shows this viewer, see SetViewType().
+   std::string fViewType;
+
    std::vector<REveCamera*> fCameraList;
 
    ROOT::Experimental::REveCamera* CreateCamera(ECameraType type);
@@ -197,6 +200,9 @@ public:
 
    void SetMandatory(bool x);
    bool GetMandatory() { return fMandatory; }
+
+   void SetViewType(const std::string &t);
+   std::string GetViewType() const;
 
    void RemoveElementLocal(REveElement *el) override;
    void RemoveElementsLocal() override;

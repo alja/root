@@ -42,6 +42,7 @@ sap.ui.define([
         setupManagerAndViewType: function (eveViewerId, mgr) {
             this.eveViewerId = eveViewerId;
             this.mgr       = mgr;
+            this.byId("titleLabel").setText(this.mgr.GetElement(this.eveViewerId).fName);
 
             let eviewer = this.mgr.GetElement(this.eveViewerId);
             let sceneInfo = eviewer.childs[0];

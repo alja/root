@@ -281,6 +281,7 @@ int REveViewer::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
    // fCamera.WriteCoreJson(j, rnr_offset);
 
    j["Mandatory"] = fMandatory;
+   j["ViewType"] = GetViewType();
    j["AxesType"] = fAxesType;
    j["CameraCenter"] = fCameraCenter;
    j["ExtrapolateMotion"] = fExtrapolateMotion;
@@ -308,6 +309,32 @@ int REveViewer::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
    j["UT_PostStream"] = "UT_EveViewerUpdate";
 
    return REveElement::WriteCoreJson(j, rnr_offset);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Set the client view that shows this viewer: "GL" (3D view, the default),
+/// "Table", "Lego", "GeoTable" or "GeoOverlapTable". With an explicit type the
+/// viewer name is free, so several viewers of one type can have unique names.
+/// Set it before the viewer is shown, the client does not change the view of
+/// an existing viewer.
+
+void REveViewer::SetViewType(const std::string &t)
+{
+   fViewType = t;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// Returns the client view type, see SetViewType(). Without an explicit type,
+/// a viewer named as one of the types gets that type, otherwise "GL".
+
+std::string REveViewer::GetViewType() const
+{
+   if (!fViewType.empty())
+      return fViewType;
+   for (auto t : {"Table", "Lego", "GeoTable", "GeoOverlapTable"})
+      if (fName == t)
+         return t;
+   return "GL";
 }
 
 ////////////////////////////////////////////////////////////////////////////////
