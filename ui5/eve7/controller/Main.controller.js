@@ -669,15 +669,13 @@ sap.ui.define(['sap/ui/core/Component',
 
       },
 
+      /** Make the main splitter fill the page content. It used to get the window
+       *  height minus one 49px toolbar, but the page has a header and a subheader,
+       *  and an application page can have other bars: the splitter came out taller
+       *  than the page content, which does not scroll, and the toolbars of the
+       *  views could end up hidden under the subheader. */
       setMainVerticalSplitterHeight: function(){
-         let mainViewHeight = document.body.clientHeight;
-         let mainToolbarHeight = 49;
-         let height = mainViewHeight - mainToolbarHeight;
-         let splitter =  this.getView().byId("MainAreaSplitter");
-         if (splitter) {
-            // console.log("set splitter height >>> " , height);
-            splitter.setHeight(height + "px");
-         }
+         this.getView().byId("MainAreaSplitter")?.setHeight("100%");
       },
 
       onAfterRendering: function(){
