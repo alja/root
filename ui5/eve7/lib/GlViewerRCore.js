@@ -792,7 +792,7 @@ sap.ui.define([
             this.camera._top    =  ey;
             this.camera._bottom = -ey;
             // Keep _aspect in sync, the aspect setter is a no-op when it matches.
-            this.camera._aspect = asp;
+            this.camera._aspect = ex / ey;
             this.camera.updateProjectionMatrix();
 
             if (typeof this.controls.resetOrthoPanZoom == 'function')
