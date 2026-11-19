@@ -98,6 +98,10 @@ private:
    /// glyph geometry, so a change costs a rebuild on the client.
    Float_t   fAxesFontSize{0.015f};
 
+   /// Colour of the 3D axis lines, ticks and labels; -1 keeps the client's
+   /// defaults (grey lines, labels in the foreground colour).
+   Color_t   fAxesColor{-1};
+
    /// Tooltip text size, same units as fAxesFontSize.
    Float_t   fTooltipFontSize{0.012f};
 
@@ -177,6 +181,9 @@ public:
 
    Float_t GetAxesFontSize() const { return fAxesFontSize; }
    void SetAxesFontSize(Float_t s);
+
+   Color_t GetAxesColor() const { return fAxesColor; }
+   void SetAxesColor(Color_t c);
 
    Float_t GetTooltipFontSize() const { return fTooltipFontSize; }
    void SetTooltipFontSize(Float_t s);

@@ -207,6 +207,17 @@ void REveViewer::SetAxesFontSize(Float_t s)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+/// Colour of the 3D axis: lines, ticks and labels. A negative value restores
+/// the default, grey lines with labels in the viewer's foreground colour. The
+/// grid on the box axis panels keeps its own lighter grey.
+
+void REveViewer::SetAxesColor(Color_t c)
+{
+   fAxesColor = c < 0 ? -1 : c;
+   StampObjProps();
+}
+
+////////////////////////////////////////////////////////////////////////////////
 /// Label size for the hover tooltip, as a fraction of viewport height. Same
 /// range as the axis labels; see SetAxesFontSize.
 
@@ -296,6 +307,7 @@ int REveViewer::WriteCoreJson(nlohmann::json &j, Int_t rnr_offset)
    // clang-format on
    j["AxesAtten"] = fAxesAtten;
    j["AxesFontSize"] = fAxesFontSize;
+   j["AxesColor"] = fAxesColor;
    j["TooltipFontSize"] = fTooltipFontSize;
    j["TooltipAlpha"] = fTooltipAlpha;
    j["BlackBg"] = fBlackBackground;

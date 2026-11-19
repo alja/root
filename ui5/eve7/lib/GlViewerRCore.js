@@ -852,6 +852,8 @@ sap.ui.define([
          // size is baked into the glyph geometry.
          if (eveView.AxesFontSize !== undefined)
             this.axis3d.font_size = eveView.AxesFontSize;
+         // AxesColor is a ROOT colour index, or -1 for the defaults.
+         this.axis3d.setColor((eveView.AxesColor >= 0) ? this.creator.RcCol(eveView.AxesColor) : null);
          this.axis3d.setStyle(eveView.AxesType);
          if (eveView.AxesUpAxis !== undefined)
             this.axis3d.setUpAxis(eveView.AxesUpAxis);

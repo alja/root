@@ -123,6 +123,10 @@ sap.ui.define([], function() {
           * from _degenKey() and _octantKey(). updateForCamera() rebuilds when
           * it changes. Null means not built for any camera. */
          this._camSig = null;
+
+         /** RC.Color for lines, ticks and labels, or null for the defaults:
+          * grey lines and labels in the viewer's foreground colour. */
+         this.color = null;
       }
 
       /** Origin, box, or nothing. */
@@ -130,6 +134,20 @@ sap.ui.define([], function() {
          if (style === this.style) return;
          this.style = style;
          this.rebuild();
+      }
+
+      /** Axis colour as an RC.Color, or null for the defaults. Rebuilds only
+       * on a real change. */
+      setColor(col) {
+         const cur = this.color;
+         if (cur === col || (cur && col && cur.getHex() === col.getHex())) return;
+         this.color = col || null;
+         this.rebuild();
+      }
+
+      /** Line and tick colour. */
+      _lineColor() {
+         return this.color || new this.RC.Color(0.55, 0.55, 0.55);
       }
 
       /** Label size attenuation with distance: 0 keeps a constant pixel size,
@@ -276,14 +294,14 @@ sap.ui.define([], function() {
                font: font.metrics,
                fontSize: this.font_size,
                fontHinting: 1.0,
-               color: this.viewer.fgCol,
+               color: this.color ? this.color : this.viewer.fgCol,
                atten: this.atten
             });
             lo.material.side = RC.FRONT_SIDE;
             // The axis must stay legible when the background flips.
             // GlViewerRCore.recolourFgElements() calls setColors() on every
             // object with use_fg_color set, so the viewer needs no special case.
-            lo.use_fg_color = true;
+            lo.use_fg_color = !this.color;
             lo.setLabels(labels);
             this.labels_obj = lo;
             this.group.add(lo);
@@ -308,7 +326,7 @@ sap.ui.define([], function() {
 
          // One neutral grey for all three axes, as in the box style. Every ray
          // is named at its ends, so colour does not have to tell them apart.
-         const col = new RC.Color(0.55, 0.55, 0.55);
+         const col = this._lineColor();
 
          const AX = [
             { i: 0, name: "x" },
@@ -509,7 +527,7 @@ sap.ui.define([], function() {
             front[this.up_axis] = mx[this.up_axis];
          }
 
-         const col  = new RC.Color(0.55, 0.55, 0.55);
+         const col  = this._lineColor();
          const gcol = new RC.Color(0.75, 0.75, 0.75);
          const at = (a, v, j, jv, k, kv) => {
             const p = [0, 0, 0];
